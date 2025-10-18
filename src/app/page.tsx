@@ -1,103 +1,339 @@
-import Image from "next/image";
+import { AppHeader } from "@/components/app-header"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import Link from "next/link"
+import Footer from "@/components/shared/Footer"
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <>
+    <div className="px-4 max-w-7xl mx-auto">
+      <AppHeader />
+      
+      {/* Hero Section */}
+      <section className="container py-20 text-center space-y-8">
+        <div className="space-y-6">
+          <h1 className="text-6xl font-bold text-primary leading-tight">
+            DON&apos;T JUST DREAM.
+            <br />
+            <span className="text-secondary">DO.</span>
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Learn something new with personalized 1-on-1 and group sessions from expert instructors.
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        
+        {/* Search Section */}
+        <div className="max-w-2xl mx-auto space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <input 
+                type="text" 
+                placeholder="Learn something new" 
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+              />
+            </div>
+            <div className="flex-1">
+              <input 
+                type="text" 
+                placeholder="Near your location" 
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+              />
+            </div>
+            <Button className="bg-secondary hover:bg-orange-600 text-white px-8">
+              Search for instructors
+            </Button>
+          </div>
+          <p className="text-sm text-gray-500">
+            Or <Link href="/contact" className="text-secondary hover:underline">talk to a lesson coordinator</Link>
+          </p>
+        </div>
+      </section>
+
+      {/* Trusted By Section */}
+      <section className="py-12 bg-gray-50">
+        <div className="container text-center">
+          <p className="text-sm text-gray-500 mb-8">Trusted by leading publications</p>
+          <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
+            {["Business Insider", "Wall Street Journal", "CNBC", "Fox", "TechCrunch", "Fortune"].map((publication) => (
+              <span key={publication} className="text-sm font-medium text-gray-600">{publication}</span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us Section */}
+      <section className="container py-20">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-bold text-primary mb-4">Why book with us?</h2>
+          <p className="text-lg text-gray-600">Click to find instructors 👀 See for yourself →</p>
+        </div>
+        
+        <div className="grid md:grid-cols-3 gap-8">
+          <Card className="text-center">
+            <CardHeader>
+              <div className="w-16 h-16 bg-secondary rounded-full mx-auto mb-4 flex items-center justify-center">
+                <span className="text-2xl">🎯</span>
+              </div>
+              <CardTitle>Expert Instructors</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                Learn from verified professionals with real-world experience and proven teaching methods.
+              </CardDescription>
+            </CardContent>
+          </Card>
+          
+          <Card className="text-center">
+            <CardHeader>
+              <div className="w-16 h-16 bg-accent rounded-full mx-auto mb-4 flex items-center justify-center">
+                <span className="text-2xl">⚡</span>
+              </div>
+              <CardTitle>Flexible Scheduling</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                Book sessions that fit your schedule with our smart calendar system and instant confirmation.
+              </CardDescription>
+            </CardContent>
+          </Card>
+          
+          <Card className="text-center">
+            <CardHeader>
+              <div className="w-16 h-16 bg-secondary rounded-full mx-auto mb-4 flex items-center justify-center">
+                <span className="text-2xl">🛡️</span>
+              </div>
+              <CardTitle>Secure & Safe</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                Protected payments, verified instructors, and a safe learning environment for everyone.
+              </CardDescription>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Never Played Before Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-primary mb-4">Never played before?</h2>
+            <p className="text-lg text-gray-600">Don&apos;t worry! Whether you&apos;re brand-new or highly experienced, our coaches can help you level up.</p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                name: "Corey J.",
+                skill: "Pickleball",
+                rating: 5,
+                review: "My lesson with Mateo was my first time ever playing pickleball and he was an excellent coach. He was very patient, took time to answer questions, and had a nice plan for our lesson."
+              },
+              {
+                name: "Jocolbe P.",
+                skill: "Golf",
+                rating: 5,
+                review: "Charlotte was amazing. This was my very first time golfing and she made me feel very comfortable and she had lots of knowledge. I'd definitely recommend her to anyone wanting to learn."
+              },
+              {
+                name: "Elson G.",
+                skill: "Tennis",
+                rating: 5,
+                review: "I was pretty nervous coming in because I had never played tennis before but Armaan eased the environment so much and I actually learned more than I ever thought on my first session alone."
+              }
+            ].map((testimonial, index) => (
+              <Card key={index} className="p-6">
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">Beginner</Badge>
+                    <div className="flex">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <span key={i} className="text-yellow-400">★</span>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600">&ldquo;{testimonial.review}&rdquo;</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+                    <div>
+                      <p className="font-medium text-sm">{testimonial.name}</p>
+                      <p className="text-xs text-gray-500">{testimonial.skill} Student</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="container py-20">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-bold text-primary mb-4">Everything you need to learn and teach</h2>
+        </div>
+        
+        <div className="grid md:grid-cols-2 gap-12">
+          {/* For Students */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
+                <span className="text-white text-sm">🎓</span>
+              </div>
+              <h3 className="text-2xl font-bold text-primary">For Students</h3>
+            </div>
+            
+            <div className="space-y-4">
+              {[
+                "1-on-1 & Group Learning - Book personalized or group sessions with experienced instructors",
+                "Flexible Scheduling - Choose session times that fit your lifestyle",
+                "HD Video Calls - Learn in real-time through seamless, high-quality video sessions",
+                "Endless Skill Categories - From academics and fitness to music, business, art, and cooking",
+                "Smart Search Filters - Discover teachers by skill, experience, or rating",
+                "Student Points System - Earn points after each lesson for discounts",
+                "Progress Tracker - Track completed lessons, achievements, and skill growth",
+                "Secure Payments - Fast, transparent, and protected payment system"
+              ].map((feature, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0"></div>
+                  <p className="text-gray-600">{feature}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* For Teachers */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
+                <span className="text-white text-sm">👨‍🏫</span>
+              </div>
+              <h3 className="text-2xl font-bold text-primary">For Teachers</h3>
+            </div>
+            
+            <div className="space-y-4">
+              {[
+                "Open to Everyone - No certification required, just real skills and passion to teach",
+                "Public Instructor Profiles - Display your bio, video, experience, and specialties",
+                "Fixed Base Pay + Automatic Raises - Earn higher pay as you advance 💰",
+                "Performance-Based Progression - Increases through consistent quality and results",
+                "Teacher Level Path - Bronze → Silver → Gold → Platinum → Master",
+                "Video Lesson Uploads - Upload and sell recorded tutorials for additional income",
+                "Earnings Dashboard - Track pay, level progress, and performance analytics",
+                "Smart Schedule Manager - Control availability, bookings, and reminders"
+              ].map((feature, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                  <p className="text-gray-600">{feature}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Features */}
+      <section className="py-20 bg-gray-50">
+        <div className="container">
+          <div className="text-center mb-16">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <span className="text-2xl">🌐</span>
+              <h2 className="text-4xl font-bold text-primary">Platform & System Features</h2>
+            </div>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                icon: "🤖",
+                title: "AI Matchmaking",
+                description: "Automatically connects students to the most compatible teachers based on skill level and learning goals."
+              },
+              {
+                icon: "📹",
+                title: "Built-In HD Video",
+                description: "No external software needed; learn and teach directly on Brain Bridge."
+              },
+              {
+                icon: "🔒",
+                title: "Secure Payment Gateway",
+                description: "Instant, encrypted, and safe for all users."
+              },
+              {
+                icon: "📊",
+                title: "Dynamic Pay Algorithm",
+                description: "Automatically adjusts pay according to teacher level, performance, and reviews."
+              },
+              {
+                icon: "🏆",
+                title: "Community Ranking",
+                description: "Highlights top-tier teachers on the homepage and in search results."
+              },
+              {
+                icon: "📱",
+                title: "Mobile & Desktop",
+                description: "Full functionality across all devices for teaching or learning on the go."
+              }
+            ].map((feature, index) => (
+              <Card key={index} className="p-6">
+                <CardContent className="space-y-4">
+                  <div className="text-3xl">{feature.icon}</div>
+                  <h3 className="font-semibold text-lg">{feature.title}</h3>
+                  <p className="text-gray-600 text-sm">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Statistics Section */}
+      <section className="container py-20">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-bold text-primary mb-4">61,312.</h2>
+          <p className="text-lg text-gray-600">That&apos;s how many lessons we gave last year.</p>
+        </div>
+        
+        <div className="grid md:grid-cols-3 gap-8 text-center">
+          <div>
+            <div className="text-3xl font-bold text-secondary mb-2">250+</div>
+            <p className="text-gray-600">Lessons delivered daily</p>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-accent mb-2">4.8★</div>
+            <p className="text-gray-600">Average instructor rating</p>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-secondary mb-2">95%</div>
+            <p className="text-gray-600">Student satisfaction rate</p>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-primary text-white">
+        <div className="container text-center space-y-8">
+          <h2 className="text-4xl font-bold">Get off the couch and learn something new!</h2>
+          <p className="text-xl opacity-90 max-w-2xl mx-auto">
+            Learning new things is one of life&apos;s most rewarding experiences. Brain Bridge makes getting started easy.
+          </p>
+          <div className="flex justify-center gap-4">
+            <Button asChild className="bg-secondary hover:bg-orange-600 text-white">
+              <Link href="/explore">Find Your Teacher</Link>
+            </Button>
+            <Button asChild variant="outline" className="border-white text-white hover:bg-white hover:text-primary">
+              <Link href="/teachers">Start Teaching</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+     
     </div>
-  );
+     {/* Footer */}
+     <Footer/>
+    </>
+  )
 }
