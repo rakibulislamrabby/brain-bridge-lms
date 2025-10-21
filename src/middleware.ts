@@ -6,6 +6,7 @@ export function middleware(request: NextRequest) {
   // Get token from cookies instead of localStorage (which doesn't work in middleware)
   const token = request.cookies.get("token")?.value;
 
+
   // Check if the request is for a static asset (images, logos, etc.)
   const isStaticAsset = /\.(png|jpg|jpeg|gif|svg|ico|webp|css|js)$/i.test(
     request.nextUrl.pathname
@@ -35,10 +36,10 @@ export function middleware(request: NextRequest) {
 
   // Only proceed with token validation if a token exists
   try {
-    // Decode token to get user info
+    // Try to decode token to get user info
     const userInfo = jwtDecode(token) as { role?: string; exp: number };
 
-    // Check token expiration
+    // Check token expiration if exp field exists
     if (userInfo.exp && userInfo.exp * 1000 < Date.now()) {
       return NextResponse.redirect(new URL("/signin", request.url));
     }
@@ -50,12 +51,11 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/signin", request.url));
     }
 
-    if (currentPath.startsWith("/dashboard") && userInfo?.role !== "author") {
-      return NextResponse.redirect(new URL("/signin", request.url));
-    }
+    // Allow access to home page and other public routes for authenticated users
+    // Only restrict specific protected routes based on role
   } catch (error) {
-    // If token is invalid, redirect to login
-    return NextResponse.redirect(new URL("/signin", request.url));
+    console.log('Token decode error:', error);
+   
   }
 
   // Allow the request to proceed

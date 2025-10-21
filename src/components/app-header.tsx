@@ -72,7 +72,7 @@ export function AppHeader() {
 
         {/* Desktop CTA Button */}
         <div className="hidden md:flex gap-2">
-          <Button asChild className="bg-orange-600 text-sm sm:text-base lg:text-lg font-medium text-white py-2 sm:py-3 lg:py-4 px-3 sm:px-4 lg:px-6">
+          <Button asChild className="bg-orange-600 text-sm sm:text-base lg:text-lg font-medium text-white py-2 sm:py-3 lg:py-6 px-3 sm:px-4 lg:px-6">
             <Link href="/signin" className="flex items-center gap-1 sm:gap-2">
               <span className="hidden sm:inline">Get Started</span>
               <span className="sm:hidden">Start</span>
