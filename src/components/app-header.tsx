@@ -1,51 +1,141 @@
+'use client'
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu"
-import { ArrowRightIcon } from "lucide-react"
+import { ArrowRightIcon, Menu, X } from "lucide-react"
+import { useState } from "react"
 
 export function AppHeader() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen)
+  }
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false)
+  }
+
   return (
-    <header className="border-b  max-w-7xl mx-auto">
-      <div className="container flex h-10 items-center justify-between">
-        <Link href="/" className="text-2xl font-bold text-primary">Brain Bridge</Link>
-        <NavigationMenu>
+    <header className="border-b bg-white/50 backdrop-blur-sm max-w-7xl mx-auto relative z-50">
+      <div className="container flex h-12 sm:h-14 lg:h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="text-xl sm:text-2xl font-bold text-primary">Brain Bridge</Link>
+        
+        {/* Desktop Navigation */}
+        <NavigationMenu className="hidden md:block">
           <NavigationMenuList>
             <NavigationMenuItem>
-              <NavigationMenuLink asChild className="text-lg font-medium">
+              <NavigationMenuLink asChild className="text-sm lg:text-base font-medium">
                 <Link href="/teacher">Teacher</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink asChild className="text-lg font-medium">
+              <NavigationMenuLink asChild className="text-sm lg:text-base font-medium">
                 <Link href="/courses">Courses</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink asChild className="text-lg font-medium">
-                <Link href="/explore">Explore</Link>
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <NavigationMenuLink asChild className="text-lg font-medium">
+              <NavigationMenuLink asChild className="text-sm lg:text-base font-medium">
                 <Link href="/about">About</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink asChild className="text-lg font-medium">
+              <NavigationMenuLink asChild className="text-sm lg:text-base font-medium">
                 <Link href="/contact">Contact Us</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
-        <div className="flex gap-2">
-          <Button asChild className="bg-orange-600 text-lg font-medium text-white py-6">
-            <Link href="/signin" className="flex items-center gap-2">
-              Get Started
-              <ArrowRightIcon className="w-4 h-4" />
+
+        {/* Mobile Menu Button */}
+        <div className="md:hidden flex items-center gap-3">
+          <Button asChild className="bg-orange-600 text-sm font-medium text-white py-2 px-3">
+            <Link href="/signin" className="flex items-center gap-1">
+              <span>Start</span>
+              <ArrowRightIcon className="w-3 h-3" />
+            </Link>
+          </Button>
+          
+          <button
+            onClick={toggleMobileMenu}
+            className="p-2 rounded-md hover:bg-gray-100 transition-colors"
+            aria-label="Toggle mobile menu"
+          >
+            {isMobileMenuOpen ? (
+              <X className="w-5 h-5 text-gray-700" />
+            ) : (
+              <Menu className="w-5 h-5 text-gray-700" />
+            )}
+          </button>
+        </div>
+
+        {/* Desktop CTA Button */}
+        <div className="hidden md:flex gap-2">
+          <Button asChild className="bg-orange-600 text-sm sm:text-base lg:text-lg font-medium text-white py-2 sm:py-3 lg:py-4 px-3 sm:px-4 lg:px-6">
+            <Link href="/signin" className="flex items-center gap-1 sm:gap-2">
+              <span className="hidden sm:inline">Get Started</span>
+              <span className="sm:hidden">Start</span>
+              <ArrowRightIcon className="w-3 h-3 sm:w-4 sm:h-4" />
             </Link>
           </Button>
         </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="md:hidden fixed inset-0 bg-black/20 z-[9998]"
+            onClick={closeMobileMenu}
+          />
+          
+          {/* Menu Content */}
+          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b shadow-xl z-[9999]">
+            <div className="px-4 py-6 space-y-4">
+            <Link
+              href="/teacher"
+              className="block py-2 text-gray-700 hover:text-orange-600 transition-colors font-medium"
+              onClick={closeMobileMenu}
+            >
+              Teacher
+            </Link>
+            <Link
+              href="/courses"
+              className="block py-2 text-gray-700 hover:text-orange-600 transition-colors font-medium"
+              onClick={closeMobileMenu}
+            >
+              Courses
+            </Link>
+            <Link
+              href="/about"
+              className="block py-2 text-gray-700 hover:text-orange-600 transition-colors font-medium"
+              onClick={closeMobileMenu}
+            >
+              About
+            </Link>
+            <Link
+              href="/contact"
+              className="block py-2 text-gray-700 hover:text-orange-600 transition-colors font-medium"
+              onClick={closeMobileMenu}
+            >
+              Contact Us
+            </Link>
+            
+            {/* Mobile CTA Button */}
+            <div className="pt-4 border-t">
+              <Button asChild className="w-full bg-orange-600 text-white py-3 font-medium">
+                <Link href="/signin" className="flex items-center justify-center gap-2" onClick={closeMobileMenu}>
+                  Get Started
+                  <ArrowRightIcon className="w-4 h-4" />
+                </Link>
+              </Button>
+            </div>
+            </div>
+          </div>
+        </>
+      )}
     </header>
   )
 }

@@ -4,16 +4,16 @@ import { Brain, Video, Shield, TrendingUp, Trophy, Smartphone } from 'lucide-rea
 
 export default function OurFeature() {
   return (
-    <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <span className="text-2xl">🌐</span>
-              <h2 className="text-4xl font-bold text-primary">Our Features</h2>
+    <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 sm:mb-16">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <span className="text-xl sm:text-2xl">🌐</span>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary">Our Features</h2>
             </div>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[
               {
                 icon: <Brain className="w-8 h-8" />,
@@ -46,11 +46,11 @@ export default function OurFeature() {
                 description: "Full functionality across all devices for teaching or learning on the go."
               }
             ].map((feature, index) => (
-              <Card key={index} className="p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-2 hover:bg-white bg-white/80 hover:border-orange-500 cursor-pointer border-2 border-transparent">
-                <CardContent className="space-y-4">
+              <Card key={index} className="p-4 sm:p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-2 hover:bg-white bg-white/80 hover:border-orange-500 cursor-pointer border-2 border-transparent">
+                <CardContent className="space-y-3 sm:space-y-4">
                   <div className="text-orange-600 transition-transform duration-300 hover:scale-110">{feature.icon}</div>
-                  <h3 className="font-semibold text-lg transition-colors duration-300 hover:text-orange-600">{feature.title}</h3>
-                  <p className="text-gray-600 text-sm">{feature.description}</p>
+                  <h3 className="font-semibold text-base sm:text-lg transition-colors duration-300 hover:text-orange-600">{feature.title}</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
