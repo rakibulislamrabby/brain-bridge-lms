@@ -12,7 +12,7 @@
       "students_enrolled": 15420,
       "instructor": {
         "name": "Sarah Johnson",
-        "avatar": "/images/instructor/instructor-1.jpg",
+        "avatar": "/images/course/details-instructor.png",
         "rating": 4.9,
         "students": 25000
       },
@@ -41,7 +41,7 @@
       "students_enrolled": 8750,
       "instructor": {
         "name": "Dr. Michael Chen",
-        "avatar": "/images/instructors/michael.jpg",
+        "avatar": "/images/course/details-instructor.png",
         "rating": 4.8,
         "students": 18000
       },
@@ -70,7 +70,7 @@
       "students_enrolled": 22100,
       "instructor": {
         "name": "Emma Rodriguez",
-        "avatar": "/images/instructors/emma.jpg",
+        "avatar": "/images/course/details-instructor.png",
         "rating": 4.7,
         "students": 35000
       },
@@ -99,7 +99,7 @@
       "students_enrolled": 12300,
       "instructor": {
         "name": "Alex Thompson",
-        "avatar": "/images/instructors/alex.jpg",
+        "avatar": "/images/course/details-instructor.png",
         "rating": 4.9,
         "students": 15000
       },
@@ -128,7 +128,7 @@
       "students_enrolled": 9200,
       "instructor": {
         "name": "Dr. Lisa Wang",
-        "avatar": "/images/instructors/lisa.jpg",
+        "avatar": "/images/course/details-instructor.png",
         "rating": 4.7,
         "students": 15000
       },
@@ -157,7 +157,7 @@
       "students_enrolled": 11200,
       "instructor": {
         "name": "James Wilson",
-        "avatar": "/images/instructors/james.jpg",
+        "avatar": "/images/course/details-instructor.png",
         "rating": 4.9,
         "students": 18000
       },
@@ -186,7 +186,7 @@
       "students_enrolled": 15600,
       "instructor": {
         "name": "Maria Garcia",
-        "avatar": "/images/instructors/maria.jpg",
+        "avatar": "/images/course/details-instructor.png",
         "rating": 4.9,
         "students": 28000
       },
@@ -215,7 +215,7 @@
       "students_enrolled": 11200,
       "instructor": {
         "name": "Robert Brown",
-        "avatar": "/images/instructors/robert.jpg",
+        "avatar": "/images/course/details-instructor.png",
         "rating": 4.5,
         "students": 20000
       },
@@ -244,7 +244,7 @@
       "students_enrolled": 13500,
       "instructor": {
         "name": "David Kim",
-        "avatar": "/images/instructors/david.jpg",
+        "avatar": "/images/course/details-instructor.png",
         "rating": 4.8,
         "students": 16000
       },
@@ -273,7 +273,7 @@
       "students_enrolled": 13400,
       "instructor": {
         "name": "Sophie Anderson",
-        "avatar": "/images/instructors/sophie.jpg",
+        "avatar": "/images/course/details-instructor.png",
         "rating": 4.8,
         "students": 22000
       },
@@ -302,7 +302,7 @@
       "students_enrolled": 18900,
       "instructor": {
         "name": "Dr. Robert Wilson",
-        "avatar": "/images/instructor/instructor-9.jpg",
+        "avatar": "/images/course/details-instructor.png",
         "rating": 4.7,
         "students": 30000
       },
@@ -331,7 +331,7 @@
       "students_enrolled": 22100,
       "instructor": {
         "name": "Jessica Martinez",
-        "avatar": "/images/instructor/instructor-10.jpg",
+        "avatar": "/images/course/details-instructor.png",
         "rating": 4.9,
         "students": 25000
       },
@@ -360,7 +360,7 @@
       "students_enrolled": 16800,
       "instructor": {
         "name": "Alex Thompson",
-        "avatar": "/images/instructor/instructor-11.jpg",
+        "avatar": "/images/course/details-instructor.png",
         "rating": 4.8,
         "students": 20000
       },
@@ -381,7 +381,7 @@
       "id": 14,
       "course_title": "Business Strategy & Management",
       "description": "Learn essential business skills including strategy development, team management, financial planning, and leadership principles.",
-      "image": "/images/course/course-img12.png",
+      "image": "/images/course/course-img1.png",
       "price": 159.99,
       "original_price": 219.99,
       "ratings": 4.6,
@@ -389,7 +389,7 @@
       "students_enrolled": 12300,
       "instructor": {
         "name": "Dr. Sarah Davis",
-        "avatar": "/images/instructor/instructor-12.jpg",
+        "avatar": "/images/course/details-instructor.png",
         "rating": 4.7,
         "students": 18000
       },
@@ -410,7 +410,7 @@
       "id": 15,
       "course_title": "Digital Art & Illustration",
       "description": "Create stunning digital artwork using Procreate, Adobe Illustrator, and Photoshop. Learn illustration techniques and digital painting.",
-      "image": "/images/course/course-img13.png",
+      "image": "/images/course/course-img5.png",
       "price": 119.99,
       "original_price": 169.99,
       "ratings": 4.8,
@@ -418,7 +418,7 @@
       "students_enrolled": 14500,
       "instructor": {
         "name": "Emma Rodriguez",
-        "avatar": "/images/instructor/instructor-13.jpg",
+        "avatar": "/images/course/details-instructor.png",
         "rating": 4.9,
         "students": 22000
       },
@@ -439,7 +439,7 @@
       "id": 16,
       "course_title": "Master Chef Cooking Techniques",
       "description": "Learn professional cooking techniques, knife skills, flavor combinations, and create restaurant-quality dishes at home.",
-      "image": "/images/course/course-img14.png",
+      "image": "/images/course/course-img2.png",
       "price": 89.99,
       "original_price": 129.99,
       "ratings": 4.7,
@@ -447,7 +447,7 @@
       "students_enrolled": 19800,
       "instructor": {
         "name": "Chef Marco Silva",
-        "avatar": "/images/instructor/instructor-14.jpg",
+        "avatar": "/images/course/details-instructor.png",
         "rating": 4.8,
         "students": 28000
       },

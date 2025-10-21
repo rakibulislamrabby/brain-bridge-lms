@@ -17,6 +17,11 @@ export function AppHeader() {
             </NavigationMenuItem>
             <NavigationMenuItem>
               <NavigationMenuLink asChild className="text-lg font-medium">
+                <Link href="/courses">Courses</Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <NavigationMenuLink asChild className="text-lg font-medium">
                 <Link href="/explore">Explore</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
