@@ -33,7 +33,7 @@ export function AppHeader() {
           </NavigationMenuList>
         </NavigationMenu>
         <div className="flex gap-2">
-          <Button asChild className="bg-orange-600 text-lg font-medium text-white">
+          <Button asChild className="bg-orange-600 text-lg font-medium text-white py-6">
             <Link href="/signin" className="flex items-center gap-2">
               Get Started
               <ArrowRightIcon className="w-4 h-4" />
