@@ -5,78 +5,24 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import Footer from "@/components/shared/Footer"
 import Hero from "@/components/Home/Hero"
+import Partner from "@/components/Home/Partner"
+import ChooseUs from "@/components/Home/ChooseUs"
+import OurFeature from "@/components/Home/OurFeature"
 
 export default function Home() {
   return (
     <>
-    <div className="px-4 max-w-7xl mx-auto">
+    <div className="px-4 mx-auto">
       <AppHeader />
       {/* Hero Section */}
       <Hero/>
-
+      {/* Platform Features */}
+      <OurFeature/>
       {/* Trusted By Section */}
-      <section className="py-12 bg-gray-50">
-        <div className="container text-center">
-          <p className="text-sm text-gray-500 mb-8">Trusted by leading publications</p>
-          <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
-            {["Business Insider", "Wall Street Journal", "CNBC", "Fox", "TechCrunch", "Fortune"].map((publication) => (
-              <span key={publication} className="text-sm font-medium text-gray-600">{publication}</span>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* <Partner/> */}
 
       {/* Why Choose Us Section */}
-      <section className="container py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-primary mb-4">Why book with us?</h2>
-          <p className="text-lg text-gray-600">Click to find instructors 👀 See for yourself →</p>
-        </div>
-        
-        <div className="grid md:grid-cols-3 gap-8">
-          <Card className="text-center">
-            <CardHeader>
-              <div className="w-16 h-16 bg-secondary rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-2xl">🎯</span>
-              </div>
-              <CardTitle>Expert Instructors</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Learn from verified professionals with real-world experience and proven teaching methods.
-              </CardDescription>
-            </CardContent>
-          </Card>
-          
-          <Card className="text-center">
-            <CardHeader>
-              <div className="w-16 h-16 bg-accent rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-2xl">⚡</span>
-              </div>
-              <CardTitle>Flexible Scheduling</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Book sessions that fit your schedule with our smart calendar system and instant confirmation.
-              </CardDescription>
-            </CardContent>
-          </Card>
-          
-          <Card className="text-center">
-            <CardHeader>
-              <div className="w-16 h-16 bg-secondary rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-2xl">🛡️</span>
-              </div>
-              <CardTitle>Secure & Safe</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Protected payments, verified instructors, and a safe learning environment for everyone.
-              </CardDescription>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+      <ChooseUs/>
 
       {/* Never Played Before Section */}
       <section className="py-20 bg-gray-50">
@@ -132,125 +78,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="container py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-primary mb-4">Everything you need to learn and teach</h2>
-        </div>
-        
-        <div className="grid md:grid-cols-2 gap-12">
-          {/* For Students */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
-                <span className="text-white text-sm">🎓</span>
-              </div>
-              <h3 className="text-2xl font-bold text-primary">For Students</h3>
-            </div>
-            
-            <div className="space-y-4">
-              {[
-                "1-on-1 & Group Learning - Book personalized or group sessions with experienced instructors",
-                "Flexible Scheduling - Choose session times that fit your lifestyle",
-                "HD Video Calls - Learn in real-time through seamless, high-quality video sessions",
-                "Endless Skill Categories - From academics and fitness to music, business, art, and cooking",
-                "Smart Search Filters - Discover teachers by skill, experience, or rating",
-                "Student Points System - Earn points after each lesson for discounts",
-                "Progress Tracker - Track completed lessons, achievements, and skill growth",
-                "Secure Payments - Fast, transparent, and protected payment system"
-              ].map((feature, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0"></div>
-                  <p className="text-gray-600">{feature}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {/* For Teachers */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-                <span className="text-white text-sm">👨‍🏫</span>
-              </div>
-              <h3 className="text-2xl font-bold text-primary">For Teachers</h3>
-            </div>
-            
-            <div className="space-y-4">
-              {[
-                "Open to Everyone - No certification required, just real skills and passion to teach",
-                "Public Instructor Profiles - Display your bio, video, experience, and specialties",
-                "Fixed Base Pay + Automatic Raises - Earn higher pay as you advance 💰",
-                "Performance-Based Progression - Increases through consistent quality and results",
-                "Teacher Level Path - Bronze → Silver → Gold → Platinum → Master",
-                "Video Lesson Uploads - Upload and sell recorded tutorials for additional income",
-                "Earnings Dashboard - Track pay, level progress, and performance analytics",
-                "Smart Schedule Manager - Control availability, bookings, and reminders"
-              ].map((feature, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
-                  <p className="text-gray-600">{feature}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Platform Features */}
-      <section className="py-20 bg-gray-50">
-        <div className="container">
-          <div className="text-center mb-16">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <span className="text-2xl">🌐</span>
-              <h2 className="text-4xl font-bold text-primary">Platform & System Features</h2>
-            </div>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              {
-                icon: "🤖",
-                title: "AI Matchmaking",
-                description: "Automatically connects students to the most compatible teachers based on skill level and learning goals."
-              },
-              {
-                icon: "📹",
-                title: "Built-In HD Video",
-                description: "No external software needed; learn and teach directly on Brain Bridge."
-              },
-              {
-                icon: "🔒",
-                title: "Secure Payment Gateway",
-                description: "Instant, encrypted, and safe for all users."
-              },
-              {
-                icon: "📊",
-                title: "Dynamic Pay Algorithm",
-                description: "Automatically adjusts pay according to teacher level, performance, and reviews."
-              },
-              {
-                icon: "🏆",
-                title: "Community Ranking",
-                description: "Highlights top-tier teachers on the homepage and in search results."
-              },
-              {
-                icon: "📱",
-                title: "Mobile & Desktop",
-                description: "Full functionality across all devices for teaching or learning on the go."
-              }
-            ].map((feature, index) => (
-              <Card key={index} className="p-6">
-                <CardContent className="space-y-4">
-                  <div className="text-3xl">{feature.icon}</div>
-                  <h3 className="font-semibold text-lg">{feature.title}</h3>
-                  <p className="text-gray-600 text-sm">{feature.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      
 
       {/* Statistics Section */}
       <section className="container py-20">

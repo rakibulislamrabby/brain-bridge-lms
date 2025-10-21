@@ -6,7 +6,7 @@ import { Star, ArrowRight } from 'lucide-react'
 
 export default function Hero() {
   return (
-    <section className="container py-14">
+    <section className="mx-auto max-w-7xl py-14">
       <div className="grid lg:grid-cols-2 gap-12 items-center">
         {/* Left Side - Content */}
         <div className="space-y-8">

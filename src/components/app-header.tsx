@@ -5,7 +5,7 @@ import { ArrowRightIcon } from "lucide-react"
 
 export function AppHeader() {
   return (
-    <header className="border-b">
+    <header className="border-b  max-w-7xl mx-auto">
       <div className="container flex h-10 items-center justify-between">
         <Link href="/" className="text-2xl font-bold text-primary">Brain Bridge</Link>
         <NavigationMenu>
