@@ -130,7 +130,7 @@ export default function SignIn() {
 
                 <Button 
                   type="submit" 
-                  className="w-full bg-secondary hover:bg-orange-600"
+                  className="w-full bg-orange-600 text-white"
                   disabled={isLoading}
                 >
                   {isLoading ? "Signing In..." : "Sign In"}

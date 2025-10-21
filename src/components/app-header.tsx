@@ -5,10 +5,15 @@ import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuL
 export function AppHeader() {
   return (
     <header className="border-b">
-      <div className="container flex h-14 items-center justify-between">
+      <div className="container flex h-10 items-center justify-between">
         <Link href="/" className="text-xl font-bold text-primary">Brain Bridge</Link>
         <NavigationMenu>
           <NavigationMenuList>
+            <NavigationMenuItem>
+              <NavigationMenuLink asChild>
+                <Link href="/teacher">Teacher</Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
             <NavigationMenuItem>
               <NavigationMenuLink asChild>
                 <Link href="/explore">Explore</Link>
@@ -16,7 +21,12 @@ export function AppHeader() {
             </NavigationMenuItem>
             <NavigationMenuItem>
               <NavigationMenuLink asChild>
-                <Link href="/teachers">Teach</Link>
+                <Link href="/about">About</Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <NavigationMenuLink asChild>
+                <Link href="/contact">Contact Us</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
           </NavigationMenuList>
