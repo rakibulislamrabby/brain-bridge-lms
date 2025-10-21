@@ -11,7 +11,6 @@ export default function Home() {
     <>
     <div className="px-4 max-w-7xl mx-auto">
       <AppHeader />
-      
       {/* Hero Section */}
       <Hero/>
 
