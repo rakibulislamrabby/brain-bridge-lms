@@ -8,6 +8,7 @@ import Hero from "@/components/Home/Hero"
 import Partner from "@/components/Home/Partner"
 import ChooseUs from "@/components/Home/ChooseUs"
 import OurFeature from "@/components/Home/OurFeature"
+import AllCourse from "@/components/Courses/AllCourse"
 
 export default function Home() {
   return (
@@ -18,11 +19,14 @@ export default function Home() {
       <Hero/>
       {/* Platform Features */}
       <OurFeature/>
+
       {/* Trusted By Section */}
       {/* <Partner/> */}
 
       {/* Why Choose Us Section */}
       <ChooseUs/>
+
+      <AllCourse/>
 
       {/* Never Played Before Section */}
       <section className="py-20 bg-gray-50">

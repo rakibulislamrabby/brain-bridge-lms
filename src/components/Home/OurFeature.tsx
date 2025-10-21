@@ -46,7 +46,7 @@ export default function OurFeature() {
                 description: "Full functionality across all devices for teaching or learning on the go."
               }
             ].map((feature, index) => (
-              <Card key={index} className="p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-2 hover:bg-white hover:border-orange-500 cursor-pointer border-2 border-transparent">
+              <Card key={index} className="p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-2 hover:bg-white bg-white/80 hover:border-orange-500 cursor-pointer border-2 border-transparent">
                 <CardContent className="space-y-4">
                   <div className="text-orange-600 transition-transform duration-300 hover:scale-110">{feature.icon}</div>
                   <h3 className="font-semibold text-lg transition-colors duration-300 hover:text-orange-600">{feature.title}</h3>
