@@ -12,7 +12,7 @@ export default function FeaturedCourses() {
   const featuredCourses = coursesData.courses.slice(0, 6)
 
   return (
-    <section className="pt-20 pb-8 bg-gray-50">
+    <section className="pt-20 pb-8 bg-gray-50 -mt-10">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8">
@@ -35,7 +35,7 @@ export default function FeaturedCourses() {
 
         {/* View All Courses Button */}
         <div className="text-center">
-          <Button asChild className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 text-lg">
+          <Button asChild className="bg-orange-600 hover:bg-orange-700 py-6 text-white px-8 text-lg">
             <Link href="/courses">View All Courses</Link>
           </Button>
         </div>

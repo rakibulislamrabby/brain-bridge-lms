@@ -24,11 +24,11 @@ export default function Home() {
 
       {/* Trusted By Section */}
       {/* <Partner/> */}
-
+      <FeaturedCourses/>
       {/* Why Choose Us Section */}
       <ChooseUs/>
 
-      <FeaturedCourses/>
+    
 
       <StudentReview/>
 
@@ -39,7 +39,7 @@ export default function Home() {
       <Statistics/>
 
       {/* CTA Section */}
-      <section className="py-20 bg-primary ">
+      {/* <section className="py-20 bg-primary ">
         <div className="container text-center space-y-8">
           <h2 className="text-4xl font-bold">Get off the couch and learn something new!</h2>
           <p className="text-xl opacity-90 max-w-2xl mx-auto">
@@ -54,7 +54,7 @@ export default function Home() {
             </Button>
           </div>
         </div>
-      </section>
+      </section> */}
 
      
     </div>
