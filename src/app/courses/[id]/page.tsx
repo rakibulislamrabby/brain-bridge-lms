@@ -1,4 +1,6 @@
-import React from 'react'
+'use client'
+
+import React, { useState, use } from 'react'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -20,17 +22,20 @@ import {
   Calendar,
   ArrowLeft,
   Share2,
-  Heart
+  Heart,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react'
 
 interface CourseDetailPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default function CourseDetailPage({ params }: CourseDetailPageProps) {
-  const course = coursesData.courses.find(c => c.id === parseInt(params.id))
+  const resolvedParams = use(params)
+  const course = coursesData.courses.find(c => c.id === parseInt(resolvedParams.id))
   
   if (!course) {
     notFound()
@@ -41,15 +46,90 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     .filter(c => c.category === course.category && c.id !== course.id)
     .slice(0, 3)
 
-  // Mock curriculum data
+  // Mock curriculum data with lessons
   const curriculum = [
-    { id: 1, title: "Introduction to the Course", duration: "15 min", lessons: 3 },
-    { id: 2, title: "Getting Started", duration: "45 min", lessons: 5 },
-    { id: 3, title: "Core Concepts", duration: "2 hours", lessons: 8 },
-    { id: 4, title: "Advanced Topics", duration: "1.5 hours", lessons: 6 },
-    { id: 5, title: "Practical Applications", duration: "1 hour", lessons: 4 },
-    { id: 6, title: "Final Project", duration: "30 min", lessons: 2 }
+    { 
+      id: 1, 
+      title: "Introduction to the Course", 
+      duration: "15 min", 
+      lessons: [
+        { id: 1, title: "Welcome to the Course", duration: "5 min", type: "video" },
+        { id: 2, title: "Course Overview", duration: "5 min", type: "video" },
+        { id: 3, title: "What You'll Learn", duration: "5 min", type: "video" }
+      ]
+    },
+    { 
+      id: 2, 
+      title: "Getting Started", 
+      duration: "45 min", 
+      lessons: [
+        { id: 4, title: "Setting Up Your Environment", duration: "10 min", type: "video" },
+        { id: 5, title: "First Steps", duration: "15 min", type: "video" },
+        { id: 6, title: "Basic Concepts", duration: "10 min", type: "video" },
+        { id: 7, title: "Practice Exercise", duration: "5 min", type: "quiz" },
+        { id: 8, title: "Review and Q&A", duration: "5 min", type: "video" }
+      ]
+    },
+    { 
+      id: 3, 
+      title: "Core Concepts", 
+      duration: "2 hours", 
+      lessons: [
+        { id: 9, title: "Understanding the Fundamentals", duration: "20 min", type: "video" },
+        { id: 10, title: "Key Principles", duration: "25 min", type: "video" },
+        { id: 11, title: "Best Practices", duration: "15 min", type: "video" },
+        { id: 12, title: "Common Mistakes", duration: "10 min", type: "video" },
+        { id: 13, title: "Hands-on Practice", duration: "20 min", type: "exercise" },
+        { id: 14, title: "Case Study Analysis", duration: "15 min", type: "video" },
+        { id: 15, title: "Quiz: Core Concepts", duration: "10 min", type: "quiz" },
+        { id: 16, title: "Discussion Forum", duration: "5 min", type: "discussion" }
+      ]
+    },
+    { 
+      id: 4, 
+      title: "Advanced Topics", 
+      duration: "1.5 hours", 
+      lessons: [
+        { id: 17, title: "Advanced Techniques", duration: "20 min", type: "video" },
+        { id: 18, title: "Complex Scenarios", duration: "15 min", type: "video" },
+        { id: 19, title: "Performance Optimization", duration: "15 min", type: "video" },
+        { id: 20, title: "Advanced Exercise", duration: "25 min", type: "exercise" },
+        { id: 21, title: "Troubleshooting Guide", duration: "10 min", type: "video" },
+        { id: 22, title: "Final Assessment", duration: "5 min", type: "quiz" }
+      ]
+    },
+    { 
+      id: 5, 
+      title: "Practical Applications", 
+      duration: "1 hour", 
+      lessons: [
+        { id: 23, title: "Real-world Project Setup", duration: "15 min", type: "video" },
+        { id: 24, title: "Building Your First Project", duration: "25 min", type: "exercise" },
+        { id: 25, title: "Testing and Debugging", duration: "10 min", type: "video" },
+        { id: 26, title: "Project Review", duration: "10 min", type: "video" }
+      ]
+    },
+    { 
+      id: 6, 
+      title: "Final Project", 
+      duration: "30 min", 
+      lessons: [
+        { id: 27, title: "Project Requirements", duration: "10 min", type: "video" },
+        { id: 28, title: "Project Submission", duration: "20 min", type: "exercise" }
+      ]
+    }
   ]
+
+  // State for accordion
+  const [expandedSections, setExpandedSections] = useState<number[]>([])
+
+  const toggleSection = (sectionId: number) => {
+    setExpandedSections(prev => 
+      prev.includes(sectionId) 
+        ? prev.filter(id => id !== sectionId)
+        : [...prev, sectionId]
+    )
+  }
 
   // Mock reviews data
   const reviews = [
@@ -185,23 +265,73 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               {/* Curriculum */}
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Course Curriculum</h2>
-                <div className="space-y-3">
-                  {curriculum.map((section, index) => (
-                    <div key={section.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-sm font-semibold">
-                            {index + 1}
+                <div className="space-y-2 cursor-pointer">
+                  {curriculum.map((section, index) => {
+                    const isExpanded = expandedSections.includes(section.id)
+                    return (
+                      <div key={section.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                        {/* Section Header */}
+                        <button
+                          onClick={() => toggleSection(section.id)}
+                          className="w-full p-4 text-left hover:bg-gray-50 cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-sm font-semibold">
+                                {index + 1}
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-gray-900">{section.title}</h3>
+                                <p className="text-sm text-gray-500">
+                                  {section.lessons.length} lessons • {section.duration}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-gray-500">
+                                {isExpanded ? 'Hide' : 'Show'} lessons
+                              </span>
+                              {isExpanded ? (
+                                <ChevronDown className="w-5 h-5 text-gray-400" />
+                              ) : (
+                                <ChevronRight className="w-5 h-5 text-gray-400" />
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-900">{section.title}</h3>
-                            <p className="text-sm text-gray-500">{section.lessons} lessons • {section.duration}</p>
+                        </button>
+                        
+                        {/* Section Content */}
+                        {isExpanded && (
+                          <div className="border-t border-gray-200 bg-gray-50">
+                            <div className="p-4 space-y-3">
+                              {section.lessons.map((lesson, lessonIndex) => (
+                                <div key={lesson.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-6 h-6 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center text-xs font-medium">
+                                      {lessonIndex + 1}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      {lesson.type === 'video' && <Play className="w-4 h-4 text-blue-500" />}
+                                      {lesson.type === 'quiz' && <CheckCircle className="w-4 h-4 text-green-500" />}
+                                      {lesson.type === 'exercise' && <Award className="w-4 h-4 text-purple-500" />}
+                                      {lesson.type === 'discussion' && <Users className="w-4 h-4 text-orange-500" />}
+                                      <span className="text-sm font-medium text-gray-900">{lesson.title}</span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                      {lesson.type}
+                                    </span>
+                                    <span className="text-sm text-gray-500">{lesson.duration}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                        <Play className="w-5 h-5 text-gray-400" />
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
 

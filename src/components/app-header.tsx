@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu"
-import { ArrowRightIcon, Menu, X, LogOut, User, LayoutDashboard } from "lucide-react"
+import { ArrowRightIcon, Menu, X, LogOut, User, LayoutDashboard, ChevronDown, ChevronUp } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { getStoredUser, clearAuthData } from "@/hooks/useAuth"
 
@@ -11,9 +11,12 @@ export function AppHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
+  const [isClient, setIsClient] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    // Set client flag to true after hydration
+    setIsClient(true)
     // Check if user is logged in
     const storedUser = getStoredUser()
     setUser(storedUser)
@@ -94,7 +97,14 @@ export function AppHeader() {
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-3">
-          {user ? (
+          {!isClient ? (
+            <Button asChild className="bg-orange-600 text-sm font-medium text-white py-2 px-3">
+              <Link href="/signin" className="flex items-center gap-1">
+                <span>Start</span>
+                <ArrowRightIcon className="w-3 h-3" />
+              </Link>
+            </Button>
+          ) : user ? (
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={toggleUserDropdown}
@@ -106,6 +116,11 @@ export function AppHeader() {
                 <span className="text-sm font-medium text-gray-700 hidden sm:block">
                   {getShortName(user.name)}
                 </span>
+                {isUserDropdownOpen ? (
+                  <ChevronUp className="w-4 h-4 text-gray-500" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                )}
               </button>
               
               {/* Mobile Dropdown */}
@@ -167,11 +182,19 @@ export function AppHeader() {
 
         {/* Desktop CTA Button */}
         <div className="hidden md:flex gap-2">
-          {user ? (
+          {!isClient ? (
+            <Button asChild className="bg-orange-600 text-sm sm:text-base lg:text-lg font-medium text-white py-2 sm:py-3 lg:py-6 px-3 sm:px-4 lg:px-6">
+              <Link href="/signin" className="flex items-center gap-1 sm:gap-2">
+                <span className="hidden sm:inline">Get Started</span>
+                <span className="sm:hidden">Start</span>
+                <ArrowRightIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+              </Link>
+            </Button>
+          ) : user ? (
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={toggleUserDropdown}
-                className="flex items-center gap-3 hover:bg-gray-100 rounded-lg p-2 transition-colors"
+                className="flex items-center gap-3 hover:bg-gray-100 rounded-lg p-2 transition-colors cursor-pointer"
               >
                 <div className="w-10 h-10 bg-orange-600 text-white rounded-full flex items-center justify-center text-lg font-medium">
                   {getUserInitial(user.name)}
@@ -179,6 +202,11 @@ export function AppHeader() {
                 <span className="text-sm font-medium text-gray-700">
                   {getShortName(user.name)}
                 </span>
+                {isUserDropdownOpen ? (
+                  <ChevronUp className="w-4 h-4 text-gray-500" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                )}
               </button>
               
               {/* Desktop Dropdown */}
@@ -271,7 +299,14 @@ export function AppHeader() {
             
             {/* Mobile User Section or CTA Button */}
             <div className="pt-4 border-t">
-              {user ? (
+              {!isClient ? (
+                <Button asChild className="w-full bg-orange-600 text-white py-3 font-medium">
+                  <Link href="/signin" className="flex items-center justify-center gap-2" onClick={closeMobileMenu}>
+                    Get Started
+                    <ArrowRightIcon className="w-4 h-4" />
+                  </Link>
+                </Button>
+              ) : user ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-10 h-10 bg-orange-600 text-white rounded-full flex items-center justify-center text-lg font-medium">
