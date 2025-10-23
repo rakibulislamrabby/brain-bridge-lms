@@ -24,8 +24,8 @@ export function middleware(request: NextRequest) {
     request.nextUrl.pathname === "/signup" ||
     request.nextUrl.pathname === "/about" ||
     request.nextUrl.pathname === "/contact" ||
-    request.nextUrl.pathname === "/courses" ||
-    request.nextUrl.pathname.startsWith("/courses/") ||
+    // request.nextUrl.pathname === "/courses" ||
+    // request.nextUrl.pathname.startsWith("/courses/") ||
     request.nextUrl.pathname === "/teacher" ||
     request.nextUrl.pathname === "/request-password-reset" ||
     request.nextUrl.pathname.startsWith("/invitation");
@@ -38,7 +38,8 @@ export function middleware(request: NextRequest) {
   // Protected paths that require authentication (dashboard and admin routes)
   const isProtectedPath = 
     request.nextUrl.pathname.startsWith("/dashboard") ||
-    request.nextUrl.pathname.startsWith("/admin");
+    // request.nextUrl.pathname.startsWith("/courses")  ||
+    request.nextUrl.pathname.startsWith("/admin");  
 
   // For protected routes, check if token exists
   if (isProtectedPath && !token) {

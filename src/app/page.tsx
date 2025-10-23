@@ -11,6 +11,7 @@ import OurFeature from "@/components/Home/OurFeature"
 import FeaturedCourses from "@/components/Home/FeaturedCourses"
 import Statistics from "@/components/Home/Statistics"
 import StudentReview from "@/components/Reviews/StudentReview"
+import Contact from "@/components/shared/Contact"
 
 export default function Home() {
   return (
@@ -55,7 +56,7 @@ export default function Home() {
           </div>
         </div>
       </section> */}
-
+      <Contact/>
      
     </div>
      {/* Footer */}

@@ -10,10 +10,12 @@ import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
 import Footer from "@/components/shared/Footer"
 import { useRegister } from "@/hooks/useAuth"
+import { useToast } from "@/components/ui/toast"
 
 export default function SignUp() {
   const router = useRouter()
   const registerMutation = useRegister()
+  const { addToast } = useToast()
   
   const [formData, setFormData] = useState({
     name: "",
@@ -23,12 +25,6 @@ export default function SignUp() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Handle successful registration redirect
-  useEffect(() => {
-    if (registerMutation.isSuccess) {
-      router.push('/signin')
-    }
-  }, [registerMutation.isSuccess, router])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -84,13 +80,34 @@ export default function SignUp() {
     try {
       // Remove confirmPassword from the data sent to API
       const { confirmPassword, ...registerData } = formData
-      await registerMutation.mutateAsync(registerData)
-      // Redirect is handled by useEffect when isSuccess becomes true
+      const result = await registerMutation.mutateAsync(registerData)
+      console.log('Registration completed successfully:', result);
+      
+      // Show success toast immediately after successful registration
+      addToast({
+        type: "success",
+        title: "Account Created Successfully!",
+        description: "Your account has been created. Redirecting to sign in...",
+        duration: 3000
+      });
+      
+      // Redirect after showing toast
+      setTimeout(() => {
+        router.push('/signin')
+      }, 2000);
+      
     } catch (error) {
       console.error("Sign up error:", error)
+      const errorMessage = error instanceof Error ? error.message : "An error occurred. Please try again."
       setErrors({ 
-        general: error instanceof Error ? error.message : "An error occurred. Please try again." 
+        general: errorMessage
       })
+      addToast({
+        type: "error",
+        title: "Registration Failed",
+        description: errorMessage,
+        duration: 5000
+      });
     }
   }
 

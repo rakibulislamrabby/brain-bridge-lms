@@ -10,10 +10,12 @@ import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
 import Footer from "@/components/shared/Footer"
 import { useLogin } from "@/hooks/useAuth"
+import { useToast } from "@/components/ui/toast"
 
 export default function SignIn() {
   const router = useRouter()
   const loginMutation = useLogin()
+  const { addToast } = useToast()
   
   const [formData, setFormData] = useState({
     email: "",
@@ -21,14 +23,6 @@ export default function SignIn() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Handle successful login redirect
-  useEffect(() => {
-    if (loginMutation.isSuccess) {
-      console.log('Login successful, redirecting to home page...');
-      // Use window.location.href for a full page reload to ensure middleware runs
-      window.location.href = '/';
-    }
-  }, [loginMutation.isSuccess])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -66,17 +60,46 @@ export default function SignIn() {
     e.preventDefault()
     
     if (!validateForm()) {
+      // Show validation error toast
+      addToast({
+        type: "error",
+        title: "Validation Error",
+        description: "Please fill in all required fields correctly.",
+        duration: 3000
+      });
       return
     }
 
     try {
-      await loginMutation.mutateAsync(formData)
-      // Redirect is handled by useEffect when isSuccess becomes true
+      console.log('Attempting login with data:', formData);
+      const result = await loginMutation.mutateAsync(formData)
+      console.log('Login mutation completed successfully:', result);
+      
+      // Show success toast immediately after successful login
+      addToast({
+        type: "success",
+        title: "Login Successful!",
+        description: "Welcome back! Redirecting to dashboard...",
+        duration: 3000
+      });
+      
+      // Redirect after showing toast
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+      
     } catch (error) {
       console.error("Sign in error:", error)
+      const errorMessage = error instanceof Error ? error.message : "Invalid email or password. Please try again."
       setErrors({ 
-        general: error instanceof Error ? error.message : "Invalid email or password. Please try again." 
+        general: errorMessage
       })
+      addToast({
+        type: "error",
+        title: "Login Failed",
+        description: errorMessage,
+        duration: 5000
+      });
     }
   }
 
