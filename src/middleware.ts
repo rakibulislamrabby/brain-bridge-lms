@@ -37,7 +37,7 @@ export function middleware(request: NextRequest) {
 
   // Protected paths that require authentication (dashboard and admin routes)
   const isProtectedPath = 
-    request.nextUrl.pathname.startsWith("/dashboard") ||
+    // request.nextUrl.pathname.startsWith("/dashboard") ||
     // request.nextUrl.pathname.startsWith("/courses")  ||
     request.nextUrl.pathname.startsWith("/admin");  
 
