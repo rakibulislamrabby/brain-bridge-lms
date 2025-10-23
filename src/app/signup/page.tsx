@@ -182,7 +182,7 @@ export default function SignUp() {
 
                 <Button 
                   type="submit" 
-                  className="w-full bg-orange-600 text-white"
+                  className="w-full bg-orange-600 text-white cursor-pointer"
                   disabled={registerMutation.isPending}
                 >
                   {registerMutation.isPending ? "Creating Account..." : "Create Account"}

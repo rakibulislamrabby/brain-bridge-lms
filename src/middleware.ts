@@ -19,8 +19,14 @@ export function middleware(request: NextRequest) {
 
   // Public paths that don't require authentication
   const isPublicPath =
+    request.nextUrl.pathname === "/" ||
     request.nextUrl.pathname === "/signin" ||
     request.nextUrl.pathname === "/signup" ||
+    request.nextUrl.pathname === "/about" ||
+    request.nextUrl.pathname === "/contact" ||
+    request.nextUrl.pathname === "/courses" ||
+    request.nextUrl.pathname.startsWith("/courses/") ||
+    request.nextUrl.pathname === "/teacher" ||
     request.nextUrl.pathname === "/request-password-reset" ||
     request.nextUrl.pathname.startsWith("/invitation");
 
@@ -29,33 +35,42 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // For all other routes, check if token exists
-  if (!token) {
+  // Protected paths that require authentication (dashboard and admin routes)
+  const isProtectedPath = 
+    request.nextUrl.pathname.startsWith("/dashboard") ||
+    request.nextUrl.pathname.startsWith("/admin");
+
+  // For protected routes, check if token exists
+  if (isProtectedPath && !token) {
     return NextResponse.redirect(new URL("/signin", request.url));
   }
 
-  // Only proceed with token validation if a token exists
-  try {
-    // Try to decode token to get user info
-    const userInfo = jwtDecode(token) as { role?: string; exp: number };
+  // Only proceed with token validation if a token exists and user is accessing protected routes
+  if (token && isProtectedPath) {
+    try {
+      // Try to decode token to get user info
+      const userInfo = jwtDecode(token) as { role?: string; exp: number };
 
-    // Check token expiration if exp field exists
-    if (userInfo.exp && userInfo.exp * 1000 < Date.now()) {
-      return NextResponse.redirect(new URL("/signin", request.url));
+      // Check token expiration if exp field exists
+      if (userInfo.exp && userInfo.exp * 1000 < Date.now()) {
+        return NextResponse.redirect(new URL("/signin", request.url));
+      }
+
+      const currentPath = request.nextUrl.pathname;
+
+      // Restrict access to admin paths if user is not an ADMIN
+      if (currentPath.startsWith("/admin") && userInfo?.role !== "admin") {
+        return NextResponse.redirect(new URL("/signin", request.url));
+      }
+
+      // Allow access to dashboard routes for authenticated users
+    } catch (error) {
+      console.log('Token decode error:', error);
+      // If token is invalid, redirect to signin for protected routes
+      if (isProtectedPath) {
+        return NextResponse.redirect(new URL("/signin", request.url));
+      }
     }
-
-    const currentPath = request.nextUrl.pathname;
-
-    // Restrict access to admin paths if user is not an ADMIN
-    if (currentPath.startsWith("/admin") && userInfo?.role !== "admin") {
-      return NextResponse.redirect(new URL("/signin", request.url));
-    }
-
-    // Allow access to home page and other public routes for authenticated users
-    // Only restrict specific protected routes based on role
-  } catch (error) {
-    console.log('Token decode error:', error);
-   
   }
 
   // Allow the request to proceed
