@@ -1,15 +1,13 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useToast } from '@/components/ui/toast'
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle } from 'lucide-react'
 
 export default function Contact() {
-  const { addToast } = useToast()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,6 +16,23 @@ export default function Contact() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+  const [toast, setToast] = useState<{type: string, title: string, description: string} | null>(null)
+
+  // Ensure component is only rendered on client side
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  // Handle toast display
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null)
+      }, 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [toast])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -63,11 +78,10 @@ export default function Contact() {
     e.preventDefault()
     
     if (!validateForm()) {
-      addToast({
+      setToast({
         type: "error",
         title: "Validation Error",
-        description: "Please fill in all required fields correctly.",
-        duration: 3000
+        description: "Please fill in all required fields correctly."
       });
       return
     }
@@ -78,11 +92,10 @@ export default function Contact() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000))
       
-      addToast({
+      setToast({
         type: "success",
         title: "Message Sent Successfully!",
-        description: "Thank you for your message. We'll get back to you soon.",
-        duration: 4000
+        description: "Thank you for your message. We'll get back to you soon."
       });
 
       // Reset form
@@ -94,15 +107,49 @@ export default function Contact() {
       })
 
     } catch (error) {
-      addToast({
+      setToast({
         type: "error",
         title: "Failed to Send Message",
-        description: "Something went wrong. Please try again later.",
-        duration: 5000
+        description: "Something went wrong. Please try again later."
       });
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Prevent hydration mismatch by not rendering until client-side
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">Get in Touch</h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Have questions about our courses or need support? We'd love to hear from you.
+            </p>
+          </div>
+          <div className="grid lg:grid-cols-2 gap-12">
+            <div className="animate-pulse">
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <div className="h-8 bg-gray-200 rounded mb-4"></div>
+                <div className="space-y-4">
+                  <div className="h-4 bg-gray-200 rounded"></div>
+                  <div className="h-4 bg-gray-200 rounded"></div>
+                  <div className="h-4 bg-gray-200 rounded"></div>
+                </div>
+              </div>
+            </div>
+            <div className="animate-pulse">
+              <div className="space-y-4">
+                <div className="h-8 bg-gray-200 rounded"></div>
+                <div className="h-4 bg-gray-200 rounded"></div>
+                <div className="h-4 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -292,6 +339,39 @@ export default function Contact() {
           </div>
         </div>
       </div>
+      
+      {/* Simple Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 max-w-sm w-full">
+          <div className={`p-4 rounded-lg shadow-lg border ${
+            toast.type === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                {toast.type === 'success' ? (
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                ) : (
+                  <div className="h-5 w-5 rounded-full bg-red-600 flex items-center justify-center">
+                    <span className="text-white text-xs">!</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <h4 className="font-medium">{toast.title}</h4>
+                <p className="text-sm mt-1">{toast.description}</p>
+              </div>
+              <button
+                onClick={() => setToast(null)}
+                className="flex-shrink-0 text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
