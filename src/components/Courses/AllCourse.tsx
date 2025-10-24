@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import CourseCard from './CourseCard'
 import coursesData from '../../data/courses.json'
-import { Laptop, Palette, Code, Globe, GraduationCap, TrendingUp, Grid3X3, Calculator, Dumbbell, Music, Briefcase, Paintbrush, ChefHat } from 'lucide-react'
+import { Laptop, Palette, Code, Globe, TrendingUp, Grid3X3, Calculator, Dumbbell, Music, Briefcase, Paintbrush, ChefHat } from 'lucide-react'
 
 export default function AllCourse() {
   const allCourses = coursesData.courses

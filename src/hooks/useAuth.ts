@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { RegisterRequest, LoginRequest, AuthResponse, AuthError } from '@/types/auth';
+import { RegisterRequest, LoginRequest, AuthResponse } from '@/types/auth';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_MAIN_BASE_URL || 'http://192.168.1.108:8000/api/';
 

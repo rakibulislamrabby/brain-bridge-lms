@@ -11,7 +11,7 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: number; name: string; email: string } | null>(null)
 
   const toggleSidebar = () => { 
     setSidebarCollapsed(!sidebarCollapsed)
@@ -24,16 +24,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }, [])
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col">
-      {/* Dashboard Header */}
-      <DashboardHeader user={user} />
+    <div className="h-screen bg-gray-50 flex">
+      {/* Sidebar - Full Height */}
+      <Sidebar 
+        isCollapsed={sidebarCollapsed} 
+        onToggle={toggleSidebar} 
+      />
       
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <Sidebar 
-          isCollapsed={sidebarCollapsed} 
-          onToggle={toggleSidebar} 
-        />
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Dashboard Header */}
+        <DashboardHeader user={user} />
         
         {/* Main Content */}
         <main className="flex-1 overflow-auto">

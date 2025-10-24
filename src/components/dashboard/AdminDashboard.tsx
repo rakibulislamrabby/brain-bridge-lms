@@ -27,7 +27,7 @@ import {
 } from 'lucide-react'
 
 interface AdminDashboardProps {
-  user: any
+  user: { id: number; name: string; email: string } | null
 }
 
 export default function AdminDashboard({ user }: AdminDashboardProps) {

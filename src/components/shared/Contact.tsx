@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle } from 'lucide-react'
+import { Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react'
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -106,7 +106,7 @@ export default function Contact() {
         message: ''
       })
 
-    } catch (error) {
+    } catch {
       setToast({
         type: "error",
         title: "Failed to Send Message",
@@ -125,7 +125,7 @@ export default function Contact() {
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">Get in Touch</h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Have questions about our courses or need support? We'd love to hear from you.
+              Have questions about our courses or need support? We&apos;d love to hear from you.
             </p>
           </div>
           <div className="grid lg:grid-cols-2 gap-12">
@@ -159,7 +159,7 @@ export default function Contact() {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Get in Touch</h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Have questions about our courses or need support? We'd love to hear from you.
+            Have questions about our courses or need support? We&apos;d love to hear from you.
           </p>
         </div>
 
@@ -270,7 +270,7 @@ export default function Contact() {
             <div>
               <h2 className="text-3xl font-bold text-gray-900 mb-6">Contact Information</h2>
               <p className="text-lg text-gray-600 mb-8">
-                We're here to help you succeed in your learning journey. Reach out to us through any of the channels below.
+                We&apos;re here to help you succeed in your learning journey. Reach out to us through any of the channels below.
               </p>
             </div>
 

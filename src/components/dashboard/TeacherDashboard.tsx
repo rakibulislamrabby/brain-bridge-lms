@@ -24,7 +24,7 @@ import {
 } from 'lucide-react'
 
 interface TeacherDashboardProps {
-  user: any
+  user: { id: number; name: string; email: string } | null
 }
 
 export default function TeacherDashboard({ user }: TeacherDashboardProps) {
@@ -84,7 +84,7 @@ export default function TeacherDashboard({ user }: TeacherDashboardProps) {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome back, {user.name}!
+              Welcome back, {user?.name}!
             </h1>
             <p className="text-gray-600">Manage your teaching activities and grow your impact</p>
           </div>

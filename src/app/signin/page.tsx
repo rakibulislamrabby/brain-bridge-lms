@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState} from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,7 +12,6 @@ import { useLogin } from "@/hooks/useAuth"
 import { useToast } from "@/components/ui/toast"
 
 export default function SignIn() {
-  const router = useRouter()
   const loginMutation = useLogin()
   const { addToast } = useToast()
   

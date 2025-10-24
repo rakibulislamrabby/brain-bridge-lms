@@ -7,7 +7,7 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import DashboardOverview from '@/components/dashboard/DashboardOverview'
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: number; name: string; email: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 

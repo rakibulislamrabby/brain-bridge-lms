@@ -1,29 +1,37 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { 
   BookOpen, 
   Search, 
   Filter, 
-  MoreVertical,
   Star,
   Users,
-  Clock,
   Eye,
   Edit,
   Trash2,
   Plus,
-  TrendingUp,
-  Video,
-  FileText
+  TrendingUp
 } from 'lucide-react'
 
 export default function CourseManagement() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterCategory, setFilterCategory] = useState('all')
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [newCourse, setNewCourse] = useState({
+    title: '',
+    instructor: '',
+    category: '',
+    level: '',
+    price: '',
+    description: ''
+  })
 
   // Mock course data
   const courses = [
@@ -86,6 +94,8 @@ export default function CourseManagement() {
   ]
 
   const categories = ['All', 'Programming', 'Web Development', 'Data Science', 'Backend', 'Mobile', 'Design']
+  const levels = ['Beginner', 'Intermediate', 'Advanced']
+  const courseCategories = ['Programming', 'Web Development', 'Data Science', 'Backend', 'Mobile', 'Design']
 
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -103,6 +113,27 @@ export default function CourseManagement() {
     averageRating: (courses.reduce((sum, c) => sum + c.rating, 0) / courses.length).toFixed(1)
   }
 
+  const handleCreateCourse = () => {
+    // Here you would typically send the data to your API
+    console.log('Creating course:', newCourse)
+    setIsCreateModalOpen(false)
+    setNewCourse({
+      title: '',
+      instructor: '',
+      category: '',
+      level: '',
+      price: '',
+      description: ''
+    })
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    setNewCourse(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -111,10 +142,117 @@ export default function CourseManagement() {
           <h1 className="text-3xl font-bold text-gray-900">Course Management</h1>
           <p className="text-gray-600 mt-2">Manage and monitor all courses on the platform</p>
         </div>
-        <Button className="bg-orange-600 hover:bg-orange-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Create New Course
-        </Button>
+        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer">
+              <Plus className="h-4 w-4 mr-2" />
+              Create New Course
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl bg-white border shadow-xl">
+            <DialogHeader>
+              <DialogTitle>Create New Course</DialogTitle>
+              <DialogDescription>
+                Fill in the details to create a new course for your students.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="title" className="text-sm font-medium text-gray-700">Course Title</Label>
+                  <Input
+                    id="title"
+                    value={newCourse.title}
+                    onChange={(e) => handleInputChange('title', e.target.value)}
+                    placeholder="Enter course title"
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="instructor" className="text-sm font-medium text-gray-700">Instructor</Label>
+                  <Input
+                    id="instructor"
+                    value={newCourse.instructor}
+                    onChange={(e) => handleInputChange('instructor', e.target.value)}
+                    placeholder="Enter instructor name"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="category" className="text-sm font-medium text-gray-700">Category</Label>
+                  <select
+                    id="category"
+                    value={newCourse.category}
+                    onChange={(e) => handleInputChange('category', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white"
+                  >
+                    <option value="">Select category</option>
+                    {courseCategories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="level" className="text-sm font-medium text-gray-700">Level</Label>
+                  <select
+                    id="level"
+                    value={newCourse.level}
+                    onChange={(e) => handleInputChange('level', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white"
+                  >
+                    <option value="">Select level</option>
+                    {levels.map(level => (
+                      <option key={level} value={level}>{level}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="price" className="text-sm font-medium text-gray-700">Price ($)</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  value={newCourse.price}
+                  onChange={(e) => handleInputChange('price', e.target.value)}
+                  placeholder="Enter course price"
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-sm font-medium text-gray-700">Description</Label>
+                <textarea
+                  id="description"
+                  value={newCourse.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  placeholder="Enter course description"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                  rows={4}
+                />
+              </div>
+              
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsCreateModalOpen(false)} 
+                  className="px-6 py-2 cursor-pointer"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleCreateCourse} 
+                  className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer px-6 py-2"
+                >
+                  Create Course
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Stats Cards */}
@@ -205,80 +343,104 @@ export default function CourseManagement() {
         </CardContent>
       </Card>
 
-      {/* Courses Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredCourses.map((course) => (
-          <Card key={course.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
-                  <CardDescription className="mt-1">by {course.instructor}</CardDescription>
-                </div>
-                <Button size="sm" variant="ghost">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Course Info */}
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{course.category}</Badge>
-                  <Badge variant="secondary">{course.level}</Badge>
-                  <Badge className={course.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
-                    {course.status}
-                  </Badge>
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Star className="h-4 w-4 text-yellow-500" />
-                    <span className="font-medium">{course.rating}</span>
-                    <span className="text-gray-500">rating</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-blue-500" />
-                    <span className="font-medium">{course.students.toLocaleString()}</span>
-                    <span className="text-gray-500">students</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-green-500" />
-                    <span className="font-medium">{course.duration}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Video className="h-4 w-4 text-purple-500" />
-                    <span className="font-medium">{course.lessons}</span>
-                    <span className="text-gray-500">lessons</span>
-                  </div>
-                </div>
-
-                {/* Price */}
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-gray-900">${course.price}</span>
-                  <span className="text-sm text-gray-500">Updated {course.lastUpdated}</span>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" className="flex-1">
-                    <Eye className="h-4 w-4 mr-2" />
-                    View
-                  </Button>
-                  <Button size="sm" variant="outline" className="flex-1">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Courses Table */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Course
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Instructor
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Level
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Rating
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Students
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Price
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredCourses.map((course) => (
+                  <tr key={course.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          <div className="h-10 w-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                            <BookOpen className="h-5 w-5 text-orange-600" />
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{course.title}</div>
+                          <div className="text-sm text-gray-500">{course.duration} • {course.lessons} lessons</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {course.instructor}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge variant="outline">{course.category}</Badge>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge variant="secondary">{course.level}</Badge>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge className={course.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                        {course.status}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                        <span className="text-sm font-medium">{course.rating}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {course.students.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      ${course.price}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center space-x-2">
+                        <Button size="sm" variant="outline">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Empty State */}
       {filteredCourses.length === 0 && (

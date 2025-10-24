@@ -123,7 +123,7 @@ export default function StudentReview() {
             What Our Students Say
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Don't just take our word for it. Here's what our amazing students have to say about their learning experience.
+            Don&apos;t just take our word for it. Here&apos;s what our amazing students have to say about their learning experience.
           </p>
         </div>
 
@@ -141,7 +141,7 @@ export default function StudentReview() {
 
               {/* Review Content */}
               <blockquote className="text-lg lg:text-xl text-gray-700 leading-relaxed mb-8 italic">
-                "{reviews[currentIndex].comment}"
+                &ldquo;{reviews[currentIndex].comment}&rdquo;
               </blockquote>
 
               {/* Rating */}

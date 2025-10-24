@@ -11,19 +11,16 @@ import {
   Video, 
   Search, 
   Star, 
-  TrendingUp, 
-  Users, 
-  Gift, 
+  TrendingUp,  
   Clock,
   Award,
   MessageCircle,
   Play,
   Filter,
-  Share2
 } from 'lucide-react'
 
 interface StudentDashboardProps {
-  user: any
+  user: { id: number; name: string; email: string } | null
 }
 
 export default function StudentDashboard({ user }: StudentDashboardProps) {
@@ -69,7 +66,7 @@ export default function StudentDashboard({ user }: StudentDashboardProps) {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Welcome back, {user.name}!
+          Welcome back, {user?.name || 'Student'}!
         </h1>
         <p className="text-gray-600">Continue your learning journey with Brain Bridge</p>
       </div>
