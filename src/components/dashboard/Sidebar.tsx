@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -11,6 +11,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   GraduationCap,
   UserCheck,
   FileText,
@@ -28,6 +30,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const pathname = usePathname()
+  const [expandedItems, setExpandedItems] = useState<string[]>([])
 
   const navigation = [
     {
@@ -41,7 +44,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       icon: BookOpen,
       href: '/dashboard/course',
       items: [
-        { title: 'All Courses', href: '/dashboard/course/all', icon: BookOpen },
+        { title: 'All Courses', href: '/dashboard/course', icon: BookOpen },
         { title: 'Categories', href: '/dashboard/course/categories', icon: FileText },
         { title: 'Content', href: '/dashboard/course/content', icon: Video },
         { title: 'Analytics', href: '/dashboard/course/analytics', icon: BarChart3 },
@@ -75,6 +78,26 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     return pathname.startsWith(href)
   }
 
+  // Auto-expand parent when sub-item is active
+  React.useEffect(() => {
+    navigation.forEach(item => {
+      if (item.items.length > 0) {
+        const hasActiveSubItem = item.items.some(subItem => isActive(subItem.href))
+        if (hasActiveSubItem && !expandedItems.includes(item.title)) {
+          setExpandedItems(prev => [...prev, item.title])
+        }
+      }
+    })
+  }, [pathname])
+
+  const toggleExpanded = (title: string) => {
+    setExpandedItems(prev => 
+      prev.includes(title) 
+        ? prev.filter(item => item !== title)
+        : [...prev, title]
+    )
+  }
+
   return (
     <div className={cn(
       "flex flex-col h-screen bg-white border-r border-gray-200 transition-all duration-300",
@@ -106,24 +129,49 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           const Icon = item.icon
           const isItemActive = isActive(item.href)
           const hasSubItems = item.items.length > 0
+          const isExpanded = expandedItems.includes(item.title)
 
           return (
             <div key={item.title}>
-              <Link
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  isItemActive
-                    ? "bg-orange-100 text-orange-700"
-                    : "text-gray-700 hover:bg-gray-100"
-                )}
-              >
-                <Icon className="h-5 w-5 flex-shrink-0" />
-                {!isCollapsed && <span>{item.title}</span>}
-              </Link>
+              {hasSubItems ? (
+                <button
+                  onClick={() => toggleExpanded(item.title)}
+                  className={cn(
+                    "flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer",
+                    isItemActive
+                      ? "bg-orange-100 text-orange-700"
+                      : "text-gray-700 hover:bg-gray-100"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    {!isCollapsed && <span>{item.title}</span>}
+                  </div>
+                  {!isCollapsed && (
+                    isExpanded ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )
+                  )}
+                </button>
+              ) : (
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer",
+                    isItemActive
+                      ? "bg-orange-100 text-orange-700"
+                      : "text-gray-700 hover:bg-gray-100"
+                  )}
+                >
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  {!isCollapsed && <span>{item.title}</span>}
+                </Link>
+              )}
 
               {/* Sub Items */}
-              {hasSubItems && !isCollapsed && (
+              {hasSubItems && !isCollapsed && isExpanded && (
                 <div className="ml-6 mt-2 space-y-1">
                   {item.items.map((subItem) => {
                     const SubIcon = subItem.icon
