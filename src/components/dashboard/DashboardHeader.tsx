@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Home, User, LogOut, Settings, ChevronDown, GraduationCap } from 'lucide-react'
+import { Home, User, LogOut, Settings, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface DashboardHeaderProps {
@@ -34,23 +34,14 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
-        {/* Left side - Branding and Home Button */}
-        <div className="flex items-center gap-6">
-          {/* Brain Bridge Logo */}
-          <div className="flex items-center gap-2">
-            <GraduationCap className="h-8 w-8 text-orange-600" />
-            <span className="text-xl font-bold text-gray-900">Brain Bridge</span>
-          </div>
-          
-          {/* Home Button */}
-          <Link
-            href="/"
-            className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-          >
-            <Home className="h-5 w-5" />
-            <span className="font-medium">Home</span>
-          </Link>
-        </div>
+        {/* Home Button */}
+        <Link
+          href="/"
+          className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+        >
+          <Home className="h-5 w-5" />
+          <span className="font-medium">Home</span>
+        </Link>
 
         {/* Profile Section */}
         <div className="relative">

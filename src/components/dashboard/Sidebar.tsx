@@ -77,11 +77,17 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
   return (
     <div className={cn(
-      "flex flex-col h-full bg-white border-r border-gray-200 transition-all duration-300",
+      "flex flex-col h-screen bg-white border-r border-gray-200 transition-all duration-300",
       isCollapsed ? "w-16" : "w-64"
     )}>
       {/* Header */}
-      <div className="flex items-center justify-end p-4 border-b border-gray-200">
+      <div className="flex items-center justify-between p-4  border-gray-200">
+        {!isCollapsed && (
+          <div className="flex items-center gap-2 py-2">
+            <GraduationCap className="h-8 w-8 text-orange-600" />
+            <span className="text-xl font-bold text-gray-900">Brain Bridge</span>
+          </div>
+        )}
         <button
           onClick={onToggle}
           className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -149,8 +155,8 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       {/* Footer */}
       <div className="p-4 border-t border-gray-200">
         {!isCollapsed && (
-          <div className="text-xs text-gray-500 text-center">
-            Brain Bridge LMS v1.0
+          <div className="text-xs text-gray-600 text-center">
+            Brain Bridge v1.0
           </div>
         )}
       </div>
