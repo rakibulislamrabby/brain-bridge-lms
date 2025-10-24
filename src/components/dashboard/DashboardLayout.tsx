@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { AppHeader } from '@/components/app-header'
+import React, { useState } from 'react'
+import { getStoredUser } from '@/hooks/useAuth'
 import Sidebar from './Sidebar'
+import DashboardHeader from './DashboardHeader'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -10,15 +11,24 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [user, setUser] = useState<any>(null)
 
-  const toggleSidebar = () => {
+  const toggleSidebar = () => { 
     setSidebarCollapsed(!sidebarCollapsed)
   }
 
+  // Get user data for header
+  React.useEffect(() => {
+    const storedUser = getStoredUser()
+    setUser(storedUser)
+  }, [])
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AppHeader />
-      <div className="flex h-[calc(100vh-4rem)]">
+    <div className="h-screen bg-gray-50 flex flex-col">
+      {/* Dashboard Header */}
+      <DashboardHeader user={user} />
+      
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <Sidebar 
           isCollapsed={sidebarCollapsed} 

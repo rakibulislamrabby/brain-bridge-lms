@@ -37,18 +37,6 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       items: []
     },
     {
-      title: 'Teacher',
-      icon: Users,
-      href: '/dashboard/teacher',
-      items: [
-        { title: 'All Teachers', href: '/dashboard/teacher/all', icon: Users },
-        { title: 'Teacher Levels', href: '/dashboard/teacher/levels', icon: Award },
-        { title: 'Performance', href: '/dashboard/teacher/performance', icon: BarChart3 },
-        { title: 'Approvals', href: '/dashboard/teacher/approvals', icon: UserCheck },
-        { title: 'Earnings', href: '/dashboard/teacher/earnings', icon: Award }
-      ]
-    },
-    {
       title: 'Course',
       icon: BookOpen,
       href: '/dashboard/course',
@@ -60,6 +48,18 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         { title: 'Reviews', href: '/dashboard/course/reviews', icon: MessageSquare }
       ]
     },
+    // {
+    //   title: 'Teacher',
+    //   icon: Users,
+    //   href: '/dashboard/teacher',
+    //   items: [
+    //     { title: 'All Teachers', href: '/dashboard/teacher/all', icon: Users },
+    //     { title: 'Teacher Levels', href: '/dashboard/teacher/levels', icon: Award },
+    //     { title: 'Performance', href: '/dashboard/teacher/performance', icon: BarChart3 },
+    //     { title: 'Approvals', href: '/dashboard/teacher/approvals', icon: UserCheck },
+    //     { title: 'Earnings', href: '/dashboard/teacher/earnings', icon: Award }
+    //   ]
+    // },
     {
       title: 'Settings',
       icon: Settings,
@@ -81,13 +81,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       isCollapsed ? "w-16" : "w-64"
     )}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        {!isCollapsed && (
-          <div className="flex items-center gap-2">
-            <GraduationCap className="h-8 w-8 text-orange-600" />
-            <span className="text-xl font-bold text-gray-900">Brain Bridge</span>
-          </div>
-        )}
+      <div className="flex items-center justify-end p-4 border-b border-gray-200">
         <button
           onClick={onToggle}
           className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
