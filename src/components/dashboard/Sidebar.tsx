@@ -1,12 +1,11 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { 
   LayoutDashboard,
-  Users,
   BookOpen,
   Settings,
   ChevronLeft,
@@ -14,13 +13,10 @@ import {
   ChevronDown,
   ChevronUp,
   GraduationCap,
-  UserCheck,
   FileText,
   BarChart3,
-  Calendar,
   MessageSquare,
-  Video,
-  Award
+  Video
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -32,7 +28,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const pathname = usePathname()
   const [expandedItems, setExpandedItems] = useState<string[]>([])
 
-  const navigation = [
+  const navigation = useMemo(() => [
     {
       title: 'Dashboard',
       icon: LayoutDashboard,
@@ -69,14 +65,14 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       href: '/dashboard/settings',
       items: []
     }
-  ]
+  ], [])
 
-  const isActive = (href: string) => {
+  const isActive = useCallback((href: string) => {
     if (href === '/dashboard') {
       return pathname === '/dashboard'
     }
     return pathname.startsWith(href)
-  }
+  }, [pathname])
 
   // Auto-expand parent when sub-item is active
   React.useEffect(() => {
@@ -88,7 +84,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         }
       }
     })
-  }, [pathname])
+  }, [pathname, expandedItems, isActive, navigation])
 
   const toggleExpanded = (title: string) => {
     setExpandedItems(prev => 

@@ -11,7 +11,7 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: number; name: string; email: string } | null>(null)
 
   const toggleSidebar = () => { 
     setSidebarCollapsed(!sidebarCollapsed)

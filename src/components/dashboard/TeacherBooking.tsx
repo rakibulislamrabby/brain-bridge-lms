@@ -7,21 +7,11 @@ import { Badge } from '@/components/ui/badge'
 import { 
   Users, 
   Search, 
-  Filter, 
   Star,
   Clock,
   Calendar,
-  MapPin,
-  Video,
-  MessageCircle,
-  BookOpen,
-  Award,
-  CheckCircle,
-  XCircle,
   ChevronDown,
   ChevronUp,
-  Plus,
-  Minus
 } from 'lucide-react'
 
 interface TimeSlot {

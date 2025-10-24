@@ -67,13 +67,13 @@ export default function ContactUs() {
                 Get in Touch
               </div>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
-                We're Here to
+                We&apos;re Here to
                 <br />
                 <span className="text-blue-600">Help You</span>
               </h1>
               <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4">
                 Have questions about our courses? Need technical support? Want to become an instructor? 
-                We're here to help you every step of the way.
+                We&apos;re here to help you every step of the way.
               </p>
             </div>
           </div>

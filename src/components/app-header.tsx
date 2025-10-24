@@ -9,7 +9,7 @@ import { getStoredUser, clearAuthData } from "@/hooks/useAuth"
 
 export function AppHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: number; name: string; email: string } | null>(null)
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
   const [isClient, setIsClient] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -213,14 +213,14 @@ export function AppHeader() {
               {isUserDropdownOpen && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]">
                   <div className="py-2">
-                    <Link
+                    {/* <Link
                       href="/profile"
                       className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setIsUserDropdownOpen(false)}
                     >
                       <User className="w-4 h-4" />
                       Profile
-                    </Link>
+                    </Link> */}
                     <Link
                       href="/dashboard"
                       className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

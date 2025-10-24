@@ -1,10 +1,8 @@
 import React from 'react'
 import { AppHeader } from '../app-header'
-import { Button } from '../ui/button'
 import { Card, CardContent } from '../ui/card'
 import { Users, Target, Award, Heart, Globe, Zap } from 'lucide-react'
 import Footer from '../shared/Footer'
-import Link from 'next/link'
 
 export default function AboutUs() {
   const stats = [
@@ -50,8 +48,8 @@ export default function AboutUs() {
                 <span className="text-orange-600">Worldwide</span>
               </h1>
               <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4">
-                We're on a mission to make quality education accessible to everyone, everywhere. 
-                Through innovative technology and passionate instructors, we're building bridges to knowledge.
+                We&apos;re on a mission to make quality education accessible to everyone, everywhere. 
+                Through innovative technology and passionate instructors, we&apos;re building bridges to knowledge.
               </p>
             </div>
 
@@ -82,12 +80,12 @@ export default function AboutUs() {
                     engaging, and transformative for everyone, regardless of their location or background.
                   </p>
                   <p>
-                    Founded in 2020 by a team of educators and technologists, we've grown from a small 
+                    Founded in 2020 by a team of educators and technologists, we&apos;ve grown from a small 
                     startup to a global platform connecting thousands of students with expert instructors 
                     across diverse fields.
                   </p>
                   <p>
-                    Today, we're proud to be at the forefront of online education, continuously innovating 
+                    Today, we&apos;re proud to be at the forefront of online education, continuously innovating 
                     to provide the best learning experience possible while maintaining our core values of 
                     quality, accessibility, and community.
                   </p>

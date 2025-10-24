@@ -10,13 +10,10 @@ import {
   Filter, 
   MoreVertical,
   Star,
-  Award,
-  TrendingUp,
   Eye,
   UserCheck,
   UserX,
   Mail,
-  Calendar
 } from 'lucide-react'
 
 export default function TeacherManagement() {

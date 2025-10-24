@@ -7,7 +7,7 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import { User, Mail, Calendar, Edit } from 'lucide-react'
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: number; name: string; email: string; created_at: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 

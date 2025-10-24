@@ -7,7 +7,7 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import CourseManagement from '@/components/dashboard/CourseManagement'
 
 export default function CoursePage() {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: number; name: string; email: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 

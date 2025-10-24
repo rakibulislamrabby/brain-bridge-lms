@@ -1,6 +1,6 @@
 import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Target, Zap, Shield, Users, Award, Clock } from 'lucide-react'
+import { Target, Shield, Award, Clock } from 'lucide-react'
 
 export default function ChooseUs() {
   return (
@@ -55,7 +55,7 @@ export default function ChooseUs() {
             </CardHeader>
             <CardContent>
               <CardDescription className="text-sm sm:text-base text-gray-600 group-hover:text-gray-700 transition-colors duration-300 leading-relaxed">
-                Protected payments, verified instructors, and a safe learning environment for everyone's peace of mind.
+                Protected payments, verified instructors, and a safe learning environment for everyone&apos;s peace of mind.
               </CardDescription>
             </CardContent>
           </Card>
