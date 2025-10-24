@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -8,14 +9,20 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
 import Footer from "@/components/shared/Footer"
+import { useLogin } from "@/hooks/useAuth"
+import { useToast } from "@/components/ui/toast"
 
 export default function SignIn() {
+  const router = useRouter()
+  const loginMutation = useLogin()
+  const { addToast } = useToast()
+  
   const [formData, setFormData] = useState({
     email: "",
     password: ""
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [isLoading, setIsLoading] = useState(false)
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -53,25 +60,46 @@ export default function SignIn() {
     e.preventDefault()
     
     if (!validateForm()) {
+      // Show validation error toast
+      addToast({
+        type: "error",
+        title: "Validation Error",
+        description: "Please fill in all required fields correctly.",
+        duration: 3000
+      });
       return
     }
 
-    setIsLoading(true)
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      console.log('Attempting login with data:', formData);
+      const result = await loginMutation.mutateAsync(formData)
+      console.log('Login mutation completed successfully:', result);
       
-      // Here you would typically send the data to your backend
-      console.log("Sign in data:", formData)
+      // Show success toast immediately after successful login
+      addToast({
+        type: "success",
+        title: "Login Successful!",
+        description: "Welcome back! Redirecting to dashboard...",
+        duration: 3000
+      });
       
-      // Redirect to dashboard or home page
-      alert("Successfully signed in!")
+      // Redirect after showing toast
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+      
     } catch (error) {
       console.error("Sign in error:", error)
-      alert("Invalid email or password. Please try again.")
-    } finally {
-      setIsLoading(false)
+      const errorMessage = error instanceof Error ? error.message : "Invalid email or password. Please try again."
+      setErrors({ 
+        general: errorMessage
+      })
+      addToast({
+        type: "error",
+        title: "Login Failed",
+        description: errorMessage,
+        duration: 5000
+      });
     }
   }
 
@@ -122,6 +150,12 @@ export default function SignIn() {
                   )}
                 </div>
 
+                {errors.general && (
+                  <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                    {errors.general}
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between">
                   <Link href="/forgot-password" className="text-sm text-secondary hover:underline">
                     Forgot password?
@@ -130,10 +164,10 @@ export default function SignIn() {
 
                 <Button 
                   type="submit" 
-                  className="w-full bg-orange-600 text-white"
-                  disabled={isLoading}
+                  className="w-full bg-orange-600 text-white cursor-pointer"
+                  disabled={loginMutation.isPending}
                 >
-                  {isLoading ? "Signing In..." : "Sign In"}
+                  {loginMutation.isPending ? "Signing In..." : "Sign In"}
                 </Button>
               </form>
 

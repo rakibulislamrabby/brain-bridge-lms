@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -8,17 +9,22 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
 import Footer from "@/components/shared/Footer"
+import { useRegister } from "@/hooks/useAuth"
+import { useToast } from "@/components/ui/toast"
 
 export default function SignUp() {
+  const router = useRouter()
+  const registerMutation = useRegister()
+  const { addToast } = useToast()
+  
   const [formData, setFormData] = useState({
     name: "",
-    phone: "",
     email: "",
     password: "",
     confirmPassword: ""
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [isLoading, setIsLoading] = useState(false)
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -40,12 +46,6 @@ export default function SignUp() {
 
     if (!formData.name.trim()) {
       newErrors.name = "Name is required"
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required"
-    } else if (!/^\+?[\d\s\-\(\)]+$/.test(formData.phone)) {
-      newErrors.phone = "Please enter a valid phone number"
     }
 
     if (!formData.email.trim()) {
@@ -77,22 +77,37 @@ export default function SignUp() {
       return
     }
 
-    setIsLoading(true)
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Remove confirmPassword from the data sent to API
+      const { confirmPassword, ...registerData } = formData
+      const result = await registerMutation.mutateAsync(registerData)
+      console.log('Registration completed successfully:', result);
       
-      // Here you would typically send the data to your backend
-      console.log("Sign up data:", formData)
+      // Show success toast immediately after successful registration
+      addToast({
+        type: "success",
+        title: "Account Created Successfully!",
+        description: "Your account has been created. Redirecting to sign in...",
+        duration: 3000
+      });
       
-      // Redirect to sign in page or dashboard
-      alert("Account created successfully! Please sign in.")
+      // Redirect after showing toast
+      setTimeout(() => {
+        router.push('/signin')
+      }, 2000);
+      
     } catch (error) {
       console.error("Sign up error:", error)
-      alert("An error occurred. Please try again.")
-    } finally {
-      setIsLoading(false)
+      const errorMessage = error instanceof Error ? error.message : "An error occurred. Please try again."
+      setErrors({ 
+        general: errorMessage
+      })
+      addToast({
+        type: "error",
+        title: "Registration Failed",
+        description: errorMessage,
+        duration: 5000
+      });
     }
   }
 
@@ -127,21 +142,6 @@ export default function SignUp() {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    placeholder="Enter your phone number"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className={errors.phone ? "border-red-500" : ""}
-                  />
-                  {errors.phone && (
-                    <p className="text-sm text-red-500">{errors.phone}</p>
-                  )}
-                </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
@@ -191,12 +191,18 @@ export default function SignUp() {
                   )}
                 </div>
 
+                {errors.general && (
+                  <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                    {errors.general}
+                  </div>
+                )}
+
                 <Button 
                   type="submit" 
-                  className="w-full bg-orange-600 text-white"
-                  disabled={isLoading}
+                  className="w-full bg-orange-600 text-white cursor-pointer"
+                  disabled={registerMutation.isPending}
                 >
-                  {isLoading ? "Creating Account..." : "Create Account"}
+                  {registerMutation.isPending ? "Creating Account..." : "Create Account"}
                 </Button>
               </form>
 

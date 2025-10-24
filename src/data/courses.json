@@ -1,0 +1,468 @@
+{
+  "courses": [
+    {
+      "id": 1,
+      "course_title": "Complete Web Development Bootcamp",
+      "description": "Learn full-stack web development from scratch. Master HTML, CSS, JavaScript, React, Node.js, and MongoDB to build modern web applications.",
+      "image": "/images/course/course-img1.png",
+      "price": 199.99,
+      "original_price": 299.99,
+      "ratings": 4.8,
+      "total_ratings": 1247,
+      "students_enrolled": 15420,
+      "instructor": {
+        "name": "Sarah Johnson",
+        "avatar": "/images/course/details-instructor.png",
+        "rating": 4.9,
+        "students": 25000
+      },
+      "duration": "45 hours",
+      "level": "Beginner",
+      "language": "English",
+      "last_updated": "2024-01-15",
+      "category": "Programming",
+      "tags": ["HTML", "CSS", "JavaScript", "React", "Node.js"],
+      "features": [
+        "Lifetime access",
+        "Certificate of completion",
+        "Mobile and desktop access",
+        "30-day money-back guarantee"
+      ]
+    },
+    {
+      "id": 2,
+      "course_title": "Advanced Python Programming",
+      "description": "Master advanced Python concepts including data structures, algorithms, machine learning, and web scraping. Perfect for intermediate to advanced developers.",
+      "image": "/images/course/course-img2.png",
+      "price": 149.99,
+      "original_price": 199.99,
+      "ratings": 4.7,
+      "total_ratings": 892,
+      "students_enrolled": 8750,
+      "instructor": {
+        "name": "Dr. Michael Chen",
+        "avatar": "/images/course/details-instructor.png",
+        "rating": 4.8,
+        "students": 18000
+      },
+      "duration": "32 hours",
+      "level": "Intermediate",
+      "language": "English",
+      "last_updated": "2024-01-10",
+      "category": "Programming",
+      "tags": ["Python", "Data Structures", "Algorithms", "Machine Learning"],
+      "features": [
+        "Lifetime access",
+        "Certificate of completion",
+        "Source code included",
+        "Community support"
+      ]
+    },
+    {
+      "id": 3,
+      "course_title": "Digital Marketing Mastery",
+      "description": "Learn comprehensive digital marketing strategies including SEO, social media marketing, email campaigns, and analytics to grow your business online.",
+      "image": "/images/course/course-img3.png",
+      "price": 99.99,
+      "original_price": 149.99,
+      "ratings": 4.6,
+      "total_ratings": 2156,
+      "students_enrolled": 22100,
+      "instructor": {
+        "name": "Emma Rodriguez",
+        "avatar": "/images/course/details-instructor.png",
+        "rating": 4.7,
+        "students": 35000
+      },
+      "duration": "28 hours",
+      "level": "Beginner",
+      "language": "English",
+      "last_updated": "2024-01-12",
+      "category": "Marketing",
+      "tags": ["SEO", "Social Media", "Email Marketing", "Analytics"],
+      "features": [
+        "Lifetime access",
+        "Certificate of completion",
+        "Marketing templates",
+        "Case studies included"
+      ]
+    },
+    {
+      "id": 4,
+      "course_title": "UI/UX Design Fundamentals",
+      "description": "Master the principles of user interface and user experience design. Learn to create beautiful, functional designs using Figma and Adobe XD.",
+      "image": "/images/course/course-img5.png",
+      "price": 129.99,
+      "original_price": 179.99,
+      "ratings": 4.9,
+      "total_ratings": 743,
+      "students_enrolled": 12300,
+      "instructor": {
+        "name": "Alex Thompson",
+        "avatar": "/images/course/details-instructor.png",
+        "rating": 4.9,
+        "students": 15000
+      },
+      "duration": "24 hours",
+      "level": "Beginner",
+      "language": "English",
+      "last_updated": "2024-01-08",
+      "category": "Design",
+      "tags": ["UI Design", "UX Design", "Figma", "Adobe XD", "Prototyping"],
+      "features": [
+        "Lifetime access",
+        "Certificate of completion",
+        "Design files included",
+        "Portfolio projects"
+      ]
+    },
+    {
+      "id": 5,
+      "course_title": "Physics Fundamentals",
+      "description": "Master the fundamental principles of physics including mechanics, thermodynamics, electromagnetism, and quantum physics.",
+      "image": "/images/course/course-img6.png",
+      "price": 129.99,
+      "original_price": 179.99,
+      "ratings": 4.6,
+      "total_ratings": 789,
+      "students_enrolled": 9200,
+      "instructor": {
+        "name": "Dr. Lisa Wang",
+        "avatar": "/images/course/details-instructor.png",
+        "rating": 4.7,
+        "students": 15000
+      },
+      "duration": "32 hours",
+      "level": "Intermediate",
+      "language": "English",
+      "last_updated": "2024-01-05",
+      "category": "Academics",
+      "tags": ["Physics", "Mechanics", "Thermodynamics", "Electromagnetism"],
+      "features": [
+        "Lifetime access",
+        "Certificate of completion",
+        "Lab simulations included",
+        "Problem-solving exercises"
+      ]
+    },
+    {
+      "id": 6,
+      "course_title": "Yoga & Meditation Mastery",
+      "description": "Learn traditional yoga poses, breathing techniques, and meditation practices for physical and mental wellness.",
+      "image": "/images/course/course-fit1.jpg",
+      "price": 79.99,
+      "original_price": 119.99,
+      "ratings": 4.8,
+      "total_ratings": 1456,
+      "students_enrolled": 11200,
+      "instructor": {
+        "name": "James Wilson",
+        "avatar": "/images/course/details-instructor.png",
+        "rating": 4.9,
+        "students": 18000
+      },
+      "duration": "24 hours",
+      "level": "Beginner",
+      "language": "English",
+      "last_updated": "2024-01-14",
+      "category": "Fitness",
+      "tags": ["Yoga", "Meditation", "Breathing", "Wellness", "Mindfulness"],
+      "features": [
+        "Lifetime access",
+        "Certificate of completion",
+        "Practice routines included",
+        "Guided meditation sessions"
+      ]
+    },
+    {
+      "id": 7,
+      "course_title": "Photography Masterclass",
+      "description": "Learn professional photography techniques, composition, lighting, and post-processing. Perfect for beginners and intermediate photographers.",
+      "image": "/images/course/course-img9.png",
+      "price": 89.99,
+      "original_price": 129.99,
+      "ratings": 4.8,
+      "total_ratings": 1834,
+      "students_enrolled": 15600,
+      "instructor": {
+        "name": "Maria Garcia",
+        "avatar": "/images/course/details-instructor.png",
+        "rating": 4.9,
+        "students": 28000
+      },
+      "duration": "20 hours",
+      "level": "Beginner",
+      "language": "English",
+      "last_updated": "2024-01-11",
+      "category": "Design",
+      "tags": ["Photography", "Composition", "Lighting", "Photoshop", "Lightroom"],
+      "features": [
+        "Lifetime access",
+        "Certificate of completion",
+        "Photo editing presets",
+        "Equipment recommendations"
+      ]
+    },
+    {
+      "id": 8,
+      "course_title": "Business Analytics with Excel",
+      "description": "Master business analytics using Excel and Power BI. Learn data analysis, visualization, and reporting for business decision-making.",
+      "image": "/images/course/course-img5.png",
+      "price": 79.99,
+      "original_price": 119.99,
+      "ratings": 4.4,
+      "total_ratings": 967,
+      "students_enrolled": 11200,
+      "instructor": {
+        "name": "Robert Brown",
+        "avatar": "/images/course/details-instructor.png",
+        "rating": 4.5,
+        "students": 20000
+      },
+      "duration": "18 hours",
+      "level": "Beginner",
+      "language": "English",
+      "last_updated": "2024-01-09",
+      "category": "Marketing",
+      "tags": ["Excel", "Power BI", "Data Analysis", "Business Intelligence"],
+      "features": [
+        "Lifetime access",
+        "Certificate of completion",
+        "Excel templates",
+        "Real business case studies"
+      ]
+    },
+    {
+      "id": 9,
+      "course_title": "Piano for Beginners",
+      "description": "Learn to play piano from scratch. Master basic chords, scales, reading sheet music, and play beautiful melodies.",
+      "image": "/images/course/course-img5.png",
+      "price": 109.99,
+      "original_price": 159.99,
+      "ratings": 4.7,
+      "total_ratings": 892,
+      "students_enrolled": 13500,
+      "instructor": {
+        "name": "David Kim",
+        "avatar": "/images/course/details-instructor.png",
+        "rating": 4.8,
+        "students": 16000
+      },
+      "duration": "26 hours",
+      "level": "Beginner",
+      "language": "English",
+      "last_updated": "2024-01-13",
+      "category": "Music",
+      "tags": ["Piano", "Chords", "Scales", "Sheet Music", "Melodies"],
+      "features": [
+        "Lifetime access",
+        "Certificate of completion",
+        "Sheet music included",
+        "Video demonstrations"
+      ]
+    },
+    {
+      "id": 10,
+      "course_title": "Graphic Design with Adobe Creative Suite",
+      "description": "Master professional graphic design using Adobe Photoshop, Illustrator, and InDesign. Create stunning visuals for print and digital media.",
+      "image": "/images/course/course-img8.png",
+      "price": 139.99,
+      "original_price": 189.99,
+      "ratings": 4.7,
+      "total_ratings": 1156,
+      "students_enrolled": 13400,
+      "instructor": {
+        "name": "Sophie Anderson",
+        "avatar": "/images/course/details-instructor.png",
+        "rating": 4.8,
+        "students": 22000
+      },
+      "duration": "30 hours",
+      "level": "Beginner",
+      "language": "English",
+      "last_updated": "2024-01-07",
+      "category": "Design",
+      "tags": ["Photoshop", "Illustrator", "InDesign", "Graphic Design", "Branding"],
+      "features": [
+        "Lifetime access",
+        "Certificate of completion",
+        "Design assets included",
+        "Portfolio projects"
+      ]
+    },
+    {
+      "id": 11,
+      "course_title": "Mathematics for Beginners",
+      "description": "Master fundamental mathematics concepts including algebra, geometry, calculus, and statistics. Perfect for students and professionals.",
+      "image": "/images/course/course-img9.png",
+      "price": 89.99,
+      "original_price": 129.99,
+      "ratings": 4.6,
+      "total_ratings": 2341,
+      "students_enrolled": 18900,
+      "instructor": {
+        "name": "Dr. Robert Wilson",
+        "avatar": "/images/course/details-instructor.png",
+        "rating": 4.7,
+        "students": 30000
+      },
+      "duration": "25 hours",
+      "level": "Beginner",
+      "language": "English",
+      "last_updated": "2024-01-16",
+      "category": "Academics",
+      "tags": ["Algebra", "Geometry", "Calculus", "Statistics", "Mathematics"],
+      "features": [
+        "Lifetime access",
+        "Certificate of completion",
+        "Practice problems included",
+        "Step-by-step solutions"
+      ]
+    },
+    {
+      "id": 12,
+      "course_title": "Complete Fitness Training Program",
+      "description": "Transform your body with our comprehensive fitness program. Learn strength training, cardio, nutrition, and wellness strategies.",
+      "image": "/images/course/course-fit2.jpg",
+      "price": 79.99,
+      "original_price": 119.99,
+      "ratings": 4.8,
+      "total_ratings": 1876,
+      "students_enrolled": 22100,
+      "instructor": {
+        "name": "Jessica Martinez",
+        "avatar": "/images/course/details-instructor.png",
+        "rating": 4.9,
+        "students": 25000
+      },
+      "duration": "18 hours",
+      "level": "Beginner",
+      "language": "English",
+      "last_updated": "2024-01-14",
+      "category": "Fitness",
+      "tags": ["Strength Training", "Cardio", "Nutrition", "Wellness", "Exercise"],
+      "features": [
+        "Lifetime access",
+        "Certificate of completion",
+        "Workout plans included",
+        "Nutrition guides"
+      ]
+    },
+    {
+      "id": 13,
+      "course_title": "Guitar Mastery for Beginners",
+      "description": "Learn to play guitar from scratch. Master chords, strumming patterns, fingerpicking, and play your favorite songs.",
+      "image": "/images/course/course-img8.png",
+      "price": 99.99,
+      "original_price": 149.99,
+      "ratings": 4.7,
+      "total_ratings": 1456,
+      "students_enrolled": 16800,
+      "instructor": {
+        "name": "Alex Thompson",
+        "avatar": "/images/course/details-instructor.png",
+        "rating": 4.8,
+        "students": 20000
+      },
+      "duration": "22 hours",
+      "level": "Beginner",
+      "language": "English",
+      "last_updated": "2024-01-12",
+      "category": "Music",
+      "tags": ["Guitar", "Chords", "Strumming", "Fingerpicking", "Songs"],
+      "features": [
+        "Lifetime access",
+        "Certificate of completion",
+        "Song tabs included",
+        "Video demonstrations"
+      ]
+    },
+    {
+      "id": 14,
+      "course_title": "Business Strategy & Management",
+      "description": "Learn essential business skills including strategy development, team management, financial planning, and leadership principles.",
+      "image": "/images/course/course-img1.png",
+      "price": 159.99,
+      "original_price": 219.99,
+      "ratings": 4.6,
+      "total_ratings": 987,
+      "students_enrolled": 12300,
+      "instructor": {
+        "name": "Dr. Sarah Davis",
+        "avatar": "/images/course/details-instructor.png",
+        "rating": 4.7,
+        "students": 18000
+      },
+      "duration": "35 hours",
+      "level": "Intermediate",
+      "language": "English",
+      "last_updated": "2024-01-10",
+      "category": "Marketing",
+      "tags": ["Strategy", "Management", "Leadership", "Finance", "Planning"],
+      "features": [
+        "Lifetime access",
+        "Certificate of completion",
+        "Case studies included",
+        "Business templates"
+      ]
+    },
+    {
+      "id": 15,
+      "course_title": "Digital Art & Illustration",
+      "description": "Create stunning digital artwork using Procreate, Adobe Illustrator, and Photoshop. Learn illustration techniques and digital painting.",
+      "image": "/images/course/course-img5.png",
+      "price": 119.99,
+      "original_price": 169.99,
+      "ratings": 4.8,
+      "total_ratings": 1123,
+      "students_enrolled": 14500,
+      "instructor": {
+        "name": "Emma Rodriguez",
+        "avatar": "/images/course/details-instructor.png",
+        "rating": 4.9,
+        "students": 22000
+      },
+      "duration": "28 hours",
+      "level": "Beginner",
+      "language": "English",
+      "last_updated": "2024-01-08",
+      "category": "Art",
+      "tags": ["Digital Art", "Illustration", "Procreate", "Photoshop", "Painting"],
+      "features": [
+        "Lifetime access",
+        "Certificate of completion",
+        "Art brushes included",
+        "Portfolio projects"
+      ]
+    },
+    {
+      "id": 16,
+      "course_title": "Master Chef Cooking Techniques",
+      "description": "Learn professional cooking techniques, knife skills, flavor combinations, and create restaurant-quality dishes at home.",
+      "image": "/images/course/course-img2.png",
+      "price": 89.99,
+      "original_price": 129.99,
+      "ratings": 4.7,
+      "total_ratings": 2134,
+      "students_enrolled": 19800,
+      "instructor": {
+        "name": "Chef Marco Silva",
+        "avatar": "/images/course/details-instructor.png",
+        "rating": 4.8,
+        "students": 28000
+      },
+      "duration": "20 hours",
+      "level": "Beginner",
+      "language": "English",
+      "last_updated": "2024-01-11",
+      "category": "Cooking",
+      "tags": ["Cooking", "Knife Skills", "Flavors", "Recipes", "Techniques"],
+      "features": [
+        "Lifetime access",
+        "Certificate of completion",
+        "Recipe collection",
+        "Video demonstrations"
+      ]
+    }
+  ]
+}
