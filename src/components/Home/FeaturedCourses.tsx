@@ -16,12 +16,12 @@ export default function FeaturedCourses() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4">
+          <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4 font-hubot">
             <Laptop className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
             <span className="text-blue-600 font-medium text-sm sm:text-base">Popular Courses</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">Pick A Course To Get Started</h2>
-          <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto px-4">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 font-hubot">Pick A Course To Get Started</h2>
+          <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto px-4 font-hubot">
             Our platform is built on the principles of innovation, quality, and inclusivity, aiming to provide a seamless learning
           </p>
         </div>

@@ -67,7 +67,7 @@ export function AppHeader() {
   return (
     <header className="border-b bg-white/50 backdrop-blur-sm max-w-7xl mx-auto relative z-50">
       <div className="container flex h-12 sm:h-14 lg:h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="text-xl sm:text-2xl font-bold text-primary">Brain Bridge</Link>
+        <Link href="/" className="text-xl sm:text-2xl font-bold text-primary">BrainBridge</Link>
         
         {/* Desktop Navigation */}
         <NavigationMenu className="hidden md:block">
