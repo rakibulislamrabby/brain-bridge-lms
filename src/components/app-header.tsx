@@ -180,16 +180,20 @@ export function AppHeader() {
           </button>
         </div>
 
-        {/* Desktop CTA Button */}
-        <div className="hidden md:flex gap-2">
+        {/* Desktop CTA Buttons */}
+        <div className="hidden md:flex gap-3">
           {!isClient ? (
-            <Button asChild className="bg-orange-600 text-sm sm:text-base lg:text-lg font-medium text-white py-2 sm:py-3 lg:py-6 px-3 sm:px-4 lg:px-6">
-              <Link href="/signin" className="flex items-center gap-1 sm:gap-2">
-                <span className="hidden sm:inline">Get Started</span>
-                <span className="sm:hidden">Start</span>
-                <ArrowRightIcon className="w-3 h-3 sm:w-4 sm:h-4" />
-              </Link>
-            </Button>
+            <>
+              <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
+                <Link href="/signin">Sign In</Link>
+              </Button>
+              <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
+                <Link href="/signup">Become a Student</Link>
+              </Button>
+              <Button asChild className="bg-orange-600 text-sm font-medium text-white py-2 px-4">
+                <Link href="/teacher">Become a Master</Link>
+              </Button>
+            </>
           ) : user ? (
             <div className="relative" ref={dropdownRef}>
               <button
@@ -213,14 +217,6 @@ export function AppHeader() {
               {isUserDropdownOpen && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]">
                   <div className="py-2">
-                    {/* <Link
-                      href="/profile"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => setIsUserDropdownOpen(false)}
-                    >
-                      <User className="w-4 h-4" />
-                      Profile
-                    </Link> */}
                     <Link
                       href="/dashboard"
                       className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -245,13 +241,17 @@ export function AppHeader() {
               )}
             </div>
           ) : (
-            <Button asChild className="bg-orange-600 text-sm sm:text-base lg:text-lg font-medium text-white py-2 sm:py-3 lg:py-6 px-3 sm:px-4 lg:px-6">
-              <Link href="/signin" className="flex items-center gap-1 sm:gap-2">
-                <span className="hidden sm:inline">Get Started</span>
-                <span className="sm:hidden">Start</span>
-                <ArrowRightIcon className="w-3 h-3 sm:w-4 sm:h-4" />
-              </Link>
-            </Button>
+            <>
+              <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
+                <Link href="/signin">Sign In</Link>
+              </Button>
+              <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
+                <Link href="/signup">Become a Student</Link>
+              </Button>
+              <Button asChild className="bg-orange-600 text-sm font-medium text-white py-2 px-4">
+                <Link href="/teacher">Become a Master</Link>
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -268,13 +268,6 @@ export function AppHeader() {
           {/* Menu Content */}
           <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b shadow-xl z-[9999]">
             <div className="px-4 py-6 space-y-4">
-            <Link
-              href="/teacher"
-              className="block py-2 text-gray-700 hover:text-orange-600 transition-colors font-medium"
-              onClick={closeMobileMenu}
-            >
-              Teacher
-            </Link>
             <Link
               href="/courses"
               className="block py-2 text-gray-700 hover:text-orange-600 transition-colors font-medium"
@@ -297,15 +290,26 @@ export function AppHeader() {
               Contact Us
             </Link>
             
-            {/* Mobile User Section or CTA Button */}
+            {/* Mobile User Section or CTA Buttons */}
             <div className="pt-4 border-t">
               {!isClient ? (
-                <Button asChild className="w-full bg-orange-600 text-white py-3 font-medium">
-                  <Link href="/signin" className="flex items-center justify-center gap-2" onClick={closeMobileMenu}>
-                    Get Started
-                    <ArrowRightIcon className="w-4 h-4" />
-                  </Link>
-                </Button>
+                <div className="space-y-3">
+                  <Button asChild variant="outline" className="w-full text-sm font-medium py-2 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
+                    <Link href="/signin" onClick={closeMobileMenu}>
+                      Sign In
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full text-sm font-medium py-2 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
+                    <Link href="/signup" onClick={closeMobileMenu}>
+                      Become a Student
+                    </Link>
+                  </Button>
+                  <Button asChild className="w-full bg-orange-600 text-white py-2 font-medium">
+                    <Link href="/teacher" onClick={closeMobileMenu}>
+                      Become a Master
+                    </Link>
+                  </Button>
+                </div>
               ) : user ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
@@ -345,12 +349,23 @@ export function AppHeader() {
                   </button>
                 </div>
               ) : (
-                <Button asChild className="w-full bg-orange-600 text-white py-3 font-medium">
-                  <Link href="/signin" className="flex items-center justify-center gap-2" onClick={closeMobileMenu}>
-                    Get Started
-                    <ArrowRightIcon className="w-4 h-4" />
-                  </Link>
-                </Button>
+                <div className="space-y-3">
+                  <Button asChild variant="outline" className="w-full text-sm font-medium py-2 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
+                    <Link href="/signin" onClick={closeMobileMenu}>
+                      Sign In
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full text-sm font-medium py-2 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
+                    <Link href="/signup" onClick={closeMobileMenu}>
+                      Become a Student
+                    </Link>
+                  </Button>
+                  <Button asChild className="w-full bg-orange-600 text-white py-2 font-medium">
+                    <Link href="/teacher" onClick={closeMobileMenu}>
+                      Become a Master
+                    </Link>
+                  </Button>
+                </div>
               )}
             </div>
             </div>
