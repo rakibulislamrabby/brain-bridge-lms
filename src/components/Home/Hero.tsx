@@ -6,10 +6,10 @@ import { Star, ArrowRight } from 'lucide-react'
 
 export default function Hero() {
   return (
-    <section className="mx-auto max-w-7xl py-8 sm:py-12 lg:py-14 px-4 sm:px-6 lg:px-8">
+    <section className="mx-auto max-w-7xl py-8 sm:py-12 lg:py-10 px-4 sm:px-6 lg:px-8">
       <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center">
         {/* Left Side - Content */}
-        <div className="space-y-6 sm:space-y-8 order-2 lg:order-1">
+        <div className="space-y-4 sm:space-y-8 order-2 lg:order-1">
           {/* Rating Section */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-2 text-left">
             <div className="flex items-center gap-1">
@@ -22,28 +22,33 @@ export default function Hero() {
           </div>
 
           {/* Main Heading */}
-          <div className="space-y-3 sm:space-y-4 text-left">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-              Find Your
+          <div className="space-y-3 sm:space-y-6 text-left">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight uppercase tracking-wide">
+              Connect Minds, Share Skills,
               <br />
-              Perfect Learn
+              Transform Learning
               <br />
-              <span>Platform</span>
+              <span className="text-orange-500">Experiences</span>
             </h1>
-            <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-lg">
-              Our mission is to help people to help people to find the best course online and learn with expert anytime, anywhere
-            </p>
+            <div className="space-y-2">
+              <p className="text-base sm:text-lg text-gray-700 font-semibold uppercase tracking-wide">
+                Flexible Learning
+              </p>
+              <p className="text-sm sm:text-base text-gray-600 uppercase tracking-wide">
+                In-Person • Video • Recorded
+              </p>
+            </div>
           </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 text-left">
-            <Button asChild className="bg-orange-600 text-white px-6 sm:px-8 py-3 sm:py-4 lg:py-6 text-sm sm:text-base lg:text-lg">
+            <Button asChild className="bg-orange-600 text-white px-5 sm:px-6 py-3 sm:py-4 text-sm sm:text-base">
               <Link href="/signup" className="flex items-center gap-2">
                 Get Started
-                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" className="border-gray-300 text-gray-700 px-6 sm:px-8 py-3 sm:py-4 lg:py-6 text-sm sm:text-base lg:text-lg">
+            <Button asChild variant="outline" className="border-gray-300 text-gray-700 px-5 sm:px-6 py-3 sm:py-4 text-sm sm:text-base">
               <Link href="/about">Learn More</Link>
             </Button>
           </div>
