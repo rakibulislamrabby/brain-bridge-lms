@@ -4,9 +4,10 @@ import Hero from "@/components/Home/Hero"
 import ChooseUs from "@/components/Home/ChooseUs"
 import OurFeature from "@/components/Home/OurFeature"
 import FeaturedCourses from "@/components/Home/FeaturedCourses"
-import Statistics from "@/components/Home/Statistics"
-import StudentReview from "@/components/Reviews/StudentReview"
+import LearningReimagined from "@/components/Reviews/LearningReimagined"
+import PointSystem from "@/components/Point/PointSystem"
 import Contact from "@/components/shared/Contact"
+import RandomSkill from "@/components/Home/RandomSkill"
 
 export default function Home() {
   return (
@@ -18,7 +19,7 @@ export default function Home() {
       {/* Platform Features */}
       <OurFeature/>
 
-      {/* Trusted By Section */}
+      <RandomSkill/>
       {/* <Partner/> */}
       <FeaturedCourses/>
       {/* Why Choose Us Section */}
@@ -26,13 +27,12 @@ export default function Home() {
 
     
 
-      <StudentReview/>
+      <LearningReimagined/>
 
-
-      
+      <PointSystem/>
 
       {/* Statistics Section */}
-      <Statistics/>
+      {/* <Statistics/> */}
 
       {/* CTA Section */}
       {/* <section className="py-20 bg-primary ">

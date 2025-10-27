@@ -15,19 +15,20 @@
 
   * {
     border-color: var(--border);
+    font-family: 'Hubot Sans', Inter, sans-serif;
   }
 
   body {
     background-color: var(--background);
     color: var(--foreground);
-    font-family: Inter, sans-serif;
+    font-family: 'Hubot Sans', Inter, sans-serif;
   }
 
   /* Global section spacing */
-  section {
+  /* section {
     margin-top: 2rem;
     margin-bottom: 2rem;
-  }
+  } */
 
   /* Ensure consistent spacing for main content */
   main {

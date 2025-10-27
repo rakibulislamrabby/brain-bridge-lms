@@ -34,7 +34,8 @@ const config: Config = {
         sm: "0.25rem",
       },
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
+        sans: ["'Hubot Sans'", "Inter", "sans-serif"],
+        hubot: ["'Hubot Sans'", "sans-serif"],
       },
     },
   },
