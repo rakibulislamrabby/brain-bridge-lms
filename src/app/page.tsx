@@ -5,7 +5,7 @@ import ChooseUs from "@/components/Home/ChooseUs"
 import OurFeature from "@/components/Home/OurFeature"
 import FeaturedCourses from "@/components/Home/FeaturedCourses"
 import Statistics from "@/components/Home/Statistics"
-import StudentReview from "@/components/Reviews/StudentReview"
+import LearningReimagined from "@/components/Reviews/LearningReimagined"
 import Contact from "@/components/shared/Contact"
 import RandomSkill from "@/components/Home/RandomSkill"
 
@@ -27,7 +27,7 @@ export default function Home() {
 
     
 
-      <StudentReview/>
+      <LearningReimagined/>
 
 
       
