@@ -71,7 +71,7 @@ export default function PointSystem() {
             HOW TO EARN POINTS
           </h3>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Our points system is designed to reward active learning and engagement. Here's how you can accumulate points:
+            Our points system is designed to reward active learning and engagement. Here&apos;s how you can accumulate points:
           </p>
         </div>
 

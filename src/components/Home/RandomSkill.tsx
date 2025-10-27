@@ -1,10 +1,10 @@
 
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Button } from '../ui/button'
 import { Card, CardContent } from '../ui/card'
-import { Shuffle, Sparkles, ArrowRight, Star } from 'lucide-react'
+import { Shuffle, ArrowRight } from 'lucide-react'
 import coursesData from '../../data/courses.json'
 
 interface Course {
