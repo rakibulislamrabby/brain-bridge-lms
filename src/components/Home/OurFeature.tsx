@@ -4,7 +4,7 @@ import { Brain, Video, Shield, TrendingUp, Trophy, Smartphone } from 'lucide-rea
 
 export default function OurFeature() {
   return (
-    <section className="py-12 sm:py-16 lg:py-20 bg-gray-100">
+    <section className="py-12 sm:py-16 lg:py-20 bg-gray-100 pb-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 sm:mb-16">
             <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
