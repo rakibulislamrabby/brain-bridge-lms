@@ -148,11 +148,7 @@ export default function SignIn() {
                   )}
                 </div>
 
-                {errors.general && (
-                  <div className="p-3 text-sm text-red-200 bg-red-900/20 border border-red-700 rounded-md">
-                    {errors.general}
-                  </div>
-                )}
+                
 
                 <div className="flex items-center justify-between">
                   <Link href="/forgot-password" className="text-sm text-orange-400 hover:text-orange-300 hover:underline">

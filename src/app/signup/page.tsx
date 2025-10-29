@@ -191,11 +191,7 @@ export default function SignUp() {
                   )}
                 </div>
 
-                {errors.general && (
-                  <div className="p-3 text-sm text-red-200 bg-red-900/20 border border-red-700 rounded-md">
-                    {errors.general}
-                  </div>
-                )}
+                
 
                 <Button 
                   type="submit" 
