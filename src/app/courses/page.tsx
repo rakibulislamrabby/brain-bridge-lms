@@ -5,7 +5,7 @@ import Footer from "@/components/shared/Footer"
 export default function CoursesPage() {
   return (
     <>
-      <div className="px-4 mx-auto">
+      <div className="px-4 mx-auto bg-gray-900 min-h-screen">
         <AppHeader />
         <AllCourse />
       </div>

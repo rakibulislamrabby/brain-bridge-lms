@@ -10,14 +10,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <link 
           href="https://fonts.googleapis.com/css2?family=Hubot+Sans:wght@400;500;600;700&display=swap" 
           rel="stylesheet" 
         />
       </head>
-      <body>
+      <body className="bg-gray-900 text-white">
         <QueryProvider>
           <ToastProvider>
             {children}

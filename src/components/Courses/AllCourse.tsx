@@ -18,16 +18,16 @@ export default function AllCourse() {
     : allCourses.filter(course => course.category === selectedCategory)
 
   return (
-    <section className="pt-20 bg-gray-50">
+    <section className="pt-20 bg-gray-900">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Laptop className="w-5 h-5 text-blue-600" />
-            <span className="text-blue-600 font-medium">Popular Courses</span>
+            <Laptop className="w-5 h-5 text-blue-400" />
+            <span className="text-blue-400 font-medium">Popular Courses</span>
           </div>
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">Pick A Course To Get Started</h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <h2 className="text-4xl font-bold text-white mb-4">Pick A Course To Get Started</h2>
+          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
             Our platform is built on the principles of innovation, quality, and inclusivity, aiming to provide a seamless learning
           </p>
         </div>
@@ -61,7 +61,7 @@ export default function AllCourse() {
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                   isActive
                     ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:border-blue-300 hover:text-blue-600'
+                    : 'bg-gray-800 text-gray-300 border border-gray-700 hover:border-blue-400 hover:text-blue-400'
                 }`}
               >
                 {getIcon(category)}

@@ -2,14 +2,14 @@
 
 @layer base {
   :root {
-    --background: #ffffff;
-    --foreground: #000000;
-    --primary: #000000;
-    --primary-foreground: #ffffff;
+    --background: #0a0a0a;
+    --foreground: #ffffff;
+    --primary: #ffffff;
+    --primary-foreground: #0a0a0a;
     --secondary: #ff7a00;
     --accent: #8b5cf6;
-    --muted: #f8f8f8;
-    --border: #e5e5e5;
+    --muted: #1a1a1a;
+    --border: #2a2a2a;
     --radius: 0.75rem;
   }
 

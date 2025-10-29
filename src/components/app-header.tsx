@@ -65,30 +65,30 @@ export function AppHeader() {
   }
 
   return (
-    <header className="border-b bg-white/50 backdrop-blur-sm max-w-7xl mx-auto relative z-50">
+    <header className="border-b border-gray-700 bg-gray-900/50 backdrop-blur-sm max-w-7xl mx-auto relative z-50">
       <div className="container flex h-12 sm:h-14 lg:h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="text-xl sm:text-2xl font-bold text-primary">BrainBridge</Link>
+        <Link href="/" className="text-xl sm:text-2xl font-bold text-white">BrainBridge</Link>
         
         {/* Desktop Navigation */}
         <NavigationMenu className="hidden md:block">
           <NavigationMenuList>
             <NavigationMenuItem>
-              <NavigationMenuLink asChild className="text-sm lg:text-base font-medium">
+              <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
                 <Link href="/teacher">Teacher</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink asChild className="text-sm lg:text-base font-medium">
+              <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
                 <Link href="/courses">Courses</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink asChild className="text-sm lg:text-base font-medium">
+              <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
                 <Link href="/about">About</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink asChild className="text-sm lg:text-base font-medium">
+              <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
                 <Link href="/contact">Contact Us</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
@@ -98,7 +98,7 @@ export function AppHeader() {
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-3">
           {!isClient ? (
-            <Button asChild className="bg-orange-600 text-sm font-medium text-white py-2 px-3">
+            <Button asChild className="bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white py-2 px-3">
               <Link href="/signin" className="flex items-center gap-1">
                 <span>Start</span>
                 <ArrowRightIcon className="w-3 h-3" />
@@ -108,28 +108,28 @@ export function AppHeader() {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={toggleUserDropdown}
-                className="flex items-center gap-2 hover:bg-gray-100 rounded-lg p-1 transition-colors"
+                className="flex items-center gap-2 hover:bg-gray-700 rounded-lg p-1 transition-colors"
               >
-                <div className="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
                   {getUserInitial(user.name)}
                 </div>
-                <span className="text-sm font-medium text-gray-700 hidden sm:block">
+                <span className="text-sm font-medium text-white hidden sm:block">
                   {getShortName(user.name)}
                 </span>
                 {isUserDropdownOpen ? (
-                  <ChevronUp className="w-4 h-4 text-gray-500" />
+                  <ChevronUp className="w-4 h-4 text-gray-300" />
                 ) : (
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                  <ChevronDown className="w-4 h-4 text-gray-300" />
                 )}
               </button>
               
               {/* Mobile Dropdown */}
               {isUserDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-[9999]">
                   <div className="py-2">
                     <Link
                       href="/profile"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-700"
                       onClick={() => setIsUserDropdownOpen(false)}
                     >
                       <User className="w-4 h-4" />
@@ -137,7 +137,7 @@ export function AppHeader() {
                     </Link>
                     <Link
                       href="/dashboard"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-700"
                       onClick={() => setIsUserDropdownOpen(false)}
                     >
                       <LayoutDashboard className="w-4 h-4" />
@@ -149,7 +149,7 @@ export function AppHeader() {
                         handleLogout()
                         setIsUserDropdownOpen(false)
                       }}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 w-full text-left"
                     >
                       <LogOut className="w-4 h-4" />
                       Logout
@@ -159,7 +159,7 @@ export function AppHeader() {
               )}
             </div>
           ) : (
-            <Button asChild className="bg-orange-600 text-sm font-medium text-white py-2 px-3">
+            <Button asChild className="bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white py-2 px-3">
               <Link href="/signin" className="flex items-center gap-1">
                 <span>Start</span>
                 <ArrowRightIcon className="w-3 h-3" />
@@ -169,13 +169,13 @@ export function AppHeader() {
           
           <button
             onClick={toggleMobileMenu}
-            className="p-2 rounded-md hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-md hover:bg-gray-700 transition-colors"
             aria-label="Toggle mobile menu"
           >
             {isMobileMenuOpen ? (
-              <X className="w-5 h-5 text-gray-700" />
+              <X className="w-5 h-5 text-white" />
             ) : (
-              <Menu className="w-5 h-5 text-gray-700" />
+              <Menu className="w-5 h-5 text-white" />
             )}
           </button>
         </div>
@@ -184,13 +184,13 @@ export function AppHeader() {
         <div className="hidden md:flex gap-3">
           {!isClient ? (
             <>
-              <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
+              <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
                 <Link href="/signin">Sign In</Link>
               </Button>
-              <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
+              <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
                 <Link href="/signup">Become a Student</Link>
               </Button>
-              <Button asChild className="bg-orange-600 text-sm font-medium text-white py-2 px-4">
+              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white py-2 px-4">
                 <Link href="/teacher">Become a Master</Link>
               </Button>
             </>
@@ -198,28 +198,28 @@ export function AppHeader() {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={toggleUserDropdown}
-                className="flex items-center gap-3 hover:bg-gray-100 rounded-lg p-2 transition-colors cursor-pointer"
+                className="flex items-center gap-3 hover:bg-gray-700 rounded-lg p-2 transition-colors cursor-pointer"
               >
-                <div className="w-10 h-10 bg-orange-600 text-white rounded-full flex items-center justify-center text-lg font-medium">
+                <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center text-lg font-medium">
                   {getUserInitial(user.name)}
                 </div>
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-white">
                   {getShortName(user.name)}
                 </span>
                 {isUserDropdownOpen ? (
-                  <ChevronUp className="w-4 h-4 text-gray-500" />
+                  <ChevronUp className="w-4 h-4 text-gray-300" />
                 ) : (
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                  <ChevronDown className="w-4 h-4 text-gray-300" />
                 )}
               </button>
               
               {/* Desktop Dropdown */}
               {isUserDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-[9999]">
                   <div className="py-2">
                     <Link
                       href="/dashboard"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-700"
                       onClick={() => setIsUserDropdownOpen(false)}
                     >
                       <LayoutDashboard className="w-4 h-4" />
@@ -231,7 +231,7 @@ export function AppHeader() {
                         handleLogout()
                         setIsUserDropdownOpen(false)
                       }}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 w-full text-left"
                     >
                       <LogOut className="w-4 h-4" />
                       Logout
@@ -242,13 +242,13 @@ export function AppHeader() {
             </div>
           ) : (
             <>
-              <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
+              <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
                 <Link href="/signin">Sign In</Link>
               </Button>
-              <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
+              <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
                 <Link href="/signup">Become a Student</Link>
               </Button>
-              <Button asChild className="bg-orange-600 text-sm font-medium text-white py-2 px-4">
+              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white py-2 px-4">
                 <Link href="/teacher">Become a Master</Link>
               </Button>
             </>
@@ -266,25 +266,25 @@ export function AppHeader() {
           />
           
           {/* Menu Content */}
-          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b shadow-xl z-[9999]">
+          <div className="md:hidden absolute top-full left-0 right-0 bg-gray-800 border-b shadow-xl z-[9999]">
             <div className="px-4 py-6 space-y-4">
             <Link
               href="/courses"
-              className="block py-2 text-gray-700 hover:text-orange-600 transition-colors font-medium"
+              className="block py-2 text-white hover:text-purple-400 transition-colors font-medium"
               onClick={closeMobileMenu}
             >
               Courses
             </Link>
             <Link
               href="/about"
-              className="block py-2 text-gray-700 hover:text-orange-600 transition-colors font-medium"
+              className="block py-2 text-white hover:text-purple-400 transition-colors font-medium"
               onClick={closeMobileMenu}
             >
               About
             </Link>
             <Link
               href="/contact"
-              className="block py-2 text-gray-700 hover:text-orange-600 transition-colors font-medium"
+              className="block py-2 text-white hover:text-purple-400 transition-colors font-medium"
               onClick={closeMobileMenu}
             >
               Contact Us
@@ -294,17 +294,17 @@ export function AppHeader() {
             <div className="pt-4 border-t">
               {!isClient ? (
                 <div className="space-y-3">
-                  <Button asChild variant="outline" className="w-full text-sm font-medium py-2 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
+                  <Button asChild variant="outline" className="w-full text-sm font-medium py-2 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
                     <Link href="/signin" onClick={closeMobileMenu}>
                       Sign In
                     </Link>
                   </Button>
-                  <Button asChild variant="outline" className="w-full text-sm font-medium py-2 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
+                  <Button asChild variant="outline" className="w-full text-sm font-medium py-2 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
                     <Link href="/signup" onClick={closeMobileMenu}>
                       Become a Student
                     </Link>
                   </Button>
-                  <Button asChild className="w-full bg-orange-600 text-white py-2 font-medium">
+                  <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 font-medium">
                     <Link href="/teacher" onClick={closeMobileMenu}>
                       Become a Master
                     </Link>
@@ -312,18 +312,18 @@ export function AppHeader() {
                 </div>
               ) : user ? (
                 <div className="space-y-2">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-10 h-10 bg-orange-600 text-white rounded-full flex items-center justify-center text-lg font-medium">
+                  <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg">
+                    <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center text-lg font-medium">
                       {getUserInitial(user.name)}
                     </div>
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-white">
                       {getShortName(user.name)}
                     </span>
                   </div>
                   
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-700 rounded-lg"
                     onClick={closeMobileMenu}
                   >
                     <User className="w-4 h-4" />
@@ -331,7 +331,7 @@ export function AppHeader() {
                   </Link>
                   <Link
                     href="/dashboard"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-700 rounded-lg"
                     onClick={closeMobileMenu}
                   >
                     <LayoutDashboard className="w-4 h-4" />
@@ -342,7 +342,7 @@ export function AppHeader() {
                       handleLogout()
                       closeMobileMenu()
                     }}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg w-full text-left"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 rounded-lg w-full text-left"
                   >
                     <LogOut className="w-4 h-4" />
                     Logout
@@ -350,17 +350,17 @@ export function AppHeader() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <Button asChild variant="outline" className="w-full text-sm font-medium py-2 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
+                  <Button asChild variant="outline" className="w-full text-sm font-medium py-2 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
                     <Link href="/signin" onClick={closeMobileMenu}>
                       Sign In
                     </Link>
                   </Button>
-                  <Button asChild variant="outline" className="w-full text-sm font-medium py-2 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
+                  <Button asChild variant="outline" className="w-full text-sm font-medium py-2 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
                     <Link href="/signup" onClick={closeMobileMenu}>
                       Become a Student
                     </Link>
                   </Button>
-                  <Button asChild className="w-full bg-orange-600 text-white py-2 font-medium">
+                  <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 font-medium">
                     <Link href="/teacher" onClick={closeMobileMenu}>
                       Become a Master
                     </Link>

@@ -158,11 +158,11 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   return (
     <>
       <AppHeader />
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Back Button */}
           <div className="mb-6">
-            <Link href="/courses" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
+            <Link href="/courses" className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
               <ArrowLeft className="w-4 h-4" />
               Back to Courses
             </Link>
@@ -172,7 +172,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               {/* Course Header */}
-              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-700">
                 <div className="relative h-64 md:h-80">
                   <Image
                     src={course.image}
@@ -181,10 +181,10 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     className="object-cover"
                   />
                   <div className="absolute top-4 right-4 flex gap-2">
-                    <Button size="sm" variant="secondary" className="bg-white/90">
+                    <Button size="sm" variant="secondary" className="bg-gray-800/90 text-white border-gray-600">
                       <Share2 className="w-4 h-4" />
                     </Button>
-                    <Button size="sm" variant="secondary" className="bg-white/90">
+                    <Button size="sm" variant="secondary" className="bg-gray-800/90 text-white border-gray-600">
                       <Heart className="w-4 h-4" />
                     </Button>
                   </div>
@@ -196,11 +196,11 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     <Badge className="bg-green-500 text-white">{course.level}</Badge>
                   </div>
                   
-                  <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                  <h1 className="text-3xl font-bold text-white mb-4">
                     {course.course_title}
                   </h1>
                   
-                  <p className="text-gray-600 text-lg mb-6">
+                  <p className="text-gray-300 text-lg mb-6">
                     {course.description}
                   </p>
 
@@ -209,29 +209,29 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     <div className="flex items-center gap-2">
                       <Star className="w-5 h-5 text-yellow-500" />
                       <div>
-                        <p className="font-semibold">{course.ratings}</p>
-                        <p className="text-sm text-gray-500">Rating</p>
+                        <p className="font-semibold text-white">{course.ratings}</p>
+                        <p className="text-sm text-gray-400">Rating</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Users className="w-5 h-5 text-blue-500" />
                       <div>
-                        <p className="font-semibold">{course.students_enrolled.toLocaleString()}</p>
-                        <p className="text-sm text-gray-500">Students</p>
+                        <p className="font-semibold text-white">{course.students_enrolled.toLocaleString()}</p>
+                        <p className="text-sm text-gray-400">Students</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Clock className="w-5 h-5 text-green-500" />
                       <div>
-                        <p className="font-semibold">{course.duration}</p>
-                        <p className="text-sm text-gray-500">Duration</p>
+                        <p className="font-semibold text-white">{course.duration}</p>
+                        <p className="text-sm text-gray-400">Duration</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Globe className="w-5 h-5 text-purple-500" />
                       <div>
-                        <p className="font-semibold">{course.language}</p>
-                        <p className="text-sm text-gray-500">Language</p>
+                        <p className="font-semibold text-white">{course.language}</p>
+                        <p className="text-sm text-gray-400">Language</p>
                       </div>
                     </div>
                   </div>
@@ -239,8 +239,8 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               </div>
 
               {/* Instructor */}
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Instructor</h2>
+              <div className="bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-700">
+                <h2 className="text-2xl font-bold text-white mb-4">Instructor</h2>
                 <div className="flex items-center gap-4">
                   <Image
                     src={course.instructor.avatar}
@@ -250,29 +250,29 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     className="rounded-full"
                   />
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900">{course.instructor.name}</h3>
+                    <h3 className="text-xl font-semibold text-white">{course.instructor.name}</h3>
                     <div className="flex items-center gap-2 mb-2">
                       <Star className="w-4 h-4 text-yellow-500" />
-                      <span className="font-medium">{course.instructor.rating}</span>
-                      <span className="text-gray-500">({course.instructor.students.toLocaleString()} students)</span>
+                      <span className="font-medium text-white">{course.instructor.rating}</span>
+                      <span className="text-gray-400">({course.instructor.students.toLocaleString()} students)</span>
                     </div>
-                    <p className="text-gray-600">Expert instructor with years of experience in {course.category.toLowerCase()}.</p>
+                    <p className="text-gray-300">Expert instructor with years of experience in {course.category.toLowerCase()}.</p>
                   </div>
                 </div>
               </div>
 
               {/* Curriculum */}
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Course Curriculum</h2>
+              <div className="bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-700">
+                <h2 className="text-2xl font-bold text-white mb-4">Course Curriculum</h2>
                 <div className="space-y-2 cursor-pointer">
                   {curriculum.map((section, index) => {
                     const isExpanded = expandedSections.includes(section.id)
                     return (
-                      <div key={section.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div key={section.id} className="border border-gray-600 rounded-lg overflow-hidden">
                         {/* Section Header */}
                         <button
                           onClick={() => toggleSection(section.id)}
-                          className="w-full p-4 text-left hover:bg-gray-50 cursor-pointer transition-colors"
+                          className="w-full p-4 text-left hover:bg-gray-700 cursor-pointer transition-colors"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -280,14 +280,14 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                 {index + 1}
                               </div>
                               <div>
-                                <h3 className="font-semibold text-gray-900">{section.title}</h3>
-                                <p className="text-sm text-gray-500">
+                                <h3 className="font-semibold text-white">{section.title}</h3>
+                                <p className="text-sm text-gray-400">
                                   {section.lessons.length} lessons • {section.duration}
                                 </p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-gray-500">
+                              <span className="text-sm text-gray-400">
                                 {isExpanded ? 'Hide' : 'Show'} lessons
                               </span>
                               {isExpanded ? (
@@ -301,12 +301,12 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                         
                         {/* Section Content */}
                         {isExpanded && (
-                          <div className="border-t border-gray-200 bg-gray-50">
+                          <div className="border-t border-gray-600 bg-gray-700">
                             <div className="p-4 space-y-3">
                               {section.lessons.map((lesson, lessonIndex) => (
-                                <div key={lesson.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100">
+                                <div key={lesson.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg border border-gray-600">
                                   <div className="flex items-center gap-3">
-                                    <div className="w-6 h-6 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center text-xs font-medium">
+                                    <div className="w-6 h-6 bg-gray-600 text-gray-300 rounded-full flex items-center justify-center text-xs font-medium">
                                       {lessonIndex + 1}
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -314,14 +314,14 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                       {lesson.type === 'quiz' && <CheckCircle className="w-4 h-4 text-green-500" />}
                                       {lesson.type === 'exercise' && <Award className="w-4 h-4 text-purple-500" />}
                                       {lesson.type === 'discussion' && <Users className="w-4 h-4 text-orange-500" />}
-                                      <span className="text-sm font-medium text-gray-900">{lesson.title}</span>
+                                      <span className="text-sm font-medium text-white">{lesson.title}</span>
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                    <span className="text-xs text-gray-300 bg-gray-600 px-2 py-1 rounded">
                                       {lesson.type}
                                     </span>
-                                    <span className="text-sm text-gray-500">{lesson.duration}</span>
+                                    <span className="text-sm text-gray-400">{lesson.duration}</span>
                                   </div>
                                 </div>
                               ))}
@@ -335,16 +335,16 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               </div>
 
               {/* Reviews */}
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Student Reviews</h2>
+              <div className="bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-700">
+                <h2 className="text-2xl font-bold text-white mb-4">Student Reviews</h2>
                 <div className="space-y-4">
                   {reviews.map((review) => (
-                    <div key={review.id} className="border-b border-gray-200 pb-4 last:border-b-0">
+                    <div key={review.id} className="border-b border-gray-600 pb-4 last:border-b-0">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+                          <div className="w-8 h-8 bg-gray-600 rounded-full"></div>
                           <div>
-                            <p className="font-semibold text-gray-900">{review.name}</p>
+                            <p className="font-semibold text-white">{review.name}</p>
                             <div className="flex items-center gap-1">
                               {[...Array(review.rating)].map((_, i) => (
                                 <Star key={i} className="w-4 h-4 text-yellow-500 fill-current" />
@@ -352,9 +352,9 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                             </div>
                           </div>
                         </div>
-                        <span className="text-sm text-gray-500">{review.date}</span>
+                        <span className="text-sm text-gray-400">{review.date}</span>
                       </div>
-                      <p className="text-gray-600">{review.comment}</p>
+                      <p className="text-gray-300">{review.comment}</p>
                     </div>
                   ))}
                 </div>
@@ -365,13 +365,13 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
             <div className="lg:col-span-1">
               <div className="sticky top-8">
                 {/* Pricing Card */}
-                <Card className="mb-6">
+                <Card className="mb-6 bg-gray-800 border-gray-700">
                   <CardContent className="p-6">
                     <div className="text-center mb-6">
                       <div className="flex items-center justify-center gap-2 mb-2">
-                        <span className="text-4xl font-bold text-gray-900">${course.price}</span>
+                        <span className="text-4xl font-bold text-white">${course.price}</span>
                         {course.original_price > course.price && (
-                          <span className="text-lg text-gray-500 line-through">${course.original_price}</span>
+                          <span className="text-lg text-gray-400 line-through">${course.original_price}</span>
                         )}
                       </div>
                       {course.original_price > course.price && (
@@ -389,7 +389,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                       {course.features.map((feature, index) => (
                         <div key={index} className="flex items-center gap-2">
                           <CheckCircle className="w-4 h-4 text-green-500" />
-                          <span className="text-gray-600">{feature}</span>
+                          <span className="text-gray-300">{feature}</span>
                         </div>
                       ))}
                     </div>
@@ -397,25 +397,25 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                 </Card>
 
                 {/* Course Info */}
-                <Card>
+                <Card className="bg-gray-800 border-gray-700">
                   <CardContent className="p-6">
-                    <h3 className="font-semibold text-gray-900 mb-4">Course Details</h3>
+                    <h3 className="font-semibold text-white mb-4">Course Details</h3>
                     <div className="space-y-3 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Last Updated</span>
-                        <span className="text-gray-900">{new Date(course.last_updated).toLocaleDateString()}</span>
+                        <span className="text-gray-400">Last Updated</span>
+                        <span className="text-white">{new Date(course.last_updated).toLocaleDateString()}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Category</span>
-                        <span className="text-gray-900">{course.category}</span>
+                        <span className="text-gray-400">Category</span>
+                        <span className="text-white">{course.category}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Level</span>
-                        <span className="text-gray-900">{course.level}</span>
+                        <span className="text-gray-400">Level</span>
+                        <span className="text-white">{course.level}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Language</span>
-                        <span className="text-gray-900">{course.language}</span>
+                        <span className="text-gray-400">Language</span>
+                        <span className="text-white">{course.language}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -427,7 +427,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
           {/* Related Courses */}
           {relatedCourses.length > 0 && (
             <div className="mt-16">
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">Related Courses</h2>
+              <h2 className="text-3xl font-bold text-white mb-8">Related Courses</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {relatedCourses.map((relatedCourse) => (
                   <CourseCard key={relatedCourse.id} course={relatedCourse} />

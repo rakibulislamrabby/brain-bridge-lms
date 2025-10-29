@@ -120,30 +120,30 @@ export default function Contact() {
   // Prevent hydration mismatch by not rendering until client-side
   if (!isClient) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12">
+      <div className="min-h-screen bg-gray-900 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Get in Touch</h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <h1 className="text-4xl font-bold text-white mb-4">Get in Touch</h1>
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
               Have questions about our courses or need support? We&apos;d love to hear from you.
             </p>
           </div>
           <div className="grid lg:grid-cols-2 gap-12">
             <div className="animate-pulse">
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <div className="h-8 bg-gray-200 rounded mb-4"></div>
+              <div className="bg-gray-800 rounded-lg shadow-lg p-6">
+                <div className="h-8 bg-gray-700 rounded mb-4"></div>
                 <div className="space-y-4">
-                  <div className="h-4 bg-gray-200 rounded"></div>
-                  <div className="h-4 bg-gray-200 rounded"></div>
-                  <div className="h-4 bg-gray-200 rounded"></div>
+                  <div className="h-4 bg-gray-700 rounded"></div>
+                  <div className="h-4 bg-gray-700 rounded"></div>
+                  <div className="h-4 bg-gray-700 rounded"></div>
                 </div>
               </div>
             </div>
             <div className="animate-pulse">
               <div className="space-y-4">
-                <div className="h-8 bg-gray-200 rounded"></div>
-                <div className="h-4 bg-gray-200 rounded"></div>
-                <div className="h-4 bg-gray-200 rounded"></div>
+                <div className="h-8 bg-gray-700 rounded"></div>
+                <div className="h-4 bg-gray-700 rounded"></div>
+                <div className="h-4 bg-gray-700 rounded"></div>
               </div>
             </div>
           </div>
@@ -153,12 +153,12 @@ export default function Contact() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-gray-900 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Get in Touch</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <h1 className="text-4xl font-bold text-white mb-4">Get in Touch</h1>
+          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
             Have questions about our courses or need support? We&apos;d love to hear from you.
           </p>
         </div>
@@ -166,9 +166,9 @@ export default function Contact() {
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Contact Form */}
           <div>
-            <Card className="shadow-lg pt-10">
+            <Card className="shadow-lg pt-10 bg-gray-800 border-gray-700">
               <CardHeader>
-                <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <CardTitle className="text-2xl font-bold text-white flex items-center gap-2">
                   <Send className="h-6 w-6 text-orange-600" />
                   Send us a Message
                 </CardTitle>
@@ -177,7 +177,7 @@ export default function Contact() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Full Name *</Label>
+                      <Label htmlFor="name" className="text-gray-300">Full Name *</Label>
                       <Input
                         id="name"
                         name="name"
@@ -185,7 +185,7 @@ export default function Contact() {
                         placeholder="Your full name"
                         value={formData.name}
                         onChange={handleInputChange}
-                        className={errors.name ? "border-red-500" : ""}
+                        className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 ${errors.name ? "border-red-500" : ""}`}
                       />
                       {errors.name && (
                         <p className="text-sm text-red-500">{errors.name}</p>
@@ -193,7 +193,7 @@ export default function Contact() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email Address *</Label>
+                      <Label htmlFor="email" className="text-gray-300">Email Address *</Label>
                       <Input
                         id="email"
                         name="email"
@@ -201,7 +201,7 @@ export default function Contact() {
                         placeholder="your.email@example.com"
                         value={formData.email}
                         onChange={handleInputChange}
-                        className={errors.email ? "border-red-500" : ""}
+                        className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 ${errors.email ? "border-red-500" : ""}`}
                       />
                       {errors.email && (
                         <p className="text-sm text-red-500">{errors.email}</p>
@@ -210,7 +210,7 @@ export default function Contact() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="subject">Subject *</Label>
+                    <Label htmlFor="subject" className="text-gray-300">Subject *</Label>
                     <Input
                       id="subject"
                       name="subject"
@@ -218,7 +218,7 @@ export default function Contact() {
                       placeholder="What's this about?"
                       value={formData.subject}
                       onChange={handleInputChange}
-                      className={errors.subject ? "border-red-500" : ""}
+                      className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 ${errors.subject ? "border-red-500" : ""}`}
                     />
                     {errors.subject && (
                       <p className="text-sm text-red-500">{errors.subject}</p>
@@ -226,7 +226,7 @@ export default function Contact() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="message">Message *</Label>
+                    <Label htmlFor="message" className="text-gray-300">Message *</Label>
                     <textarea
                       id="message"
                       name="message"
@@ -234,8 +234,8 @@ export default function Contact() {
                       placeholder="Tell us more about your inquiry..."
                       value={formData.message}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none ${
-                        errors.message ? "border-red-500" : "border-gray-300"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none bg-gray-700 border-gray-600 text-white placeholder-gray-400 ${
+                        errors.message ? "border-red-500" : ""
                       }`}
                     />
                     {errors.message && (
@@ -268,8 +268,8 @@ export default function Contact() {
           {/* Contact Information */}
           <div className="space-y-8">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">Contact Information</h2>
-              <p className="text-lg text-gray-600 mb-8">
+              <h2 className="text-3xl font-bold text-white mb-6">Contact Information</h2>
+              <p className="text-lg text-gray-300 mb-8">
                 We&apos;re here to help you succeed in your learning journey. Reach out to us through any of the channels below.
               </p>
             </div>
@@ -283,8 +283,8 @@ export default function Contact() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Email Us</h3>
-                  <p className="text-gray-600">Send us an email anytime</p>
+                  <h3 className="text-lg font-semibold text-white">Email Us</h3>
+                  <p className="text-gray-400">Send us an email anytime</p>
                   <a 
                     href="mailto:support@brainbridge.com" 
                     className="text-orange-600 hover:text-orange-700 font-medium"
@@ -302,8 +302,8 @@ export default function Contact() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Call Us</h3>
-                  <p className="text-gray-600">Mon-Fri from 9am to 6pm</p>
+                  <h3 className="text-lg font-semibold text-white">Call Us</h3>
+                  <p className="text-gray-400">Mon-Fri from 9am to 6pm</p>
                   <a 
                     href="tel:+1234567890" 
                     className="text-orange-600 hover:text-orange-700 font-medium"
@@ -321,9 +321,9 @@ export default function Contact() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Visit Us</h3>
-                  <p className="text-gray-600">Come say hello at our office</p>
-                  <p className="text-gray-700">
+                  <h3 className="text-lg font-semibold text-white">Visit Us</h3>
+                  <p className="text-gray-400">Come say hello at our office</p>
+                  <p className="text-gray-300">
                     123 Education Street<br />
                     Learning City, LC 12345
                   </p>
@@ -345,13 +345,13 @@ export default function Contact() {
         <div className="fixed top-4 right-4 z-50 max-w-sm w-full">
           <div className={`p-4 rounded-lg shadow-lg border ${
             toast.type === 'success' 
-              ? 'bg-green-50 border-green-200 text-green-800' 
-              : 'bg-red-50 border-red-200 text-red-800'
+              ? 'bg-green-900 border-green-700 text-green-200' 
+              : 'bg-red-900 border-red-700 text-red-200'
           }`}>
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0">
                 {toast.type === 'success' ? (
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <CheckCircle className="h-5 w-5 text-green-400" />
                 ) : (
                   <div className="h-5 w-5 rounded-full bg-red-600 flex items-center justify-center">
                     <span className="text-white text-xs">!</span>
@@ -364,7 +364,7 @@ export default function Contact() {
               </div>
               <button
                 onClick={() => setToast(null)}
-                className="flex-shrink-0 text-gray-400 hover:text-gray-600"
+                className="flex-shrink-0 text-gray-400 hover:text-gray-200"
               >
                 ×
               </button>

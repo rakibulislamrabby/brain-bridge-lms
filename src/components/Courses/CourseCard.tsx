@@ -50,10 +50,10 @@ export default function CourseCard({ course }: CourseCardProps) {
 
   return (
     <Link href={`/courses/${course.id}`}>
-      <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+      <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer bg-gray-800 border-gray-700">
         {/* Course Image */}
         <div className="relative">
-          <div className="w-full h-48 bg-gray-200 relative overflow-hidden">
+          <div className="w-full h-48 bg-gray-700 relative overflow-hidden">
             <Image
               src={course.image}
               alt={course.course_title}
@@ -64,7 +64,7 @@ export default function CourseCard({ course }: CourseCardProps) {
           
           {/* Instructor Avatar */}
           <div className="absolute bottom-0 right-4 translate-y-1/2">
-            <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-white">
+            <div className="w-12 h-12 rounded-full border-2 border-gray-800 overflow-hidden bg-gray-800">
               <Image
                 src={course.instructor.avatar}
                 alt={course.instructor.name}
@@ -91,12 +91,12 @@ export default function CourseCard({ course }: CourseCardProps) {
           </div>
 
           {/* Course Title */}
-          <h3 className="font-bold text-lg text-gray-900 line-clamp-2">
+          <h3 className="font-bold text-lg text-white line-clamp-2">
             {course.course_title}
           </h3>
 
           {/* Course Metrics */}
-          <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex items-center gap-4 text-sm text-gray-400">
             <div className="flex items-center gap-1">
               <Play className="w-4 h-4" />
               <span>20</span>
@@ -112,20 +112,20 @@ export default function CourseCard({ course }: CourseCardProps) {
           </div>
 
           {/* Separator */}
-          <div className="border-t border-dashed border-gray-300"></div>
+          <div className="border-t border-dashed border-gray-600"></div>
 
           {/* Footer */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-gray-900">${course.price}</span>
+              <span className="text-2xl font-bold text-white">${course.price}</span>
               {course.original_price > course.price && (
-                <span className="text-sm text-gray-500 line-through">${course.original_price}</span>
+                <span className="text-sm text-gray-400 line-through">${course.original_price}</span>
               )}
             </div>
             <div className="flex items-center gap-1">
               <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-              <span className="text-sm font-medium">{course.ratings}</span>
-              <span className="text-sm text-gray-500">({formatRatings(course.total_ratings)})</span>
+              <span className="text-sm font-medium text-white">{course.ratings}</span>
+              <span className="text-sm text-gray-400">({formatRatings(course.total_ratings)})</span>
             </div>
           </div>
         </div>

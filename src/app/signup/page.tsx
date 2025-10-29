@@ -113,21 +113,21 @@ export default function SignUp() {
 
   return (
     <>
-      <div className="px-4 max-w-7xl mx-auto">
+      <div className="px-4 max-w-7xl mx-auto bg-gray-900 min-h-screen">
         <AppHeader />
         
-        <div className="container py-20 flex justify-center">
-          <Card className="w-full max-w-md">
+        <div className="container py-14 flex justify-center">
+          <Card className="w-full max-w-md bg-gray-800 border-gray-700 shadow-2xl">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-2xl font-bold text-white pt-7">Create Account</CardTitle>
+              <CardDescription className="text-gray-300">
                 Join Brain Bridge to start learning and teaching
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
+                  <Label htmlFor="name" className="text-gray-300">Full Name</Label>
                   <Input
                     id="name"
                     name="name"
@@ -135,7 +135,7 @@ export default function SignUp() {
                     placeholder="Enter your full name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className={errors.name ? "border-red-500" : ""}
+                    className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.name ? "border-red-500" : ""}`}
                   />
                   {errors.name && (
                     <p className="text-sm text-red-500">{errors.name}</p>
@@ -144,7 +144,7 @@ export default function SignUp() {
 
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-gray-300">Email</Label>
                   <Input
                     id="email"
                     name="email"
@@ -152,7 +152,7 @@ export default function SignUp() {
                     placeholder="Enter your email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={errors.email ? "border-red-500" : ""}
+                    className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.email ? "border-red-500" : ""}`}
                   />
                   {errors.email && (
                     <p className="text-sm text-red-500">{errors.email}</p>
@@ -160,7 +160,7 @@ export default function SignUp() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-gray-300">Password</Label>
                   <Input
                     id="password"
                     name="password"
@@ -168,7 +168,7 @@ export default function SignUp() {
                     placeholder="Create a password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className={errors.password ? "border-red-500" : ""}
+                    className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.password ? "border-red-500" : ""}`}
                   />
                   {errors.password && (
                     <p className="text-sm text-red-500">{errors.password}</p>
@@ -176,7 +176,7 @@ export default function SignUp() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Label htmlFor="confirmPassword" className="text-gray-300">Confirm Password</Label>
                   <Input
                     id="confirmPassword"
                     name="confirmPassword"
@@ -184,7 +184,7 @@ export default function SignUp() {
                     placeholder="Confirm your password"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    className={errors.confirmPassword ? "border-red-500" : ""}
+                    className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.confirmPassword ? "border-red-500" : ""}`}
                   />
                   {errors.confirmPassword && (
                     <p className="text-sm text-red-500">{errors.confirmPassword}</p>
@@ -192,14 +192,14 @@ export default function SignUp() {
                 </div>
 
                 {errors.general && (
-                  <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                  <div className="p-3 text-sm text-red-200 bg-red-900/20 border border-red-700 rounded-md">
                     {errors.general}
                   </div>
                 )}
 
                 <Button 
                   type="submit" 
-                  className="w-full bg-orange-600 text-white cursor-pointer"
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white cursor-pointer transition-colors duration-200"
                   disabled={registerMutation.isPending}
                 >
                   {registerMutation.isPending ? "Creating Account..." : "Create Account"}
@@ -207,9 +207,9 @@ export default function SignUp() {
               </form>
 
               <div className="mt-6 text-center">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-400">
                   Already have an account?{" "}
-                  <Link href="/signin" className="text-secondary hover:underline">
+                  <Link href="/signin" className="text-orange-400 hover:text-orange-300 hover:underline">
                     Sign in
                   </Link>
                 </p>

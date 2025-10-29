@@ -12,16 +12,16 @@ export default function FeaturedCourses() {
   const featuredCourses = coursesData.courses.slice(0, 6)
 
   return (
-    <section className="pt-12 sm:pt-16 lg:pt-20 pb-6 sm:pb-8 bg-gray-50 -mt-6 sm:-mt-8 lg:-mt-10">
+    <section className="pt-12 sm:pt-16 lg:pt-20 pb-6 sm:pb-8 bg-gray-800 -mt-6 sm:-mt-8 lg:-mt-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
           <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4 font-hubot">
-            <Laptop className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-            <span className="text-blue-600 font-medium text-sm sm:text-base">Popular Courses</span>
+            <Laptop className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+            <span className="text-purple-400 font-medium text-sm sm:text-base">Popular Courses</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 font-hubot">Pick A Course To Get Started</h2>
-          <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto px-4 font-hubot">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4 font-hubot">Pick A Course To Get Started</h2>
+          <p className="text-base sm:text-lg lg:text-xl text-gray-300 max-w-2xl mx-auto px-4 font-hubot">
             Our platform is built on the principles of innovation, quality, and inclusivity, aiming to provide a seamless learning
           </p>
         </div>
@@ -35,7 +35,7 @@ export default function FeaturedCourses() {
 
         {/* View All Courses Button */}
         <div className="text-center">
-          <Button asChild className="bg-orange-600 hover:bg-orange-700 py-3 sm:py-4 lg:py-6 text-white px-6 sm:px-8 text-sm sm:text-base lg:text-lg">
+          <Button asChild className="bg-purple-600 hover:bg-purple-700 py-3 sm:py-4 lg:py-6 text-white px-6 sm:px-8 text-sm sm:text-base lg:text-lg">
             <Link href="/courses">View All Courses</Link>
           </Button>
         </div>
