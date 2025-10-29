@@ -3,8 +3,7 @@
 import { AppHeader } from '@/components/app-header'
 import Footer from '@/components/shared/Footer'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { BookOpen, Users, Clock, Bell, ArrowRight } from 'lucide-react'
+import { BookOpen, Users, Clock} from 'lucide-react'
 
 export default function TeacherPage() {
   return (
@@ -24,7 +23,7 @@ export default function TeacherPage() {
               Teacher Portal
             </h1>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-12 leading-relaxed">
-              We're building an amazing platform for teachers to create, manage, and deliver exceptional learning experiences. 
+              We&apos;re building an amazing platform for teachers to create, manage, and deliver exceptional learning experiences. 
               Stay tuned for something incredible!
             </p>
 
