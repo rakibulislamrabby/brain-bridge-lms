@@ -71,12 +71,13 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
 
   return (
     <header className={`${isLanding ? 'bg-transparent' : 'border-b border-gray-700 bg-gray-900/50 backdrop-blur-sm'} max-w-7xl mx-auto relative z-50`}>
-      <div className={`container flex h-12 sm:h-14 lg:h-16 items-center px-4 sm:px-6 lg:px-8 ${isLanding ? 'justify-between' : 'justify-between'}`}>
+      <div className="container flex h-12 sm:h-14 lg:h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="text-xl sm:text-2xl font-bold text-white">BrainBridge</Link>
-        
-        {/* Desktop Navigation - Right side for landing, middle for default */}
-        {!isLanding && (
-          <NavigationMenu className="hidden md:block">
+
+        {/* Desktop Navigation and Button - Always on the right side */}
+        <div className="hidden md:flex items-center gap-6">
+          {/* Navigation Menu */}
+          <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
@@ -100,23 +101,71 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
-        )}
+          
+          {/* Get Started Button */}
+          {!isClient ? (
+            <Button asChild className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-900 text-sm font-medium py-2 px-4">
+              <Link href="/signin">Get Started</Link>
+            </Button>
+          ) : user ? (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={toggleUserDropdown}
+                className="flex items-center gap-3 hover:bg-gray-700 rounded-lg p-2 transition-colors cursor-pointer"
+              >
+                <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center text-lg font-medium">
+                  {getUserInitial(user.name)}
+                </div>
+                <span className="text-sm font-medium text-white">
+                  {getShortName(user.name)}
+                </span>
+                {isUserDropdownOpen ? (
+                  <ChevronUp className="w-4 h-4 text-gray-300" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-300" />
+                )}
+              </button>
+              
+              {/* Desktop Dropdown */}
+              {isUserDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-[9999]">
+                  <div className="py-2">
+                    <Link
+                      href="/dashboard"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-700"
+                      onClick={() => setIsUserDropdownOpen(false)}
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      Dashboard
+                    </Link>
+                    <hr className="my-1" />
+                    <button
+                      onClick={() => {
+                        handleLogout()
+                        setIsUserDropdownOpen(false)
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 w-full text-left"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Button asChild className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-900 text-sm font-medium py-2 px-4">
+              <Link href="/signin">Get Started</Link>
+            </Button>
+          )}
+        </div>
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-3">
           {!isClient ? (
-            isLanding ? (
-              <Button asChild className="bg-transparent border border-white text-white hover:bg-white hover:text-gray-900 text-sm font-medium py-2 px-3">
-                <Link href="/signin">Get Started</Link>
-              </Button>
-            ) : (
-              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white py-2 px-3">
-                <Link href="/signin" className="flex items-center gap-1">
-                  <span>Start</span>
-                  <ArrowRightIcon className="w-3 h-3" />
-                </Link>
-              </Button>
-            )
+            <Button asChild className="bg-transparent border border-white text-white hover:bg-white hover:text-gray-900 text-sm font-medium py-2 px-3">
+              <Link href="/signin">Get Started</Link>
+            </Button>
           ) : user ? (
             <div className="relative" ref={dropdownRef}>
               <button
@@ -172,18 +221,9 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
               )}
             </div>
           ) : (
-            isLanding ? (
-              <Button asChild className="bg-transparent border border-white text-white hover:bg-white hover:text-gray-900 text-sm font-medium py-2 px-3">
-                <Link href="/signin">Get Started</Link>
-              </Button>
-            ) : (
-              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white py-2 px-3">
-                <Link href="/signin" className="flex items-center gap-1">
-                  <span>Start</span>
-                  <ArrowRightIcon className="w-3 h-3" />
-                </Link>
-              </Button>
-            )
+            <Button asChild className="bg-transparent border border-white text-white hover:bg-white hover:text-gray-900 text-sm font-medium py-2 px-3">
+              <Link href="/signin">Get Started</Link>
+            </Button>
           )}
           
           <button
@@ -198,168 +238,6 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
             )}
           </button>
         </div>
-
-        {/* Desktop CTA Buttons - Right side, grouped with nav for landing */}
-        {isLanding ? (
-          <div className="hidden md:flex items-center gap-6">
-            {/* Navigation Menu */}
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
-                    <Link href="/teacher">Teacher</Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
-                    <Link href="/courses">Courses</Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
-                    <Link href="/about">About</Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
-                    <Link href="/contact">Contact Us</Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-            
-            {/* Get Started Button */}
-            {!isClient ? (
-              <Button asChild className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-900 text-sm font-medium py-2 px-4">
-                <Link href="/signin">Get Started</Link>
-              </Button>
-            ) : user ? (
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={toggleUserDropdown}
-                  className="flex items-center gap-3 hover:bg-gray-700 rounded-lg p-2 transition-colors cursor-pointer"
-                >
-                  <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center text-lg font-medium">
-                    {getUserInitial(user.name)}
-                  </div>
-                  <span className="text-sm font-medium text-white">
-                    {getShortName(user.name)}
-                  </span>
-                  {isUserDropdownOpen ? (
-                    <ChevronUp className="w-4 h-4 text-gray-300" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-gray-300" />
-                  )}
-                </button>
-                
-                {/* Desktop Dropdown */}
-                {isUserDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-[9999]">
-                    <div className="py-2">
-                      <Link
-                        href="/dashboard"
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-700"
-                        onClick={() => setIsUserDropdownOpen(false)}
-                      >
-                        <LayoutDashboard className="w-4 h-4" />
-                        Dashboard
-                      </Link>
-                      <hr className="my-1" />
-                      <button
-                        onClick={() => {
-                          handleLogout()
-                          setIsUserDropdownOpen(false)
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 w-full text-left"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Button asChild className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-900 text-sm font-medium py-2 px-4">
-                <Link href="/signin">Get Started</Link>
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="hidden md:flex gap-3">
-            {!isClient ? (
-              <>
-                <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
-                  <Link href="/signin">Sign In</Link>
-                </Button>
-                <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
-                  <Link href="/signup">Become a Student</Link>
-                </Button>
-                <Button asChild className="bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white py-2 px-4">
-                  <Link href="/signup">Become a Master</Link>
-                </Button>
-              </>
-            ) : user ? (
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={toggleUserDropdown}
-                  className="flex items-center gap-3 hover:bg-gray-700 rounded-lg p-2 transition-colors cursor-pointer"
-                >
-                  <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center text-lg font-medium">
-                    {getUserInitial(user.name)}
-                  </div>
-                  <span className="text-sm font-medium text-white">
-                    {getShortName(user.name)}
-                  </span>
-                  {isUserDropdownOpen ? (
-                    <ChevronUp className="w-4 h-4 text-gray-300" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-gray-300" />
-                  )}
-                </button>
-                
-                {/* Desktop Dropdown */}
-                {isUserDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-[9999]">
-                    <div className="py-2">
-                      <Link
-                        href="/dashboard"
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-700"
-                        onClick={() => setIsUserDropdownOpen(false)}
-                      >
-                        <LayoutDashboard className="w-4 h-4" />
-                        Dashboard
-                      </Link>
-                      <hr className="my-1" />
-                      <button
-                        onClick={() => {
-                          handleLogout()
-                          setIsUserDropdownOpen(false)
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 w-full text-left"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
-                  <Link href="/signin">Sign In</Link>
-                </Button>
-                <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
-                  <Link href="/signup">Become a Student</Link>
-                </Button>
-                <Button asChild className="bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white py-2 px-4">
-                  <Link href="/teacher">Become a Master</Link>
-                </Button>
-              </>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Mobile Menu Overlay */}
