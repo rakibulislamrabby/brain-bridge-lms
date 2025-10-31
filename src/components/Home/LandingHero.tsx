@@ -12,7 +12,7 @@ export default function LandingHero() {
       </div>
       
       {/* Hero with background */}
-      <div className="relative pt-12 sm:pt-14 lg:pt-16">
+      <div className="relative">
         <Hero variant="landing" />
       </div>
     </div>

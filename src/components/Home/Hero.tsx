@@ -17,7 +17,7 @@ export default function Hero({ variant = 'default' }: HeroProps) {
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
           {/* Hero Background Image */}
-          <div className="relative w-full h-full">
+          <div className="relative w-full h-full"> 
             <Image
               src="/images/hero/hero1.jpg"
               alt="Learning collage"
@@ -29,10 +29,10 @@ export default function Hero({ variant = 'default' }: HeroProps) {
           </div>
           
           {/* Dark overlay for better text readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 via-gray-900/70 to-purple-900/60 z-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 via-gray-900/70 to-gray-900/60 z-10"></div>
           
           {/* Purple gradient overlay in center */}
-          <div className="absolute inset-0 bg-gradient-to-b from-purple-900/40 via-purple-900/20 to-transparent z-20"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-gray-900/40 via-gray-900/20 to-transparent z-20"></div>
         </div>
 
         {/* Hero Content */}
