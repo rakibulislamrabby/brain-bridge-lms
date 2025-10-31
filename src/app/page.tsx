@@ -1,6 +1,5 @@
-import { AppHeader } from "@/components/app-header"
 import Footer from "@/components/shared/Footer"
-import Hero from "@/components/Home/Hero"
+import LandingHero from "@/components/Home/LandingHero"
 import ChooseUs from "@/components/Home/ChooseUs"
 import OurFeature from "@/components/Home/OurFeature"
 import FeaturedCourses from "@/components/Home/FeaturedCourses"
@@ -13,9 +12,8 @@ export default function Home() {
   return (
     <>
     <div className=" mx-auto">
-      <AppHeader />
-      {/* Hero Section */}
-      <Hero/>
+      {/* Combined Header + Hero Section for Landing Page */}
+      <LandingHero />
       {/* Platform Features */}
       <OurFeature/>
 

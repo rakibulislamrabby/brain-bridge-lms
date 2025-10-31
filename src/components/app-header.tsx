@@ -7,12 +7,17 @@ import { ArrowRightIcon, Menu, X, LogOut, User, LayoutDashboard, ChevronDown, Ch
 import { useState, useEffect, useRef } from "react"
 import { getStoredUser, clearAuthData } from "@/hooks/useAuth"
 
-export function AppHeader() {
+interface AppHeaderProps {
+  variant?: 'default' | 'landing'
+}
+
+export function AppHeader({ variant = 'default' }: AppHeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [user, setUser] = useState<{ id: number; name: string; email: string } | null>(null)
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
   const [isClient, setIsClient] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const isLanding = variant === 'landing'
 
   useEffect(() => {
     // Set client flag to true after hydration
@@ -65,7 +70,7 @@ export function AppHeader() {
   }
 
   return (
-    <header className="border-b border-gray-700 bg-gray-900/50 backdrop-blur-sm max-w-7xl mx-auto relative z-50">
+    <header className={`${isLanding ? 'bg-transparent' : 'border-b border-gray-700 bg-gray-900/50 backdrop-blur-sm'} max-w-7xl mx-auto relative z-50`}>
       <div className="container flex h-12 sm:h-14 lg:h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="text-xl sm:text-2xl font-bold text-white">BrainBridge</Link>
         
@@ -98,12 +103,18 @@ export function AppHeader() {
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-3">
           {!isClient ? (
-            <Button asChild className="bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white py-2 px-3">
-              <Link href="/signin" className="flex items-center gap-1">
-                <span>Start</span>
-                <ArrowRightIcon className="w-3 h-3" />
-              </Link>
-            </Button>
+            isLanding ? (
+              <Button asChild className="bg-transparent border border-white text-white hover:bg-white hover:text-gray-900 text-sm font-medium py-2 px-3">
+                <Link href="/signin">Get Started</Link>
+              </Button>
+            ) : (
+              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white py-2 px-3">
+                <Link href="/signin" className="flex items-center gap-1">
+                  <span>Start</span>
+                  <ArrowRightIcon className="w-3 h-3" />
+                </Link>
+              </Button>
+            )
           ) : user ? (
             <div className="relative" ref={dropdownRef}>
               <button
@@ -159,12 +170,18 @@ export function AppHeader() {
               )}
             </div>
           ) : (
-            <Button asChild className="bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white py-2 px-3">
-              <Link href="/signin" className="flex items-center gap-1">
-                <span>Start</span>
-                <ArrowRightIcon className="w-3 h-3" />
-              </Link>
-            </Button>
+            isLanding ? (
+              <Button asChild className="bg-transparent border border-white text-white hover:bg-white hover:text-gray-900 text-sm font-medium py-2 px-3">
+                <Link href="/signin">Get Started</Link>
+              </Button>
+            ) : (
+              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white py-2 px-3">
+                <Link href="/signin" className="flex items-center gap-1">
+                  <span>Start</span>
+                  <ArrowRightIcon className="w-3 h-3" />
+                </Link>
+              </Button>
+            )
           )}
           
           <button
@@ -183,17 +200,23 @@ export function AppHeader() {
         {/* Desktop CTA Buttons */}
         <div className="hidden md:flex gap-3">
           {!isClient ? (
-            <>
-              <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
-                <Link href="/signin">Sign In</Link>
+            isLanding ? (
+              <Button asChild className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-900 text-sm font-medium py-2 px-4">
+                <Link href="/signin">Get Started</Link>
               </Button>
-              <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
-                <Link href="/signup">Become a Student</Link>
-              </Button>
-              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white py-2 px-4">
-                <Link href="/teacher">Become a Master</Link>
-              </Button>
-            </>
+            ) : (
+              <>
+                <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
+                  <Link href="/signin">Sign In</Link>
+                </Button>
+                <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
+                  <Link href="/signup">Become a Student</Link>
+                </Button>
+                <Button asChild className="bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white py-2 px-4">
+                  <Link href="/teacher">Become a Master</Link>
+                </Button>
+              </>
+            )
           ) : user ? (
             <div className="relative" ref={dropdownRef}>
               <button
@@ -241,17 +264,23 @@ export function AppHeader() {
               )}
             </div>
           ) : (
-            <>
-              <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
-                <Link href="/signin">Sign In</Link>
+            isLanding ? (
+              <Button asChild className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-900 text-sm font-medium py-2 px-4">
+                <Link href="/signin">Get Started</Link>
               </Button>
-              <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
-                <Link href="/signup">Become a Student</Link>
-              </Button>
-              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white py-2 px-4">
-                <Link href="/teacher">Become a Master</Link>
-              </Button>
-            </>
+            ) : (
+              <>
+                <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
+                  <Link href="/signin">Sign In</Link>
+                </Button>
+                <Button asChild variant="outline" className="text-sm font-medium py-2 px-4 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white">
+                  <Link href="/signup">Become a Student</Link>
+                </Button>
+                <Button asChild className="bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white py-2 px-4">
+                  <Link href="/teacher">Become a Master</Link>
+                </Button>
+              </>
+            )
           )}
         </div>
       </div>
