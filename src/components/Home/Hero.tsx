@@ -4,7 +4,68 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Star, ArrowRight } from 'lucide-react'
 
-export default function Hero() {
+interface HeroProps {
+  variant?: 'default' | 'landing'
+}
+
+export default function Hero({ variant = 'default' }: HeroProps) {
+  const isLanding = variant === 'landing'
+  
+  if (isLanding) {
+    return (
+      <section className="relative min-h-[600px] sm:min-h-[700px] lg:min-h-[800px] flex items-center justify-center overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 z-0">
+          {/* Hero Background Image */}
+          <div className="relative w-full h-full"> 
+            <Image
+              src="/images/hero/hero1.jpg"
+              alt="Learning collage"
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+            />
+          </div>
+          
+          {/* Dark overlay for better text readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 via-gray-900/70 to-gray-900/60 z-10"></div>
+          
+          {/* Purple gradient overlay in center */}
+          <div className="absolute inset-0 bg-gradient-to-b from-gray-900/40 via-gray-900/20 to-transparent z-20"></div>
+        </div>
+
+        {/* Hero Content */}
+        <div className="relative z-30 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="text-center space-y-8 sm:space-y-12">
+            {/* Main Headline */}
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
+              Learn Anything.
+              <br />
+              From Anyone.
+              <br />
+              Anywhere.
+            </h1>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white px-8 sm:px-10 py-4 sm:py-5 text-base sm:text-lg font-medium">
+                <Link href="/signup" className="flex items-center gap-2">
+                  Start Learning
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-gray-900 px-8 sm:px-10 py-4 sm:py-5 text-base sm:text-lg font-medium">
+                <Link href="/teacher">Become a Teacher</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  // Default Hero (original design)
   return (
     <section className="mx-auto max-w-7xl py-8 sm:py-12 lg:py-10 px-4 sm:px-6 lg:px-8 bg-gray-900">
       <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center">
