@@ -23,7 +23,7 @@ export default function Hero({ variant = 'default' }: HeroProps) {
               alt="Learning collage"
               fill
               className="object-cover"
-              sizes="90vw"
+              sizes="100vw"
               priority
             />
           </div>
