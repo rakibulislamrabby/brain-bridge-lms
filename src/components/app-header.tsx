@@ -105,7 +105,7 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
           {/* Get Started Button */}
           {!isClient ? (
             <Button asChild className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-900 text-sm font-medium py-2 px-4">
-              <Link href="/signin">Get Started</Link>
+              <Link href="/signin">Sign In</Link>
             </Button>
           ) : user ? (
             <div className="relative" ref={dropdownRef}>
@@ -155,7 +155,7 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
             </div>
           ) : (
             <Button asChild className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-900 text-sm font-medium py-2 px-4">
-              <Link href="/signin">Get Started</Link>
+              <Link href="/signin">Sign In</Link>
             </Button>
           )}
         </div>
@@ -164,7 +164,7 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
         <div className="md:hidden flex items-center gap-3">
           {!isClient ? (
             <Button asChild className="bg-transparent border border-white text-white hover:bg-white hover:text-gray-900 text-sm font-medium py-2 px-3">
-              <Link href="/signin">Get Started</Link>
+              <Link href="/signin">Sign In</Link>
             </Button>
           ) : user ? (
             <div className="relative" ref={dropdownRef}>
@@ -222,7 +222,7 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
             </div>
           ) : (
             <Button asChild className="bg-transparent border border-white text-white hover:bg-white hover:text-gray-900 text-sm font-medium py-2 px-3">
-              <Link href="/signin">Get Started</Link>
+              <Link href="/signin">Sign In </Link>
             </Button>
           )}
           

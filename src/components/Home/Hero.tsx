@@ -13,31 +13,36 @@ export default function Hero({ variant = 'default' }: HeroProps) {
   
   if (isLanding) {
     return (
-      <section className="relative min-h-[600px] sm:min-h-[700px] lg:min-h-[800px] flex items-center justify-center overflow-hidden">
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0 z-0">
-          {/* Hero Background Image */}
-          <div className="relative w-full h-full"> 
-            <Image
-              src="/images/hero/hero-2.png"
-              alt="Learning collage"
-              fill
-              className="object-cover"
-              sizes="100vw"
-              priority
-            />
-          </div>
+      <section className="relative w-full bg-gray-900">
+        {/* Hero Background Image - Full width fit without cropping */}
+        <div className="relative w-full">
+          <Image
+            src="/images/hero/hero-2.png"
+            alt="Learning collage"
+            width={1920}
+            height={1080}
+            className="w-full h-auto brightness-[1.15] contrast-[1.15] saturate-[1.2]"
+            sizes="100vw"
+            priority
+            quality={95}
+            style={{
+              display: 'block',
+              width: '100%',
+              height: 'auto'
+            }}
+          />
           
-          {/* Dark overlay for better text readability */}
-          {/* <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 via-gray-900/70 to-gray-900/60 z-10"></div> */}
+          {/* Subtle overlay for better text readability without dulling colors */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/15 z-10 pointer-events-none"></div>
           
-          {/* Purple gradient overlay in center */}
-          <div className="absolute inset-0 bg-gradient-to-b from-gray-900/40 via-gray-900/20 to-transparent z-20"></div>
+          {/* Vibrant color enhancement overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-600/8 via-transparent to-blue-600/8 z-20 mix-blend-soft-light pointer-events-none"></div>
         </div>
 
-        {/* Hero Content */}
-        <div className="relative z-30 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="text-center space-y-8 sm:space-y-12">
+        {/* Hero Content - Absolute positioned over image */}
+        <div className="absolute inset-0 z-30 flex items-center justify-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div className="text-center space-y-8 sm:space-y-12">
             {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
               Learn Anything.
@@ -49,16 +54,17 @@ export default function Hero({ variant = 'default' }: HeroProps) {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
-              <Button asChild className="bg-purple-800 hover:bg-purple-900 text-white px-8 sm:px-10 py-4 sm:py-5 text-base sm:text-lg font-medium">
+              <Button asChild className="bg-purple-800 hover:bg-purple-900 text-white px-10 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-medium">
                 <Link href="/signup" className="flex items-center gap-2">
                   Start Learning
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-6 h-6" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-gray-900 px-8 sm:px-10 py-4 sm:py-5 text-base sm:text-lg font-medium">
-                <Link href="/teacher">Become a Teacher</Link>
+              <Button asChild variant="outline" className="border-2 border-white/20 text-black bg-white/60 hover:text-gray-900 hover:bg-white/80 px-10 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-medium">
+                <Link href="/teacher">Become a Master</Link>
               </Button>
             </div>
+          </div>
           </div>
         </div>
       </section>
@@ -103,13 +109,13 @@ export default function Hero({ variant = 'default' }: HeroProps) {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 text-left">
-            <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white px-5 sm:px-6 py-3 sm:py-4 text-sm sm:text-base">
+            <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white px-8 sm:px-10 py-4 sm:py-5 text-base sm:text-lg">
               <Link href="/signup" className="flex items-center gap-2">
                 Get Started
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-5 h-5" />
               </Link>
             </Button>
-            <Button asChild variant="outline" className="border-gray-300 text-white px-5 sm:px-6 py-3 sm:py-4 text-sm sm:text-base">
+            <Button asChild variant="outline" className="border-gray-300 text-white px-8 sm:px-10 py-4 sm:py-5 text-base sm:text-lg">
               <Link href="/about">Learn More</Link>
             </Button>
           </div>
