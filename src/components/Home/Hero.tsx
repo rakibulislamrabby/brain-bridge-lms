@@ -49,14 +49,14 @@ export default function Hero({ variant = 'default' }: HeroProps) {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
-              <Button asChild className="bg-purple-800 hover:bg-purple-900 text-white px-8 sm:px-10 py-4 sm:py-5 text-base sm:text-lg font-medium">
+              <Button asChild className="bg-purple-800 hover:bg-purple-900 text-white px-10 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-medium">
                 <Link href="/signup" className="flex items-center gap-2">
                   Start Learning
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-6 h-6" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-gray-900 px-8 sm:px-10 py-4 sm:py-5 text-base sm:text-lg font-medium">
-                <Link href="/teacher">Become a Teacher</Link>
+              <Button asChild variant="outline" className="border-2 border-white/20 text-black bg-white/60 hover:text-gray-900 hover:bg-white/80 px-10 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-medium">
+                <Link href="/teacher">Become a Master</Link>
               </Button>
             </div>
           </div>
@@ -103,13 +103,13 @@ export default function Hero({ variant = 'default' }: HeroProps) {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 text-left">
-            <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white px-5 sm:px-6 py-3 sm:py-4 text-sm sm:text-base">
+            <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white px-8 sm:px-10 py-4 sm:py-5 text-base sm:text-lg">
               <Link href="/signup" className="flex items-center gap-2">
                 Get Started
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-5 h-5" />
               </Link>
             </Button>
-            <Button asChild variant="outline" className="border-gray-300 text-white px-5 sm:px-6 py-3 sm:py-4 text-sm sm:text-base">
+            <Button asChild variant="outline" className="border-gray-300 text-white px-8 sm:px-10 py-4 sm:py-5 text-base sm:text-lg">
               <Link href="/about">Learn More</Link>
             </Button>
           </div>

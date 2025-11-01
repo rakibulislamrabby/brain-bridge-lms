@@ -25,7 +25,7 @@ export default function Home() {
 
     
 
-      <LearningReimagined/>
+      
 
       <PointSystem/>
 
@@ -50,6 +50,7 @@ export default function Home() {
         </div>
       </section> */}
       <Contact/>
+      <LearningReimagined/>
      
     </div>
      {/* Footer */}
