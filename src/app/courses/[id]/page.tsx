@@ -430,7 +430,13 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               <h2 className="text-3xl font-bold text-white mb-8">Related Courses</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {relatedCourses.map((relatedCourse) => (
-                  <CourseCard key={relatedCourse.id} course={relatedCourse} />
+                  <CourseCard 
+                    key={relatedCourse.id} 
+                    course={{
+                      ...relatedCourse,
+                      delivery_method: relatedCourse.delivery_method as 'online' | 'video_call' | 'in_person'
+                    }} 
+                  />
                 ))}
               </div>
             </div>
