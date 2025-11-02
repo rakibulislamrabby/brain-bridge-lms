@@ -27,7 +27,8 @@
         "Certificate of completion",
         "Mobile and desktop access",
         "30-day money-back guarantee"
-      ]
+      ],
+      "delivery_method": "online"
     },
     {
       "id": 2,
@@ -56,7 +57,8 @@
         "Certificate of completion",
         "Source code included",
         "Community support"
-      ]
+      ],
+      "delivery_method": "video_call"
     },
     {
       "id": 3,
@@ -85,7 +87,8 @@
         "Certificate of completion",
         "Marketing templates",
         "Case studies included"
-      ]
+      ],
+      "delivery_method": "online"
     },
     {
       "id": 4,
@@ -114,7 +117,8 @@
         "Certificate of completion",
         "Design files included",
         "Portfolio projects"
-      ]
+      ],
+      "delivery_method": "video_call"
     },
     {
       "id": 5,
@@ -143,7 +147,8 @@
         "Certificate of completion",
         "Lab simulations included",
         "Problem-solving exercises"
-      ]
+      ],
+      "delivery_method": "video_call"
     },
     {
       "id": 6,
@@ -172,7 +177,8 @@
         "Certificate of completion",
         "Practice routines included",
         "Guided meditation sessions"
-      ]
+      ],
+      "delivery_method": "in_person"
     },
     {
       "id": 7,
@@ -201,7 +207,8 @@
         "Certificate of completion",
         "Photo editing presets",
         "Equipment recommendations"
-      ]
+      ],
+      "delivery_method": "in_person"
     },
     {
       "id": 8,
@@ -230,7 +237,8 @@
         "Certificate of completion",
         "Excel templates",
         "Real business case studies"
-      ]
+      ],
+      "delivery_method": "online"
     },
     {
       "id": 9,
@@ -259,7 +267,8 @@
         "Certificate of completion",
         "Sheet music included",
         "Video demonstrations"
-      ]
+      ],
+      "delivery_method": "in_person"
     },
     {
       "id": 10,
@@ -288,7 +297,8 @@
         "Certificate of completion",
         "Design assets included",
         "Portfolio projects"
-      ]
+      ],
+      "delivery_method": "video_call"
     },
     {
       "id": 11,
@@ -317,7 +327,8 @@
         "Certificate of completion",
         "Practice problems included",
         "Step-by-step solutions"
-      ]
+      ],
+      "delivery_method": "video_call"
     },
     {
       "id": 12,
@@ -346,7 +357,8 @@
         "Certificate of completion",
         "Workout plans included",
         "Nutrition guides"
-      ]
+      ],
+      "delivery_method": "in_person"
     },
     {
       "id": 13,
@@ -375,7 +387,8 @@
         "Certificate of completion",
         "Song tabs included",
         "Video demonstrations"
-      ]
+      ],
+      "delivery_method": "in_person"
     },
     {
       "id": 14,
@@ -404,7 +417,8 @@
         "Certificate of completion",
         "Case studies included",
         "Business templates"
-      ]
+      ],
+      "delivery_method": "video_call"
     },
     {
       "id": 15,
@@ -433,7 +447,8 @@
         "Certificate of completion",
         "Art brushes included",
         "Portfolio projects"
-      ]
+      ],
+      "delivery_method": "online"
     },
     {
       "id": 16,
@@ -462,7 +477,8 @@
         "Certificate of completion",
         "Recipe collection",
         "Video demonstrations"
-      ]
+      ],
+      "delivery_method": "in_person"
     }
   ]
 }
