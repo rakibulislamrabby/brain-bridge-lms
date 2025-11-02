@@ -2,7 +2,7 @@ import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Card } from '../ui/card'
-import { Play, Clock, Users, Star } from 'lucide-react'
+import { Play, Clock, Users, Star, MapPin, Video, Globe } from 'lucide-react'
 
 interface Course {
   id: number
@@ -27,6 +27,7 @@ interface Course {
   category: string
   tags: string[]
   features: string[]
+  delivery_method: 'in_person' | 'video_call' | 'online'
 }
 
 interface CourseCardProps {
@@ -47,6 +48,22 @@ export default function CourseCard({ course }: CourseCardProps) {
     }
     return num.toString()
   }
+
+  const getDeliveryMethodInfo = (method: string) => {
+    switch (method) {
+      case 'in_person':
+        return { label: 'In-Person', icon: MapPin, color: 'bg-orange-500', textColor: 'text-orange-100' }
+      case 'video_call':
+        return { label: 'Video Call', icon: Video, color: 'bg-purple-500', textColor: 'text-purple-100' }
+      case 'online':
+        return { label: 'Online', icon: Globe, color: 'bg-blue-500', textColor: 'text-blue-100' }
+      default:
+        return { label: 'Online', icon: Globe, color: 'bg-blue-500', textColor: 'text-blue-100' }
+    }
+  }
+
+  const deliveryInfo = getDeliveryMethodInfo(course.delivery_method)
+  const DeliveryIcon = deliveryInfo.icon
 
   return (
     <Link href={`/courses/${course.id}`}>
@@ -79,7 +96,7 @@ export default function CourseCard({ course }: CourseCardProps) {
         {/* Card Content */}
         <div className="p-4 space-y-3">
           {/* Tags */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded-md flex items-center gap-1">
               <div className="w-3 h-3 bg-white rounded-sm"></div>
               {course.category}
@@ -87,6 +104,10 @@ export default function CourseCard({ course }: CourseCardProps) {
             <span className="px-2 py-1 bg-green-500 text-white text-xs rounded-md flex items-center gap-1">
               <div className="w-3 h-3 bg-white rounded-sm"></div>
               {course.level}
+            </span>
+            <span className={`px-2 py-1 ${deliveryInfo.color} ${deliveryInfo.textColor} text-xs rounded-md flex items-center gap-1`}>
+              <DeliveryIcon className="w-3 h-3" />
+              {deliveryInfo.label}
             </span>
           </div>
 

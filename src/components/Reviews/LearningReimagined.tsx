@@ -7,12 +7,12 @@ export default function LearningReimagined() {
     {
       icon: <Users className="w-6 h-6" />,
       title: "IN-PERSON LESSONS",
-      description: "Connect with local teachers for hands-on learning experiences in your community."
+      description: "Connect with local master for hands-on learning experiences in your community."
     },
     {
       icon: <Video className="w-6 h-6" />,
       title: "LIVE VIDEO SESSIONS",
-      description: "Join one-on-one video lessons with expert teachers from anywhere in the world."
+      description: "Join one-on-one video lessons with expert master from anywhere in the world."
     },
     {
       icon: <BookOpen className="w-6 h-6" />,

@@ -21,7 +21,7 @@ export default function OurFeature() {
               {
                 icon: <Brain className="w-8 h-8" />,
                 title: "AI Matchmaking",
-                description: "Automatically connects students to the most compatible teachers based on skill level and learning goals."
+                description: "Automatically connects students to the most compatible masters based on skill level and learning goals."
               },
               {
                 icon: <Video className="w-8 h-8" />,
@@ -36,12 +36,12 @@ export default function OurFeature() {
               {
                 icon: <TrendingUp className="w-8 h-8" />,
                 title: "Dynamic Pay Algorithm",
-                description: "Automatically adjusts pay according to teacher level, performance, and reviews."
+                description: "Automatically adjusts pay according to master level, performance, and reviews."
               },
               {
                 icon: <Trophy className="w-8 h-8" />,
                 title: "Community Ranking",
-                description: "Highlights top-tier teachers on the homepage and in search results."
+                description: "Highlights top-tier masters on the homepage and in search results."
               },
               {
                 icon: <Smartphone className="w-8 h-8" />,

@@ -81,7 +81,7 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
             <NavigationMenuList>
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
-                  <Link href="/teacher">Teacher</Link>
+                  <Link href="/teacher">Master</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>

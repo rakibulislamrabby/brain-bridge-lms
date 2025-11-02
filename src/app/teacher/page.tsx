@@ -20,10 +20,10 @@ export default function TeacherPage() {
 
             {/* Main Heading */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
-              Teacher Portal
+              Master Portal
             </h1>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-12 leading-relaxed">
-              We&apos;re building an amazing platform for teachers to create, manage, and deliver exceptional learning experiences. 
+              We&apos;re building an amazing platform for masters to create, manage, and deliver exceptional learning experiences. 
               Stay tuned for something incredible!
             </p>
 
