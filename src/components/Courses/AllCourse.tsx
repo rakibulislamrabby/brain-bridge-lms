@@ -53,7 +53,7 @@ export default function AllCourse() {
         <div className="mb-8">
           <div className="text-center mb-4">
             <h3 className="text-xl font-semibold text-white mb-2">Choose Your Learning Style</h3>
-            <p className="text-gray-400">Select how you'd like to learn</p>
+            <p className="text-gray-400">Select how you&apos;d like to learn</p>
           </div>
           <div className="flex flex-wrap justify-center gap-3">
             {deliveryMethods.map((method) => {
