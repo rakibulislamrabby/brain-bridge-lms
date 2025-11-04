@@ -9,19 +9,17 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
 import Footer from "@/components/shared/Footer"
-import { useRegister } from "@/hooks/useAuth"
 import { useRegisterTeacher, useRegisterStudent } from "@/hooks/use-rolebased-auth"
 import { useToast } from "@/components/ui/toast"
 import { GraduationCap, User } from "lucide-react"
 
 export default function SignUp() {
   const router = useRouter()
-  const registerMutation = useRegister()
   const registerTeacherMutation = useRegisterTeacher()
   const registerStudentMutation = useRegisterStudent()
   const { addToast } = useToast()
   
-  const [activeTab, setActiveTab] = useState<'general' | 'student' | 'master'>('general')
+  const [activeTab, setActiveTab] = useState<'student' | 'master'>('student')
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -98,8 +96,14 @@ export default function SignUp() {
       let result
       
       if (activeTab === 'master') {
-        // Register as teacher
-        const { confirmPassword, ...teacherData } = formData
+        // Register as teacher - only send required fields with actual values
+        const teacherData = {
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          password: formData.password,
+          title: formData.title.trim()
+        }
+        console.log('Sending teacher data:', teacherData)
         result = await registerTeacherMutation.mutateAsync(teacherData)
         addToast({
           type: "success",
@@ -107,24 +111,19 @@ export default function SignUp() {
           description: "Your master account has been created. Redirecting...",
           duration: 3000
         });
-      } else if (activeTab === 'student') {
-        // Register as student
-        const { confirmPassword, title, ...studentData } = formData
+      } else {
+        // Register as student - only send required fields with actual values
+        const studentData = {
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          password: formData.password
+        }
+        console.log('Sending student data:', studentData)
         result = await registerStudentMutation.mutateAsync(studentData)
         addToast({
           type: "success",
           title: "Student Account Created!",
           description: "Your student account has been created. Redirecting...",
-          duration: 3000
-        });
-      } else {
-        // General registration (existing flow)
-        const { confirmPassword, title, ...registerData } = formData
-        result = await registerMutation.mutateAsync(registerData)
-        addToast({
-          type: "success",
-          title: "Account Created Successfully!",
-          description: "Your account has been created. Redirecting to sign in...",
           duration: 3000
         });
       }
@@ -170,21 +169,6 @@ export default function SignUp() {
               
               {/* Tabs */}
               <div className="flex gap-2 mt-4 border-b border-gray-700">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab('general')
-                    setFormData({ name: "", email: "", password: "", confirmPassword: "", title: "" })
-                    setErrors({})
-                  }}
-                  className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
-                    activeTab === 'general'
-                      ? 'text-orange-500 border-b-2 border-orange-500'
-                      : 'text-gray-400 hover:text-gray-300'
-                  }`}
-                >
-                  General
-                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -257,6 +241,26 @@ export default function SignUp() {
                     <p className="text-sm text-red-500">{errors.email}</p>
                   )}
                 </div>
+                {/* Title field for Master/Teacher */}
+                {activeTab === 'master' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="title" className="text-gray-300">
+                      Title <span className="text-red-400">*</span>
+                    </Label>
+                    <Input
+                      id="title"
+                      name="title"
+                      type="text"
+                      placeholder="e.g., Math Teacher"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                      className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.title ? "border-red-500" : ""}`}
+                    />
+                    {errors.title && (
+                      <p className="text-sm text-red-500">{errors.title}</p>
+                    )}
+                  </div>
+                )}  
 
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-gray-300">Password</Label>
@@ -290,43 +294,21 @@ export default function SignUp() {
                   )}
                 </div>
 
-                {/* Title field for Master/Teacher */}
-                {activeTab === 'master' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="title" className="text-gray-300">
-                      Title <span className="text-red-400">*</span>
-                    </Label>
-                    <Input
-                      id="title"
-                      name="title"
-                      type="text"
-                      placeholder="e.g., Math Teacher"
-                      value={formData.title}
-                      onChange={handleInputChange}
-                      className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.title ? "border-red-500" : ""}`}
-                    />
-                    {errors.title && (
-                      <p className="text-sm text-red-500">{errors.title}</p>
-                    )}
-                  </div>
-                )}
+                
 
                 <Button 
                   type="submit" 
                   className="w-full bg-orange-600 hover:bg-orange-700 text-white cursor-pointer transition-colors duration-200"
                   disabled={
-                    registerMutation.isPending || 
                     registerTeacherMutation.isPending || 
                     registerStudentMutation.isPending
                   }
                 >
-                  {(registerMutation.isPending || registerTeacherMutation.isPending || registerStudentMutation.isPending) 
+                  {(registerTeacherMutation.isPending || registerStudentMutation.isPending) 
                     ? "Creating Account..." 
                     : activeTab === 'master' 
                       ? "Become a Master" 
-                      : activeTab === 'student'
-                        ? "Become a Student"
-                        : "Create Account"}
+                      : "Become a Student"}
                 </Button>
               </form>
 

@@ -24,39 +24,74 @@ export interface AuthResponse {
 
 // API function to register a teacher
 const registerTeacher = async (data: RegisterTeacherRequest): Promise<AuthResponse> => {
-  const response = await fetch(`${API_BASE_URL}teachers`, {
+  // Clean data - remove any empty strings or undefined values
+  const cleanData = {
+    name: data.name.trim(),
+    email: data.email.trim(),
+    password: data.password,
+    title: data.title.trim()
+  };
+  
+  // Validate required fields
+  if (!cleanData.name || !cleanData.email || !cleanData.password || !cleanData.title) {
+    throw new Error('All fields are required for teacher registration');
+  }
+  
+  const url = `${API_BASE_URL}teachers`;
+  console.log('Registering as Master/Teacher - POST:', { url, data: cleanData });
+  
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(cleanData),
   });
 
   const result = await response.json();
 
   if (!response.ok) {
+    console.error('Teacher registration failed:', result);
     throw new Error(result.message || result.error || 'Teacher registration failed');
   }
 
+  console.log('Teacher registration successful:', result);
   return result;
 };
 
 // API function to register a student
 const registerStudent = async (data: RegisterStudentRequest): Promise<AuthResponse> => {
-  const response = await fetch(`${API_BASE_URL}students`, {
+  // Clean data - remove any empty strings or undefined values
+  const cleanData = {
+    name: data.name.trim(),
+    email: data.email.trim(),
+    password: data.password
+  };
+  
+  // Validate required fields
+  if (!cleanData.name || !cleanData.email || !cleanData.password) {
+    throw new Error('All fields are required for student registration');
+  }
+  
+  const url = `${API_BASE_URL}students`;
+  console.log('Registering as Student - POST:', { url, data: cleanData });
+  
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(cleanData),
   });
 
   const result = await response.json();
 
   if (!response.ok) {
+    console.error('Student registration failed:', result);
     throw new Error(result.message || result.error || 'Student registration failed');
   }
 
+  console.log('Student registration successful:', result);
   return result;
 };
 

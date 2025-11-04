@@ -10,13 +10,11 @@ import { AppHeader } from "@/components/app-header"
 import Footer from "@/components/shared/Footer"
 import { useLogin } from "@/hooks/useAuth"
 import { useToast } from "@/components/ui/toast"
-import { GraduationCap, User } from "lucide-react"
 
 export default function SignIn() {
   const loginMutation = useLogin()
   const { addToast } = useToast()
   
-  const [activeTab, setActiveTab] = useState<'general' | 'student' | 'master'>('general')
   const [formData, setFormData] = useState({
     email: "",
     password: ""
@@ -115,49 +113,6 @@ export default function SignIn() {
               <CardDescription className="text-gray-300">
                 Sign in to your Brain Bridge account
               </CardDescription>
-              
-              {/* Tabs */}
-              <div className="flex gap-2 mt-4 border-b border-gray-700">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('general')}
-                  className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
-                    activeTab === 'general'
-                      ? 'text-orange-500 border-b-2 border-orange-500'
-                      : 'text-gray-400 hover:text-gray-300'
-                  }`}
-                >
-                  General
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('student')}
-                  className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
-                    activeTab === 'student'
-                      ? 'text-orange-500 border-b-2 border-orange-500'
-                      : 'text-gray-400 hover:text-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <User className="h-4 w-4" />
-                    Student
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('master')}
-                  className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
-                    activeTab === 'master'
-                      ? 'text-orange-500 border-b-2 border-orange-500'
-                      : 'text-gray-400 hover:text-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <GraduationCap className="h-4 w-4" />
-                    Master
-                  </div>
-                </button>
-              </div>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -206,13 +161,7 @@ export default function SignIn() {
                   className="w-full bg-orange-600 hover:bg-orange-700 text-white cursor-pointer transition-colors duration-200"
                   disabled={loginMutation.isPending}
                 >
-                  {loginMutation.isPending 
-                    ? "Signing In..." 
-                    : activeTab === 'master'
-                      ? "Sign In as Master"
-                      : activeTab === 'student'
-                        ? "Sign In as Student"
-                        : "Sign In"}
+                  {loginMutation.isPending ? "Signing In..." : "Sign In"}
                 </Button>
               </form>
 
