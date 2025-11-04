@@ -10,18 +10,24 @@ import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
 import Footer from "@/components/shared/Footer"
 import { useRegister } from "@/hooks/useAuth"
+import { useRegisterTeacher, useRegisterStudent } from "@/hooks/use-rolebased-auth"
 import { useToast } from "@/components/ui/toast"
+import { GraduationCap, User } from "lucide-react"
 
 export default function SignUp() {
   const router = useRouter()
   const registerMutation = useRegister()
+  const registerTeacherMutation = useRegisterTeacher()
+  const registerStudentMutation = useRegisterStudent()
   const { addToast } = useToast()
   
+  const [activeTab, setActiveTab] = useState<'general' | 'student' | 'master'>('general')
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    title: "" // For master/teacher
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -66,6 +72,11 @@ export default function SignUp() {
       newErrors.confirmPassword = "Passwords do not match"
     }
 
+    // Validate title for master/teacher
+    if (activeTab === 'master' && !formData.title.trim()) {
+      newErrors.title = "Title is required"
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -74,26 +85,59 @@ export default function SignUp() {
     e.preventDefault()
     
     if (!validateForm()) {
+      addToast({
+        type: "error",
+        title: "Validation Error",
+        description: "Please fill in all required fields correctly.",
+        duration: 3000
+      });
       return
     }
 
     try {
-      // Remove confirmPassword from the data sent to API
-      const { confirmPassword, ...registerData } = formData
-      const result = await registerMutation.mutateAsync(registerData)
-      console.log('Registration completed successfully:', result);
+      let result
       
-      // Show success toast immediately after successful registration
-      addToast({
-        type: "success",
-        title: "Account Created Successfully!",
-        description: "Your account has been created. Redirecting to sign in...",
-        duration: 3000
-      });
+      if (activeTab === 'master') {
+        // Register as teacher
+        const { confirmPassword, ...teacherData } = formData
+        result = await registerTeacherMutation.mutateAsync(teacherData)
+        addToast({
+          type: "success",
+          title: "Master Account Created!",
+          description: "Your master account has been created. Redirecting...",
+          duration: 3000
+        });
+      } else if (activeTab === 'student') {
+        // Register as student
+        const { confirmPassword, title, ...studentData } = formData
+        result = await registerStudentMutation.mutateAsync(studentData)
+        addToast({
+          type: "success",
+          title: "Student Account Created!",
+          description: "Your student account has been created. Redirecting...",
+          duration: 3000
+        });
+      } else {
+        // General registration (existing flow)
+        const { confirmPassword, title, ...registerData } = formData
+        result = await registerMutation.mutateAsync(registerData)
+        addToast({
+          type: "success",
+          title: "Account Created Successfully!",
+          description: "Your account has been created. Redirecting to sign in...",
+          duration: 3000
+        });
+      }
+      
+      console.log('Registration completed successfully:', result);
       
       // Redirect after showing toast
       setTimeout(() => {
-        router.push('/signin')
+        if (result?.access_token) {
+          window.location.href = '/'
+        } else {
+          router.push('/signin')
+        }
       }, 2000);
       
     } catch (error) {
@@ -123,6 +167,61 @@ export default function SignUp() {
               <CardDescription className="text-gray-300">
                 Join Brain Bridge to start learning and teaching
               </CardDescription>
+              
+              {/* Tabs */}
+              <div className="flex gap-2 mt-4 border-b border-gray-700">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('general')
+                    setFormData({ name: "", email: "", password: "", confirmPassword: "", title: "" })
+                    setErrors({})
+                  }}
+                  className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
+                    activeTab === 'general'
+                      ? 'text-orange-500 border-b-2 border-orange-500'
+                      : 'text-gray-400 hover:text-gray-300'
+                  }`}
+                >
+                  General
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('student')
+                    setFormData({ name: "", email: "", password: "", confirmPassword: "", title: "" })
+                    setErrors({})
+                  }}
+                  className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
+                    activeTab === 'student'
+                      ? 'text-orange-500 border-b-2 border-orange-500'
+                      : 'text-gray-400 hover:text-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <User className="h-4 w-4" />
+                    Become Student
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('master')
+                    setFormData({ name: "", email: "", password: "", confirmPassword: "", title: "" })
+                    setErrors({})
+                  }}
+                  className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
+                    activeTab === 'master'
+                      ? 'text-orange-500 border-b-2 border-orange-500'
+                      : 'text-gray-400 hover:text-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <GraduationCap className="h-4 w-4" />
+                    Become Master
+                  </div>
+                </button>
+              </div>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -191,14 +290,43 @@ export default function SignUp() {
                   )}
                 </div>
 
-                
+                {/* Title field for Master/Teacher */}
+                {activeTab === 'master' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="title" className="text-gray-300">
+                      Title <span className="text-red-400">*</span>
+                    </Label>
+                    <Input
+                      id="title"
+                      name="title"
+                      type="text"
+                      placeholder="e.g., Math Teacher"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                      className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.title ? "border-red-500" : ""}`}
+                    />
+                    {errors.title && (
+                      <p className="text-sm text-red-500">{errors.title}</p>
+                    )}
+                  </div>
+                )}
 
                 <Button 
                   type="submit" 
                   className="w-full bg-orange-600 hover:bg-orange-700 text-white cursor-pointer transition-colors duration-200"
-                  disabled={registerMutation.isPending}
+                  disabled={
+                    registerMutation.isPending || 
+                    registerTeacherMutation.isPending || 
+                    registerStudentMutation.isPending
+                  }
                 >
-                  {registerMutation.isPending ? "Creating Account..." : "Create Account"}
+                  {(registerMutation.isPending || registerTeacherMutation.isPending || registerStudentMutation.isPending) 
+                    ? "Creating Account..." 
+                    : activeTab === 'master' 
+                      ? "Become a Master" 
+                      : activeTab === 'student'
+                        ? "Become a Student"
+                        : "Create Account"}
                 </Button>
               </form>
 
