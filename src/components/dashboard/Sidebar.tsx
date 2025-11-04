@@ -16,7 +16,8 @@ import {
   FileText,
   BarChart3,
   MessageSquare,
-  Video
+  Video,
+  FolderOpen
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -47,12 +48,19 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         { title: 'Reviews', href: '/dashboard/course/reviews', icon: MessageSquare }
       ]
     },
+    {
+      title: 'Subject',
+      icon: FolderOpen,
+      href: '/dashboard/subject',
+      items: []
+    },
     // {
     //   title: 'Teacher',
     //   icon: Users,
     //   href: '/dashboard/teacher',
     //   items: [
-    //     { title: 'All Teachers', href: '/dashboard/teacher/all', icon: Users },
+    //     { title: 'All Teachers', href: '/dashboard/teacher/all', icon: Users }, 
+    
     //     { title: 'Teacher Levels', href: '/dashboard/teacher/levels', icon: Award },
     //     { title: 'Performance', href: '/dashboard/teacher/performance', icon: BarChart3 },
     //     { title: 'Approvals', href: '/dashboard/teacher/approvals', icon: UserCheck },
