@@ -167,22 +167,22 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="py-2">
-                    <button
+                    {/* <button
                       onClick={handleProfileClick}
                       className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-700 w-full text-left transition-colors"
                     >
                       <User className="w-4 h-4" /> Profile
-                    </button>
+                    </button> */}
                     <button
                       onClick={handleDashboardClick}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-700 w-full text-left transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-700 w-full text-left transition-colors cursor-pointer"
                     >
                       <LayoutDashboard className="w-4 h-4" /> Dashboard
                     </button>
                     <hr className="my-1 border-gray-700" />
                     <button
                       onClick={handleLogout}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 w-full text-left transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 w-full text-left transition-colors cursor-pointer"
                     >
                       <LogOut className="w-4 h-4" /> Logout
                     </button>
