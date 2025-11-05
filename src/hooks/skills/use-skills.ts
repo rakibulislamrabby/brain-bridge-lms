@@ -46,6 +46,11 @@ export interface CreateSkillRequest {
   subject_id: number;
 }
 
+export interface UpdateSkillRequest {
+  name: string;
+  subject_id: number;
+}
+
 export interface SkillResponse {
   id: number;
   name: string;
@@ -170,6 +175,52 @@ export const useCreateSkill = () => {
     },
     onError: (error) => {
       console.error('Create skill error:', error);
+    },
+  });
+};
+
+// API function to update a skill
+const updateSkill = async ({ id, data }: { id: number; data: UpdateSkillRequest }): Promise<SkillResponse> => {
+  const url = `${API_BASE_URL}skills/${id}`;
+  const headers = getAuthHeaders();
+  
+  console.log('Updating skill:', { url, id, data });
+
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: headers,
+    body: JSON.stringify(data),
+  });
+
+  let result;
+  try {
+    result = await response.json();
+  } catch (error) {
+    throw new Error('Invalid response from server');
+  }
+
+  if (!response.ok) {
+    const errorMessage = result?.message || result?.error || `Failed to update skill (${response.status})`;
+    console.error('Update skill error:', errorMessage);
+    throw new Error(errorMessage);
+  }
+
+  console.log('Skill updated successfully:', result);
+  return result;
+};
+
+// Custom hook to update a skill
+export const useUpdateSkill = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateSkill,
+    onSuccess: () => {
+      // Invalidate and refetch skills list after successful update
+      queryClient.invalidateQueries({ queryKey: ['skills'] });
+    },
+    onError: (error) => {
+      console.error('Update skill error:', error);
     },
   });
 };

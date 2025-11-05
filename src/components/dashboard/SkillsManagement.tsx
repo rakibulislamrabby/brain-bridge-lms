@@ -20,9 +20,10 @@ import {
   XCircle,
   Loader2,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Edit
 } from 'lucide-react'
-import { useCreateSkill, useSkills, useDeleteSkill } from '@/hooks/skills/use-skills'
+import { useCreateSkill, useSkills, useDeleteSkill, useUpdateSkill } from '@/hooks/skills/use-skills'
 import { useSubjects } from '@/hooks/subject/use-subject'
 
 export default function SkillsManagement() {
@@ -30,8 +31,14 @@ export default function SkillsManagement() {
     name: '',
     subject_id: ''
   })
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    subject_id: ''
+  })
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [skillToDelete, setSkillToDelete] = useState<{ id: number; name: string } | null>(null)
+  const [skillToEdit, setSkillToEdit] = useState<{ id: number; name: string; subject_id: number } | null>(null)
   const { addToast } = useToast()
 
   // React Query hooks
@@ -39,6 +46,7 @@ export default function SkillsManagement() {
   const { data: subjects = [] } = useSubjects()
   const createSkillMutation = useCreateSkill()
   const deleteSkillMutation = useDeleteSkill()
+  const updateSkillMutation = useUpdateSkill()
 
   // Show error toast when query fails
   useEffect(() => {
@@ -89,6 +97,61 @@ export default function SkillsManagement() {
       addToast({
         type: 'error',
         title: 'Error Creating Skill',
+        description: errorMessage,
+        duration: 5000
+      })
+    }
+  }
+
+  const handleEditClick = (skill: { id: number; name: string; subject_id: number }) => {
+    setSkillToEdit(skill)
+    setEditFormData({
+      name: skill.name,
+      subject_id: skill.subject_id.toString()
+    })
+    setEditDialogOpen(true)
+  }
+
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!skillToEdit) return
+
+    try {
+      const payload = {
+        name: editFormData.name.trim(),
+        subject_id: parseInt(editFormData.subject_id)
+      }
+
+      await updateSkillMutation.mutateAsync({
+        id: skillToEdit.id,
+        data: payload
+      })
+      
+      addToast({
+        type: 'success',
+        title: 'Success!',
+        description: `Skill "${editFormData.name}" updated successfully!`,
+        duration: 3000
+      })
+      
+      setEditDialogOpen(false)
+      setSkillToEdit(null)
+      setEditFormData({ name: '', subject_id: '' })
+    } catch (err) {
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : 'An error occurred while updating the skill'
+      addToast({
+        type: 'error',
+        title: 'Error Updating Skill',
         description: errorMessage,
         duration: 5000
       })
@@ -280,22 +343,34 @@ export default function SkillsManagement() {
                         </td>
                       )}
                       <td className="py-3 px-4">
-                        <Button
-                          onClick={() => handleDeleteClick(skill.id, skill.name)}
-                          disabled={deleteSkillMutation.isPending}
-                          variant="destructive"
-                          size="sm"
-                          className="bg-red-800 hover:bg-red-900 text-white cursor-pointer"
-                        >
-                          {deleteSkillMutation.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <>
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Delete
-                            </>
-                          )}
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={() => handleEditClick(skill)}
+                            disabled={updateSkillMutation.isPending || deleteSkillMutation.isPending}
+                            variant="outline"
+                            size="sm"
+                            className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white cursor-pointer"
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteClick(skill.id, skill.name)}
+                            disabled={deleteSkillMutation.isPending || updateSkillMutation.isPending}
+                            variant="destructive"
+                            size="sm"
+                            className="bg-red-800 hover:bg-red-900 text-white cursor-pointer"
+                          >
+                            {deleteSkillMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Delete
+                              </>
+                            )}
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -305,6 +380,91 @@ export default function SkillsManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Skill Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="bg-gray-800 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Edit className="h-5 w-5 text-orange-500" />
+              Edit Skill
+            </DialogTitle>
+            <DialogDescription className="text-gray-400 pt-2">
+              Update the skill information below
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit}>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name" className="text-sm font-medium text-gray-300">
+                  Skill Name <span className="text-red-400">*</span>
+                </Label>
+                <Input
+                  id="edit-name"
+                  name="name"
+                  value={editFormData.name}
+                  onChange={handleEditInputChange}
+                  placeholder="e.g., Problem Solving"
+                  required
+                  className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-subject_id" className="text-sm font-medium text-gray-300">
+                  Subject <span className="text-red-400">*</span>
+                </Label>
+                <select
+                  id="edit-subject_id"
+                  name="subject_id"
+                  value={editFormData.subject_id}
+                  onChange={handleEditInputChange}
+                  required
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value="">Select a subject</option>
+                  {subjects.map((subject) => (
+                    <option key={subject.id} value={subject.id}>
+                      {subject.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <DialogFooter className="gap-5 space-x-4 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setEditDialogOpen(false)
+                  setSkillToEdit(null)
+                  setEditFormData({ name: '', subject_id: '' })
+                }}
+                className="border-gray-600 text-gray-300 hover:bg-gray-700 cursor-pointer"
+                disabled={updateSkillMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={updateSkillMutation.isPending || !editFormData.name.trim() || !editFormData.subject_id}
+                className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
+              >
+                {updateSkillMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Update Skill
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

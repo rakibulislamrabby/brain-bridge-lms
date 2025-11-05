@@ -20,23 +20,30 @@ import {
   XCircle,
   Loader2,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Edit
 } from 'lucide-react'
-import { useCreateSubject, useSubjects, useDeleteSubject } from '@/hooks/subject/use-subject'
+import { useCreateSubject, useSubjects, useDeleteSubject, useUpdateSubject } from '@/hooks/subject/use-subject'
 
 export default function SubjectManagement() {
   const [formData, setFormData] = useState({
     name: '',
     parent_id: ''
   })
+  const [editFormData, setEditFormData] = useState({
+    name: ''
+  })
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [subjectToDelete, setSubjectToDelete] = useState<{ id: number; name: string } | null>(null)
+  const [subjectToEdit, setSubjectToEdit] = useState<{ id: number; name: string; parent_id: number | null } | null>(null)
   const { addToast } = useToast()
 
   // React Query hooks
   const { data: subjects = [], isLoading: loading, error: queryError } = useSubjects()
   const createSubjectMutation = useCreateSubject()
   const deleteSubjectMutation = useDeleteSubject()
+  const updateSubjectMutation = useUpdateSubject()
 
   // Show error toast when query fails
   useEffect(() => {
@@ -87,6 +94,60 @@ export default function SubjectManagement() {
       addToast({
         type: 'error',
         title: 'Error Creating Subject',
+        description: errorMessage,
+        duration: 5000
+      })
+    }
+  }
+
+  const handleEditClick = (subject: { id: number; name: string; parent_id: number | null }) => {
+    setSubjectToEdit(subject)
+    setEditFormData({
+      name: subject.name
+    })
+    setEditDialogOpen(true)
+  }
+
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!subjectToEdit) return
+
+    try {
+      const payload = {
+        name: editFormData.name.trim(),
+        parent_id: subjectToEdit.parent_id // Keep existing parent_id
+      }
+
+      await updateSubjectMutation.mutateAsync({
+        id: subjectToEdit.id,
+        data: payload
+      })
+      
+      addToast({
+        type: 'success',
+        title: 'Success!',
+        description: `Subject "${editFormData.name}" updated successfully!`,
+        duration: 3000
+      })
+      
+      setEditDialogOpen(false)
+      setSubjectToEdit(null)
+      setEditFormData({ name: '' })
+    } catch (err) {
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : 'An error occurred while updating the subject'
+      addToast({
+        type: 'error',
+        title: 'Error Updating Subject',
         description: errorMessage,
         duration: 5000
       })
@@ -255,22 +316,34 @@ export default function SubjectManagement() {
                           </td>
                         )}
                         <td className="py-3 px-4">
-                          <Button
-                            onClick={() => handleDeleteClick(subject.id, subject.name)}
-                            disabled={deleteSubjectMutation.isPending}
-                            variant="destructive"
-                            size="sm"
-                            className="bg-red-800 hover:bg-red-900 text-white cursor-pointer"
-                          >
-                            {deleteSubjectMutation.isPending ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                Delete
-                              </>
-                            )}
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              onClick={() => handleEditClick(subject)}
+                              disabled={updateSubjectMutation.isPending || deleteSubjectMutation.isPending}
+                              variant="outline"
+                              size="sm"
+                              className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white cursor-pointer"
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                            <Button
+                              onClick={() => handleDeleteClick(subject.id, subject.name)}
+                              disabled={deleteSubjectMutation.isPending || updateSubjectMutation.isPending}
+                              variant="destructive"
+                              size="sm"
+                              className="bg-red-800 hover:bg-red-900 text-white cursor-pointer"
+                            >
+                              {deleteSubjectMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Delete
+                                </>
+                              )}
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     )
@@ -281,6 +354,71 @@ export default function SubjectManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Subject Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="bg-gray-800 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Edit className="h-5 w-5 text-orange-500" />
+              Edit Subject
+            </DialogTitle>
+            <DialogDescription className="text-gray-400 pt-2">
+              Update the subject information below
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit}>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name" className="text-sm font-medium text-gray-300">
+                  Subject Name <span className="text-red-400">*</span>
+                </Label>
+                <Input
+                  id="edit-name"
+                  name="name"
+                  value={editFormData.name}
+                  onChange={handleEditInputChange}
+                  placeholder="e.g., Mathematics"
+                  required
+                  className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500"
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-5 space-x-4 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setEditDialogOpen(false)
+                  setSubjectToEdit(null)
+                  setEditFormData({ name: '' })
+                }}
+                className="border-gray-600 text-gray-300 hover:bg-gray-700 cursor-pointer"
+                disabled={updateSubjectMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={updateSubjectMutation.isPending || !editFormData.name.trim()}
+                className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
+              >
+                {updateSubjectMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Update Subject
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

@@ -35,6 +35,11 @@ export interface CreateSubjectRequest {
   parent_id: number | null;
 }
 
+export interface UpdateSubjectRequest {
+  name: string;
+  parent_id: number | null;
+}
+
 export interface SubjectResponse {
   id: number;
   name: string;
@@ -162,6 +167,52 @@ const deleteSubject = async (id: number): Promise<void> => {
     const errorMessage = result?.message || result?.error || `Failed to delete subject (${response.status})`;
     throw new Error(errorMessage);
   }
+};
+
+// API function to update a subject
+const updateSubject = async ({ id, data }: { id: number; data: UpdateSubjectRequest }): Promise<SubjectResponse> => {
+  const url = `${API_BASE_URL}subjects/${id}`;
+  const headers = getAuthHeaders();
+  
+  console.log('Updating subject:', { url, id, data });
+
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: headers,
+    body: JSON.stringify(data),
+  });
+
+  let result;
+  try {
+    result = await response.json();
+  } catch (error) {
+    throw new Error('Invalid response from server');
+  }
+
+  if (!response.ok) {
+    const errorMessage = result?.message || result?.error || `Failed to update subject (${response.status})`;
+    console.error('Update subject error:', errorMessage);
+    throw new Error(errorMessage);
+  }
+
+  console.log('Subject updated successfully:', result);
+  return result;
+};
+
+// Custom hook to update a subject
+export const useUpdateSubject = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateSubject,
+    onSuccess: () => {
+      // Invalidate and refetch subjects list after successful update
+      queryClient.invalidateQueries({ queryKey: ['subjects'] });
+    },
+    onError: (error) => {
+      console.error('Update subject error:', error);
+    },
+  });
 };
 
 // Custom hook to delete a subject
