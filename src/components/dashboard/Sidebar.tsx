@@ -18,7 +18,8 @@ import {
   MessageSquare,
   Video,
   FolderOpen,
-  Target
+  Target,
+  Users
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -74,6 +75,12 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     //     { title: 'Earnings', href: '/dashboard/teacher/earnings', icon: Award }
     //   ]
     // },
+    {
+      title: 'User List',
+      icon: Users,
+      href: '/dashboard/user-list',
+      items: []
+    },
     {
       title: 'Settings',
       icon: Settings,
