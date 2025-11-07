@@ -1,7 +1,17 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_MAIN_BASE_URL || 'http://192.168.1.108:8000/api/';
+const API_BASE_URL = process.env.NEXT_PUBLIC_MAIN_BASE_URL || '';
 
+const joinUrl = (path: string) => {
+  const trimmedPath = path.startsWith('/') ? path.slice(1) : path;
+  if (!API_BASE_URL) {
+    return `/${trimmedPath}`;
+  }
+  const base = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+  return `${base}/${trimmedPath}`;
+};
+
+// Helper functions
 const getAuthToken = (): string | null => {
   if (typeof window !== 'undefined') {
     return localStorage.getItem('auth_token');
@@ -95,7 +105,7 @@ const normalizeCourseArray = (result: any): CourseResponse[] => {
 };
 
 const fetchCourses = async (): Promise<CourseResponse[]> => {
-  const url = `${API_BASE_URL}courses`;
+  const url = joinUrl('courses');
   const headers = getAuthHeaders();
 
   console.log('Fetching courses from:', url);
@@ -126,10 +136,57 @@ const fetchCourses = async (): Promise<CourseResponse[]> => {
   }
 };
 
+const deleteCourse = async (id: number): Promise<void> => {
+  const url = joinUrl(`courses/${id}`);
+  const headers = {
+    ...getAuthHeaders(),
+    Accept: 'application/json',
+  };
+
+  console.log('Deleting course:', id, url);
+
+  try {
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers,
+    });
+
+    if (!response.ok) {
+      let result: any = null;
+      try {
+        const text = await response.text();
+        result = text ? JSON.parse(text) : null;
+      } catch (parseError) {
+        // ignore parse error, use generic message below
+      }
+
+      const errorMessage = result?.message || result?.error || `Failed to delete course (${response.status})`;
+      throw new Error(errorMessage);
+    }
+  } catch (error) {
+    console.error('Delete course error:', error); 
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Network error: Failed to delete course');
+  }
+};
+
 export const useCourses = () => {
   return useQuery({
     queryKey: ['courses'],
     queryFn: fetchCourses,
     staleTime: 60 * 1000,
+  });
+};
+
+export const useDeleteCourse = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteCourse,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+    },
   });
 };

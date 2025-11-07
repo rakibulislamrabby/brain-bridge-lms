@@ -16,9 +16,12 @@ import {
   Users,
   Star,
   Layers,
-  Film
+  Film,
+  Trash2
 } from 'lucide-react'
-import { useCourses } from '@/hooks/course/use-courses'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useCourses, useDeleteCourse } from '@/hooks/course/use-courses'
+import { useToast } from '@/components/ui/toast'
 
 const getStatus = (course: any) => {
   if (course.status) {
@@ -103,6 +106,11 @@ export default function CourseManagement() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterSubject, setFilterSubject] = useState('all')
   const { data: courses = [], isLoading: loading, error } = useCourses()
+  const deleteCourseMutation = useDeleteCourse()
+  const { addToast } = useToast()
+  const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [courseToDelete, setCourseToDelete] = useState<{ id: number; title: string } | null>(null)
 
   const subjectOptions = useMemo(() => {
     const subjects = new Set<string>()
@@ -134,6 +142,34 @@ export default function CourseManagement() {
       return matchesSubject && (titleMatch || descriptionMatch || subjectMatch || teacherMatch)
     })
   }, [courses, searchTerm, filterSubject])
+
+  const handleDeleteCourse = async () => {
+    if (!courseToDelete) return
+
+    const { id, title } = courseToDelete
+    const label = title?.trim() ? title : 'this course'
+
+    setDeletingId(id)
+
+    try {
+      await deleteCourseMutation.mutateAsync(id)
+      addToast({
+        title: 'Course deleted',
+        description: `Course "${label}" has been removed.`,
+        type: 'success',
+      })
+      setDeleteDialogOpen(false)
+      setCourseToDelete(null)
+    } catch (error) {
+      addToast({
+        title: 'Error deleting course',
+        description: error instanceof Error ? error.message : 'Failed to delete course.',
+        type: 'error',
+      })
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const stats = useMemo(() => {
     if (!courses.length) {
@@ -296,17 +332,17 @@ export default function CourseManagement() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
+              <table className="w-full min-w-[1100px] border-collapse">
                 <thead className="bg-gray-900/60">
                   <tr>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Course</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Title</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Subject</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Teacher</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Modules</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Videos</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Price</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Created</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Created At</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -345,6 +381,27 @@ export default function CourseManagement() {
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-300">{priceLabel}</td>
                         <td className="py-3 px-4 text-sm text-gray-300">{formatDate(course.created_at)}</td>
+                        <td className="py-3 px-4 text-sm text-gray-300">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-red-700 text-red-400 hover:bg-red-900/30 cursor-pointer"
+                            onClick={() => {
+                              setCourseToDelete({ id: course.id, title: course.title })
+                              setDeleteDialogOpen(true)
+                            }}
+                            disabled={deleteCourseMutation.isPending && deletingId === course.id}
+                          >
+                            {deleteCourseMutation.isPending && deletingId === course.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </>
+                            )}
+                          </Button>
+                        </td>
                       </tr>
                     )
                   })}
@@ -354,6 +411,53 @@ export default function CourseManagement() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setDeleteDialogOpen(false)
+          setCourseToDelete(null)
+        } else {
+          setDeleteDialogOpen(true)
+        }
+      }}>
+        <DialogContent className="bg-gray-800 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-white">Delete Course</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Are you sure you want to delete
+              {courseToDelete?.title ? ` "${courseToDelete.title}"` : ' this course'}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-end sm:space-x-3 gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false)
+                setCourseToDelete(null)
+              }}
+              className="border-gray-600 text-gray-300 hover:bg-gray-700 cursor-pointer"
+              disabled={deleteCourseMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteCourse}
+              className="bg-red-800 hover:bg-red-900 text-white cursor-pointer"
+              disabled={deleteCourseMutation.isPending}
+            >
+              {deleteCourseMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
