@@ -44,7 +44,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       href: '/dashboard/course',
       items: [
         { title: 'All Courses', href: '/dashboard/course', icon: BookOpen },
-        { title: 'Categories', href: '/dashboard/course/categories', icon: FileText },
+        { title: 'Add Course', href: '/dashboard/course/add-course', icon: FileText },
         { title: 'Content', href: '/dashboard/course/content', icon: Video },
         { title: 'Analytics', href: '/dashboard/course/analytics', icon: BarChart3 },
         { title: 'Reviews', href: '/dashboard/course/reviews', icon: MessageSquare }
