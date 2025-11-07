@@ -12,9 +12,7 @@ const getAuthToken = (): string | null => {
 
 // Helper function to get auth headers
 const getAuthHeaders = (): Record<string, string> => {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  const headers: Record<string, string> = {};
   
   const token = getAuthToken();
   if (token) {
@@ -167,6 +165,9 @@ const fetchMe = async (): Promise<UserProfile> => {
     return userProfile;
   } catch (error) {
     console.error('Fetch profile error:', error);
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('Unable to reach the Brain Bridge API. Please verify your network connection and API base URL.');
+    }
     if (error instanceof Error) {
       throw error;
     }

@@ -147,7 +147,7 @@ export default function DashboardOverview() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-white">Recent Activity</CardTitle>
+            <CardTitle className="text-white pt-5">Recent Activity</CardTitle>
             <CardDescription className="text-gray-400">Latest platform activities</CardDescription>
           </CardHeader>
           <CardContent>
@@ -177,7 +177,7 @@ export default function DashboardOverview() {
 
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-white">Quick Actions</CardTitle>
+            <CardTitle className="text-white pt-5">Quick Actions</CardTitle>
             <CardDescription className="text-gray-400">Common administrative tasks</CardDescription>
           </CardHeader>
           <CardContent>
