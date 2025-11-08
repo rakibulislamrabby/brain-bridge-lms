@@ -6,9 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import {
-  BookOpen,
-  Search,
+import { 
+  BookOpen, 
+  Search, 
   Loader2,
   XCircle,
   Plus,
@@ -235,10 +235,10 @@ export default function CourseManagement() {
           <p className="text-gray-400 mt-2">Monitor and manage all courses on the platform</p>
         </div>
         <Link href="/dashboard/course/add-course">
-          <Button className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer">
-            <Plus className="h-4 w-4 mr-2" />
+            <Button className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer">
+              <Plus className="h-4 w-4 mr-2" />
             Add Course
-          </Button>
+            </Button>
         </Link>
       </div>
 
@@ -246,7 +246,7 @@ export default function CourseManagement() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-6 flex items-center justify-between">
-            <div>
+              <div>
               <p className="text-sm text-gray-400">Total Courses</p>
               <p className="text-2xl font-bold text-white">{stats.total}</p>
             </div>
@@ -255,7 +255,7 @@ export default function CourseManagement() {
         </Card>
         <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-6 flex items-center justify-between">
-            <div>
+              <div>
               <p className="text-sm text-gray-400">Published</p>
               <p className="text-2xl font-bold text-white">{stats.published}</p>
             </div>
@@ -264,7 +264,7 @@ export default function CourseManagement() {
         </Card>
         <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-6 flex items-center justify-between">
-            <div>
+              <div>
               <p className="text-sm text-gray-400">Total Students</p>
               <p className="text-2xl font-bold text-white">{stats.totalStudents.toLocaleString()}</p>
             </div>
@@ -273,7 +273,7 @@ export default function CourseManagement() {
         </Card>
         <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-6 flex items-center justify-between">
-            <div>
+              <div>
               <p className="text-sm text-gray-400">Average Rating</p>
               <p className="text-2xl font-bold text-white">{stats.averageRating}</p>
             </div>
@@ -331,10 +331,10 @@ export default function CourseManagement() {
               No courses found matching your criteria.
             </div>
           ) : (
-            <div className="overflow-x-auto">
+          <div className="overflow-x-auto">
               <table className="w-full min-w-[1100px] border-collapse">
                 <thead className="bg-gray-900/60">
-                  <tr>
+                <tr>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Title</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Subject</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Teacher</th>
@@ -343,8 +343,8 @@ export default function CourseManagement() {
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Price</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Created At</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Actions</th>
-                  </tr>
-                </thead>
+                </tr>
+              </thead>
                 <tbody>
                   {filteredCourses.map((course) => {
                     const status = getStatus(course)
@@ -362,23 +362,23 @@ export default function CourseManagement() {
                             <p className="text-xs text-gray-400 line-clamp-2 max-w-[360px]">
                               {course.description || 'No description provided.'}
                             </p>
-                          </div>
-                        </td>
+                      </div>
+                    </td>
                         <td className="py-3 px-4 text-sm text-gray-300">{subjectName}</td>
                         <td className="py-3 px-4 text-sm text-gray-300">{teacherName}</td>
                         <td className="py-3 px-4 text-sm text-gray-300 flex items-center gap-2">
                           <Layers className="h-4 w-4 text-orange-500" />
                           {modulesCount}
-                        </td>
+                    </td>
                         <td className="py-3 px-4 text-sm text-gray-300 flex items-center gap-2">
                           <Film className="h-4 w-4 text-orange-500" />
                           {videosCount}
-                        </td>
+                    </td>
                         <td className="py-3 px-4">
                           <Badge className={status === 'published' ? 'bg-green-600/80 text-white' : 'bg-yellow-600/80 text-white'}>
                             {status.charAt(0).toUpperCase() + status.slice(1)}
-                          </Badge>
-                        </td>
+                      </Badge>
+                    </td>
                         <td className="py-3 px-4 text-sm text-gray-300">{priceLabel}</td>
                         <td className="py-3 px-4 text-sm text-gray-300">{formatDate(course.created_at)}</td>
                         <td className="py-3 px-4 text-sm text-gray-300">
@@ -400,14 +400,14 @@ export default function CourseManagement() {
                                 Delete
                               </>
                             )}
-                          </Button>
-                        </td>
-                      </tr>
+                        </Button>
+                    </td>
+                  </tr>
                     )
                   })}
-                </tbody>
-              </table>
-            </div>
+              </tbody>
+            </table>
+          </div>
           )}
         </CardContent>
       </Card>

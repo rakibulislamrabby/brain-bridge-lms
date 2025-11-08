@@ -577,33 +577,23 @@ export default function AddCourseForm() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2 pt-5">
-              <Settings className="h-5 w-5 text-orange-500" />
-              Finalize
-            </CardTitle>
-            <CardDescription className="text-gray-400">
-              Review your information before submitting
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              type="submit"
-              disabled={createCourseMutation.isPending}
-              className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
-            >
-              {createCourseMutation.isPending ? (
-                <>
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  Creating Course...
-                </>
-              ) : (
-                'Create Course'
-              )}
-            </Button>
-          </CardContent>
-        </Card>
+
+        <div className="flex justify-center">
+          <Button
+            type="submit"
+            disabled={createCourseMutation.isPending}
+            className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
+          >
+            {createCourseMutation.isPending ? (
+              <>
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                Creating Course...
+              </>
+            ) : (
+              'Create Course'
+            )}
+          </Button>
+        </div>
       </form>
     </div>
   )
