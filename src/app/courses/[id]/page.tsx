@@ -177,7 +177,7 @@ export default function CourseDetailPage() {
     <>
       <AppHeader />
       <div className="min-h-screen bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto px-4 py-8 pb-20">
           {/* Back Button */}
           <div className="mb-6">
             <Link href="/courses" className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
@@ -407,7 +407,7 @@ export default function CourseDetailPage() {
               </div>
 
               {/* Reviews */}
-              <div className="bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-700">
+              {/* <div className="bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-700">
                 <h2 className="text-2xl font-bold text-white mb-4">Student Reviews</h2>
                 <div className="space-y-4">
                   {reviews.map((review) => (
@@ -430,7 +430,7 @@ export default function CourseDetailPage() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Sidebar */}
@@ -453,7 +453,7 @@ export default function CourseDetailPage() {
                       )}
                     </div>
                     
-                    <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 mb-4">
+                    <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 mb-4 cursor-pointer">
                       Enroll Now
                     </Button>
                     
