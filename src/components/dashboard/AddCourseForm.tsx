@@ -45,7 +45,7 @@ export default function AddCourseForm() {
 
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
 
-  const [modules, setModules] = useState<ModuleFormState[]>([
+const [modules, setModules] = useState<ModuleFormState[]>([
     {
       title: '',
       description: '',
@@ -90,21 +90,21 @@ export default function AddCourseForm() {
     })
   }
 
-  const updateVideo = (
+const updateVideo = (
     moduleIndex: number,
     videoIndex: number,
     updatedVideo: Partial<VideoFormState>
   ) => {
     setModules((prev) => {
       const next = [...prev]
-      const module = { ...next[moduleIndex] }
-      const videos = [...module.videos]
+      const moduleDraft = { ...next[moduleIndex] }
+      const videos = [...moduleDraft.videos]
       videos[videoIndex] = {
         ...videos[videoIndex],
         ...updatedVideo,
       }
-      module.videos = videos
-      next[moduleIndex] = module
+      moduleDraft.videos = videos
+      next[moduleIndex] = moduleDraft
       return next
     })
   }
@@ -118,7 +118,7 @@ export default function AddCourseForm() {
     updateVideo(moduleIndex, videoIndex, { file })
   }
 
-  const addModule = () => {
+const addModule = () => {
     setModules((prev) => ([
       ...prev,
       {
@@ -130,16 +130,16 @@ export default function AddCourseForm() {
     ]))
   }
 
-  const removeModule = (index: number) => {
+const removeModule = (index: number) => {
     setModules((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const addVideo = (moduleIndex: number) => {
+const addVideo = (moduleIndex: number) => {
     setModules((prev) => {
       const next = [...prev]
-      const module = { ...next[moduleIndex] }
-      module.videos = [
-        ...module.videos,
+      const moduleDraft = { ...next[moduleIndex] }
+      moduleDraft.videos = [
+        ...moduleDraft.videos,
         {
           title: '',
           description: '',
@@ -148,17 +148,17 @@ export default function AddCourseForm() {
           file: null,
         },
       ]
-      next[moduleIndex] = module
+      next[moduleIndex] = moduleDraft
       return next
     })
   }
 
-  const removeVideo = (moduleIndex: number, videoIndex: number) => {
+const removeVideo = (moduleIndex: number, videoIndex: number) => {
     setModules((prev) => {
       const next = [...prev]
-      const module = { ...next[moduleIndex] }
-      module.videos = module.videos.filter((_, i) => i !== videoIndex)
-      next[moduleIndex] = module
+      const moduleDraft = { ...next[moduleIndex] }
+      moduleDraft.videos = moduleDraft.videos.filter((_, i) => i !== videoIndex)
+      next[moduleIndex] = moduleDraft
       return next
     })
   }
@@ -183,7 +183,7 @@ export default function AddCourseForm() {
     ])
   }
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (!teacherId) {
@@ -207,9 +207,9 @@ export default function AddCourseForm() {
     }
 
     for (let moduleIndex = 0; moduleIndex < modules.length; moduleIndex += 1) {
-      const module = modules[moduleIndex]
-      for (let videoIndex = 0; videoIndex < module.videos.length; videoIndex += 1) {
-        const video = module.videos[videoIndex]
+      const moduleState = modules[moduleIndex]
+      for (let videoIndex = 0; videoIndex < moduleState.videos.length; videoIndex += 1) {
+        const video = moduleState.videos[videoIndex]
         if (!video.file) {
           addToast({
             type: 'error',
@@ -396,7 +396,7 @@ export default function AddCourseForm() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {modules.map((module, moduleIndex) => (
+            {modules.map((moduleState, moduleIndex) => (
               <div key={moduleIndex} className="border border-gray-700 rounded-lg p-4 bg-gray-900/40 space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -424,7 +424,7 @@ export default function AddCourseForm() {
                   <div>
                     <Label className="text-sm font-medium text-gray-300">Module Title</Label>
                     <Input
-                      value={module.title}
+                      value={moduleState.title}
                       onChange={(event) => updateModule(moduleIndex, { title: event.target.value })}
                       placeholder="e.g., Introduction to Web Development"
                       className="mt-2 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500"
@@ -436,7 +436,7 @@ export default function AddCourseForm() {
                     <Input
                       type="number"
                       min={1}
-                      value={module.order_index}
+                      value={moduleState.order_index}
                       onChange={(event) => updateModule(moduleIndex, { order_index: Number(event.target.value) })}
                       className="mt-2 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500"
                     />
@@ -446,7 +446,7 @@ export default function AddCourseForm() {
                 <div>
                   <Label className="text-sm font-medium text-gray-300">Description</Label>
                   <Textarea
-                    value={module.description}
+                    value={moduleState.description}
                     onChange={(event) => updateModule(moduleIndex, { description: event.target.value })}
                     placeholder="Describe what learners will gain from this module"
                     className="mt-2 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500 min-h-[100px]"
@@ -470,12 +470,12 @@ export default function AddCourseForm() {
                     </Button>
                   </div>
 
-                  {module.videos.length === 0 ? (
+                  {moduleState.videos.length === 0 ? (
                     <p className="text-sm text-gray-500 border border-dashed border-gray-700 rounded-lg p-4 text-center">
-                      No videos added yet. Click "Add Video" to include lesson content.
+                      No videos added yet. Click &quot;Add Video&quot; to include lesson content.
                     </p>
                   ) : (
-                    module.videos.map((video, videoIndex) => (
+                    moduleState.videos.map((video, videoIndex) => (
                       <div key={videoIndex} className="border border-gray-700 rounded-lg p-4 bg-gray-800/80 space-y-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>

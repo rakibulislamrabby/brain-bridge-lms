@@ -96,32 +96,38 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
     })
 
     const initialModules = Array.isArray(course.modules) && course.modules.length > 0
-      ? course.modules.map((module, index) => ({
-          id: module.id,
-          title: module.title || '',
-          description: module.description || '',
-          order_index: module.order_index !== undefined ? Number(module.order_index) : index + 1,
-          videos: Array.isArray(module.videos) && module.videos.length > 0
-            ? module.videos.map((video, videoIndex) => ({
-                id: video.id,
-                title: video.title || '',
-                description: video.description || '',
-                duration_hours: video.duration_hours !== undefined && video.duration_hours !== null
-                  ? String(video.duration_hours)
-                  : '',
-                is_published: getBoolean(video.is_published),
-                file: null,
-                video_url: video.video_url || '',
-                type: video.type || null,
-              }))
-            : [{
-                title: '',
-                description: '',
-                duration_hours: '',
-                is_published: true,
-                file: null,
-              } as VideoFormState],
-        }))
+      ? course.modules.map((moduleData, index) => {
+          const rawVideos = Array.isArray((moduleData as any).video_lessons) && (moduleData as any).video_lessons.length > 0
+            ? (moduleData as any).video_lessons
+            : (Array.isArray((moduleData as any).videos) ? (moduleData as any).videos : [])
+
+          return {
+            id: moduleData.id,
+            title: moduleData.title || '',
+            description: moduleData.description || '',
+            order_index: moduleData.order_index !== undefined ? Number(moduleData.order_index) : index + 1,
+            videos: rawVideos.length > 0
+              ? rawVideos.map((video: any, videoIndex: number) => ({
+                  id: video.id,
+                  title: video.title || '',
+                  description: video.description || '',
+                  duration_hours: video.duration_hours !== undefined && video.duration_hours !== null
+                    ? String(video.duration_hours)
+                    : '',
+                  is_published: video.is_published !== undefined ? Boolean(video.is_published) : true,
+                  file: null,
+                  video_url: video.video_url || video.url || null,
+                  type: video.type || 'video',
+                }))
+              : [{
+                  title: '',
+                  description: '',
+                  duration_hours: '',
+                  is_published: true,
+                  file: null,
+                }],
+          }
+        })
       : [{
           title: '',
           description: '',
@@ -194,14 +200,14 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
   ) => {
     setModules((prev) => {
       const next = [...prev]
-      const module = { ...next[moduleIndex] }
-      const videos = [...module.videos]
+      const moduleDraft = { ...next[moduleIndex] }
+      const videos = [...moduleDraft.videos]
       videos[videoIndex] = {
         ...videos[videoIndex],
         ...updatedVideo,
       }
-      module.videos = videos
-      next[moduleIndex] = module
+      moduleDraft.videos = videos
+      next[moduleIndex] = moduleDraft
       return next
     })
   }
@@ -240,9 +246,9 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
   const addVideo = (moduleIndex: number) => {
     setModules((prev) => {
       const next = [...prev]
-      const module = { ...next[moduleIndex] }
-      module.videos = [
-        ...module.videos,
+      const moduleDraft = { ...next[moduleIndex] }
+      moduleDraft.videos = [
+        ...moduleDraft.videos,
         {
           title: '',
           description: '',
@@ -251,7 +257,7 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
           file: null,
         },
       ]
-      next[moduleIndex] = module
+      next[moduleIndex] = moduleDraft
       return next
     })
   }
@@ -259,9 +265,9 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
   const removeVideo = (moduleIndex: number, videoIndex: number) => {
     setModules((prev) => {
       const next = [...prev]
-      const module = { ...next[moduleIndex] }
-      module.videos = module.videos.filter((_, i) => i !== videoIndex)
-      next[moduleIndex] = module
+      const moduleDraft = { ...next[moduleIndex] }
+      moduleDraft.videos = moduleDraft.videos.filter((_, i) => i !== videoIndex)
+      next[moduleIndex] = moduleDraft
       return next
     })
   }
@@ -295,9 +301,9 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
     }
 
     for (let moduleIndex = 0; moduleIndex < modules.length; moduleIndex += 1) {
-      const module = modules[moduleIndex]
-      for (let videoIndex = 0; videoIndex < module.videos.length; videoIndex += 1) {
-        const video = module.videos[videoIndex]
+      const moduleState = modules[moduleIndex]
+      for (let videoIndex = 0; videoIndex < moduleState.videos.length; videoIndex += 1) {
+        const video = moduleState.videos[videoIndex]
         if (!video.file && !video.video_url) {
           addToast({
             type: 'error',
@@ -315,12 +321,12 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
         ...courseInfo,
         teacher_id: teacherId,
         thumbnail: thumbnailFile || undefined,
-        modules: modules.map((module, moduleIndex) => ({
-          id: module.id,
-          title: module.title,
-          description: module.description,
-          order_index: module.order_index || moduleIndex + 1,
-          videos: module.videos.map((video) => ({
+        modules: modules.map((moduleState, moduleIndex) => ({
+          id: moduleState.id,
+          title: moduleState.title,
+          description: moduleState.description,
+          order_index: moduleState.order_index || moduleIndex + 1,
+          videos: moduleState.videos.map((video) => ({
             id: video.id,
             title: video.title,
             description: video.description,
@@ -512,7 +518,7 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {modules.map((module, moduleIndex) => (
+            {modules.map((moduleState, moduleIndex) => (
               <div key={moduleIndex} className="border border-gray-700 rounded-lg p-4 bg-gray-900/40 space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -540,7 +546,7 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
                   <div>
                     <Label className="text-sm font-medium text-gray-300">Module Title</Label>
                     <Input
-                      value={module.title}
+                      value={moduleState.title}
                       onChange={(event) => updateModule(moduleIndex, { title: event.target.value })}
                       placeholder="Module title"
                       className="mt-2 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500"
@@ -552,7 +558,7 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
                     <Input
                       type="number"
                       min={1}
-                      value={module.order_index}
+                      value={moduleState.order_index}
                       onChange={(event) => updateModule(moduleIndex, { order_index: Number(event.target.value) })}
                       className="mt-2 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500"
                     />
@@ -562,7 +568,7 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
                 <div>
                   <Label className="text-sm font-medium text-gray-300">Description</Label>
                   <Textarea
-                    value={module.description}
+                    value={moduleState.description}
                     onChange={(event) => updateModule(moduleIndex, { description: event.target.value })}
                     placeholder="Describe what this module covers"
                     className="mt-2 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500 min-h-[100px]"
@@ -586,12 +592,12 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
                     </Button>
                   </div>
 
-                  {module.videos.length === 0 ? (
+                  {moduleState.videos.length === 0 ? (
                     <p className="text-sm text-gray-500 border border-dashed border-gray-700 rounded-lg p-4 text-center">
                       No videos added yet. Click &quot;Add Video&quot; to include lesson content.
                     </p>
                   ) : (
-                    module.videos.map((video, videoIndex) => (
+                    moduleState.videos.map((video, videoIndex) => (
                       <div key={videoIndex} className="border border-gray-700 rounded-lg p-4 bg-gray-800/80 space-y-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>

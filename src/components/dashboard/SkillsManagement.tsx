@@ -476,7 +476,7 @@ export default function SkillsManagement() {
             </DialogTitle>
             <DialogDescription className="text-gray-400 pt-2">
               Are you sure you want to delete the skill{' '}
-              <span className="font-semibold text-white">"{skillToDelete?.name}"</span>?
+              <span className="font-semibold text-white">&quot;{skillToDelete?.name}&quot;</span>?
               <br />
               <span className="text-red-400 mt-2 block">This action cannot be undone.</span>
             </DialogDescription>

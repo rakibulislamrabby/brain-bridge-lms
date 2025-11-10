@@ -192,7 +192,7 @@ export default function UserManagement() {
             </DialogTitle>
             <DialogDescription className="text-gray-400 pt-2">
               Are you sure you want to delete the user{' '}
-              <span className="font-semibold text-white">"{userToDelete?.name}"</span>?
+              <span className="font-semibold text-white">&quot;{userToDelete?.name}&quot;</span>?
               <br />
               <span className="text-red-400 mt-2 block">This action cannot be undone.</span>
             </DialogDescription>
