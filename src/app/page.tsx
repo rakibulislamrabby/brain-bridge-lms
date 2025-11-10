@@ -2,7 +2,7 @@ import Footer from "@/components/shared/Footer"
 import LandingHero from "@/components/Home/LandingHero"
 import ChooseUs from "@/components/Home/ChooseUs"
 import OurFeature from "@/components/Home/OurFeature"
-import FeaturedCourses from "@/components/Home/FeaturedCourses"
+import AllCourse from "@/components/Courses/AllCourse"
 import LearningReimagined from "@/components/Reviews/LearningReimagined"
 import PointSystem from "@/components/Point/PointSystem"
 import Contact from "@/components/shared/Contact"
@@ -19,7 +19,7 @@ export default function Home() {
 
       <RandomSkill/>
       {/* <Partner/> */}
-      <FeaturedCourses/>
+      <AllCourse/>
       {/* Why Choose Us Section */}
       <ChooseUs/>
 

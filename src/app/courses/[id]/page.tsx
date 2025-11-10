@@ -39,8 +39,8 @@ const resolveMediaUrl = (path?: string | null, fallback?: string) => {
   }
 
   const base = MEDIA_BASE_URL.endsWith('/') ? MEDIA_BASE_URL : `${MEDIA_BASE_URL}/`
-  const cleanedPath = path.startsWith('/') ? path.slice(1) : path
-  return `${base}${cleanedPath}`
+  const cleanedPath = path.replace(/^\/?storage\//, '').replace(/^\/+/, '')
+  return `${base}storage/${cleanedPath}`
 }
 
 const getSubjectName = (course: any) => {
@@ -59,6 +59,9 @@ const getModules = (course: any) => {
 }
 
 const getModuleVideos = (module: any) => {
+  if (Array.isArray(module?.video_lessons)) {
+    return module.video_lessons
+  }
   if (Array.isArray(module?.videos)) {
     return module.videos
   }
@@ -324,44 +327,76 @@ export default function CourseDetailPage() {
                                   Lesson details will be added soon.
                                 </div>
                               )}
-                              {videos.map((lesson: any, lessonIndex: number) => (
-                                <div key={lesson.id ?? lessonIndex} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg border border-gray-600">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-6 h-6 bg-gray-600 text-gray-300 rounded-full flex items-center justify-center text-xs font-medium">
-                                      {lessonIndex + 1}
+                              {videos.map((lesson: any, lessonIndex: number) => {
+                                const lessonType = lesson.type || 'video'
+                                const videoUrl = lesson.video_url ? resolveMediaUrl(lesson.video_url) : undefined
+                                const durationLabel =
+                                  lesson.duration_hours !== undefined && lesson.duration_hours !== null
+                                    ? `${Number(lesson.duration_hours).toFixed(1)} hrs`
+                                    : lesson.duration
+
+                                return (
+                                  <div
+                                    key={lesson.id ?? lessonIndex}
+                                    className="space-y-3 p-3 bg-gray-800 rounded-lg border border-gray-600"
+                                  >
+                                    <div className="flex items-center justify-between gap-3">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-6 h-6 bg-gray-600 text-gray-300 rounded-full flex items-center justify-center text-xs font-medium">
+                                          {lessonIndex + 1}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          {lessonType === 'video' && <Play className="w-4 h-4 text-blue-500" />}
+                                          {lessonType === 'quiz' && <CheckCircle className="w-4 h-4 text-green-500" />}
+                                          {lessonType === 'exercise' && <Award className="w-4 h-4 text-purple-500" />}
+                                          {lessonType === 'discussion' && <Users className="w-4 h-4 text-orange-500" />}
+                                          <span className="text-sm font-medium text-white">
+                                            {lesson.title || `Lesson ${lessonIndex + 1}`}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        {lessonType && (
+                                          <span className="text-xs text-gray-300 bg-gray-600 px-2 py-1 rounded capitalize">
+                                            {lessonType.replace(/_/g, ' ')}
+                                          </span>
+                                        )}
+                                        {durationLabel && (
+                                          <span className="text-sm text-gray-400">
+                                            {durationLabel}
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      {lesson.type === 'video' && <Play className="w-4 h-4 text-blue-500" />}
-                                      {lesson.type === 'quiz' && <CheckCircle className="w-4 h-4 text-green-500" />}
-                                      {lesson.type === 'exercise' && <Award className="w-4 h-4 text-purple-500" />}
-                                      {lesson.type === 'discussion' && <Users className="w-4 h-4 text-orange-500" />}
-                                      <span className="text-sm font-medium text-white">{lesson.title || `Lesson ${lessonIndex + 1}`}</span>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    {lesson.type && (
-                                      <span className="text-xs text-gray-300 bg-gray-600 px-2 py-1 rounded">
-                                        {lesson.type}
-                                      </span>
+                                    {lesson.description && (
+                                      <p className="text-xs text-gray-400 leading-relaxed">
+                                        {lesson.description}
+                                      </p>
                                     )}
-                                      {lesson.duration_hours && (
-                                      <span className="text-sm text-gray-400">
-                                        {Number(lesson.duration_hours).toFixed(1)} hrs
-                                      </span>
-                                    )}
-                                      {lesson.video_url && (
-                                        <a
-                                          href={resolveMediaUrl(lesson.video_url)}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-xs text-orange-400 hover:text-orange-300 underline"
+                                    {videoUrl ? (
+                                      <div className="rounded-lg overflow-hidden border border-gray-700 bg-black">
+                                        <div
+                                          className="relative w-full"
+                                          style={{ paddingBottom: '56.25%' }} // 16:9 aspect ratio
                                         >
-                                          View
-                                        </a>
-                                      )}
+                                          <video
+                                            controls
+                                            className="absolute inset-0 h-full w-full object-cover"
+                                            preload="metadata"
+                                          >
+                                            <source src={videoUrl} type="video/mp4" />
+                                            Your browser does not support the video tag.
+                                          </video>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <p className="text-xs text-gray-500 italic">
+                                        Video not available for this lesson.
+                                      </p>
+                                    )}
                                   </div>
-                                </div>
-                              ))}
+                                )
+                              })}
                             </div>
                           </div>
                         )}
