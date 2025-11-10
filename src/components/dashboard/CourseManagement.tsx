@@ -17,7 +17,8 @@ import {
   Star,
   Layers,
   Film,
-  Trash2
+  Trash2,
+  Pencil
 } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useCourses, useDeleteCourse } from '@/hooks/course/use-courses'
@@ -382,26 +383,38 @@ export default function CourseManagement() {
                         <td className="py-3 px-4 text-sm text-gray-300">{priceLabel}</td>
                         <td className="py-3 px-4 text-sm text-gray-300">{formatDate(course.created_at)}</td>
                         <td className="py-3 px-4 text-sm text-gray-300">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-red-700 text-red-400 hover:bg-red-900/30 cursor-pointer"
-                            onClick={() => {
-                              setCourseToDelete({ id: course.id, title: course.title })
-                              setDeleteDialogOpen(true)
-                            }}
-                            disabled={deleteCourseMutation.isPending && deletingId === course.id}
-                          >
-                            {deleteCourseMutation.isPending && deletingId === course.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </>
-                            )}
-                        </Button>
-                    </td>
+                          <div className="flex items-center gap-2">
+                            <Link href={`/dashboard/course/${course.id}/edit`}>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-blue-600 text-blue-400 hover:bg-blue-900/30 cursor-pointer"
+                              >
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit
+                              </Button>
+                            </Link>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-red-700 text-red-400 hover:bg-red-900/30 cursor-pointer"
+                              onClick={() => {
+                                setCourseToDelete({ id: course.id, title: course.title })
+                                setDeleteDialogOpen(true)
+                              }}
+                              disabled={deleteCourseMutation.isPending && deletingId === course.id}
+                            >
+                              {deleteCourseMutation.isPending && deletingId === course.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </td>
                   </tr>
                     )
                   })}

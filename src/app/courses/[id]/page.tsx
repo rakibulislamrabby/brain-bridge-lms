@@ -27,6 +27,21 @@ import { useCourse, useCourses } from '@/hooks/course/use-courses'
 import { Loader2, XCircle } from 'lucide-react'
 
 const fallbackImage = 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80'
+const MEDIA_BASE_URL = 'https://brainbridge.mitwebsolutions.com/'
+
+const resolveMediaUrl = (path?: string | null, fallback?: string) => {
+  if (!path) {
+    return fallback
+  }
+
+  if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+
+  const base = MEDIA_BASE_URL.endsWith('/') ? MEDIA_BASE_URL : `${MEDIA_BASE_URL}/`
+  const cleanedPath = path.startsWith('/') ? path.slice(1) : path
+  return `${base}${cleanedPath}`
+}
 
 const getSubjectName = (course: any) => {
   return course?.subject?.name || course?.subject_name || 'General'
@@ -154,8 +169,7 @@ export default function CourseDetailPage() {
   const studentsCount = course.students_count ?? course.total_students ?? 0
   const duration = course.duration ?? `${modules.length} modules`
   const language = course.language ?? 'English'
-  const thumbnail = course.thumbnail_url || fallbackImage
-
+  const thumbnail = resolveMediaUrl(course.thumbnail_url, fallbackImage) || fallbackImage
   return (
     <>
       <AppHeader />
@@ -175,8 +189,8 @@ export default function CourseDetailPage() {
               {/* Course Header */}
               <div className="bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-700">
                 <div className="relative h-64 md:h-80">
-                  <Image
-                    src={thumbnail}
+                   <Image
+                     src={thumbnail}
                     alt={course.title || 'Course thumbnail'}
                     fill
                     className="object-cover"
@@ -330,11 +344,21 @@ export default function CourseDetailPage() {
                                         {lesson.type}
                                       </span>
                                     )}
-                                    {lesson.duration_hours && (
+                                      {lesson.duration_hours && (
                                       <span className="text-sm text-gray-400">
                                         {Number(lesson.duration_hours).toFixed(1)} hrs
                                       </span>
                                     )}
+                                      {lesson.video_url && (
+                                        <a
+                                          href={resolveMediaUrl(lesson.video_url)}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-xs text-orange-400 hover:text-orange-300 underline"
+                                        >
+                                          View
+                                        </a>
+                                      )}
                                   </div>
                                 </div>
                               ))}

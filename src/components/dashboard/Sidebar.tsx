@@ -44,10 +44,16 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       href: '/dashboard/course',
       items: [
         { title: 'All Courses', href: '/dashboard/course', icon: BookOpen },
-        { title: 'Add Course', href: '/dashboard/course/add-course', icon: FileText },
-        // { title: 'Content', href: '/dashboard/course/content', icon: Video },
-        // { title: 'Analytics', href: '/dashboard/course/analytics', icon: BarChart3 },
-        // { title: 'Reviews', href: '/dashboard/course/reviews', icon: MessageSquare }
+        { title: 'Add Course', href: '/dashboard/course/add-course', icon: FileText }
+      ]
+    },
+    {
+      title: 'One to One Session',
+      icon: Video,
+      href: '/dashboard/one-to-one-session',
+      items: [
+        { title: 'All Slots', href: '/dashboard/one-to-one-session', icon: Video },
+        { title: 'Add Slot', href: '/dashboard/one-to-one-session/add-slot', icon: FileText },
       ]
     },
     {
