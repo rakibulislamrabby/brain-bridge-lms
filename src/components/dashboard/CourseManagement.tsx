@@ -1,461 +1,476 @@
 'use client'
 
-import { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
+import { useMemo, useState } from 'react'
+import Link from 'next/link'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { 
   BookOpen, 
   Search, 
-  Filter, 
-  Star,
-  Users,
-  Eye,
-  Edit,
-  Trash2,
+  Loader2,
+  XCircle,
   Plus,
-  TrendingUp
+  TrendingUp,
+  Users,
+  Star,
+  Layers,
+  Film,
+  Trash2,
+  Pencil
 } from 'lucide-react'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useCourses, useDeleteCourse } from '@/hooks/course/use-courses'
+import { useToast } from '@/components/ui/toast'
+
+const getStatus = (course: any) => {
+  if (course.status) {
+    return course.status
+  }
+
+  const value = course.is_published
+  if (value === true || value === 1 || value === '1') {
+    return 'published'
+  }
+
+  return 'draft'
+}
+
+const getSubjectName = (course: any) => {
+  return course.subject?.name || course.subject_name || '—'
+}
+
+const getTeacherName = (course: any) => {
+  return course.teacher?.name || course.teacher_name || '—'
+}
+
+const getModulesCount = (course: any) => {
+  if (typeof course.modules_count === 'number') {
+    return course.modules_count
+  }
+  if (Array.isArray(course.modules)) {
+    return course.modules.length
+  }
+  return 0
+}
+
+const getVideosCount = (course: any) => {
+  if (typeof course.videos_count === 'number') {
+    return course.videos_count
+  }
+  if (Array.isArray(course.videos)) {
+    return course.videos.length
+  }
+  return 0
+}
+
+const getStudentsCount = (course: any) => {
+  return course.students_count ?? course.total_students ?? 0
+}
+
+const getAverageRating = (course: any) => {
+  return course.average_rating ?? course.rating ?? null
+}
+
+const getPriceLabel = (course: any) => {
+  if (course.price === undefined || course.price === null || course.price === '') {
+    return '—'
+  }
+
+  const priceNumber = Number(course.price)
+  if (!Number.isNaN(priceNumber)) {
+    return `$${priceNumber.toFixed(2)}`
+  }
+
+  return String(course.price)
+}
+
+const formatDate = (value?: string) => {
+  if (!value) {
+    return '—'
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return '—'
+  }
+
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
 
 export default function CourseManagement() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterCategory, setFilterCategory] = useState('all')
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [newCourse, setNewCourse] = useState({
-    title: '',
-    instructor: '',
-    category: '',
-    level: '',
-    price: '',
-    description: ''
-  })
+  const [filterSubject, setFilterSubject] = useState('all')
+  const { data: courses = [], isLoading: loading, error } = useCourses()
+  const deleteCourseMutation = useDeleteCourse()
+  const { addToast } = useToast()
+  const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [courseToDelete, setCourseToDelete] = useState<{ id: number; title: string } | null>(null)
 
-  // Mock course data
-  const courses = [
-    {
-      id: 1,
-      title: 'Complete JavaScript Course',
-      instructor: 'Sarah Johnson',
-      category: 'Programming',
-      level: 'Beginner',
-      rating: 4.8,
-      students: 1250,
-      duration: '12 hours',
-      price: 99,
-      status: 'published',
-      lessons: 45,
-      lastUpdated: '2024-01-15'
-    },
-    {
-      id: 2,
-      title: 'React Development Masterclass',
-      instructor: 'Mike Chen',
-      category: 'Web Development',
-      level: 'Intermediate',
-      rating: 4.9,
-      students: 890,
-      duration: '15 hours',
-      price: 149,
-      status: 'published',
-      lessons: 52,
-      lastUpdated: '2024-01-12'
-    },
-    {
-      id: 3,
-      title: 'Python for Data Science',
-      instructor: 'Emily Davis',
-      category: 'Data Science',
-      level: 'Advanced',
-      rating: 4.7,
-      students: 2100,
-      duration: '20 hours',
-      price: 199,
-      status: 'published',
-      lessons: 68,
-      lastUpdated: '2024-01-10'
-    },
-    {
-      id: 4,
-      title: 'Node.js Backend Development',
-      instructor: 'David Wilson',
-      category: 'Backend',
-      level: 'Intermediate',
-      rating: 4.6,
-      students: 450,
-      duration: '10 hours',
-      price: 79,
-      status: 'draft',
-      lessons: 32,
-      lastUpdated: '2024-01-08'
-    }
-  ]
-
-  const categories = ['All', 'Programming', 'Web Development', 'Data Science', 'Backend', 'Mobile', 'Design']
-  const levels = ['Beginner', 'Intermediate', 'Advanced']
-  const courseCategories = ['Programming', 'Web Development', 'Data Science', 'Backend', 'Mobile', 'Design']
-
-  const filteredCourses = courses.filter(course => {
-    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.instructor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.category.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesFilter = filterCategory === 'all' || course.category === filterCategory
-    return matchesSearch && matchesFilter
-  })
-
-  const stats = {
-    total: courses.length,
-    published: courses.filter(c => c.status === 'published').length,
-    draft: courses.filter(c => c.status === 'draft').length,
-    totalStudents: courses.reduce((sum, c) => sum + c.students, 0),
-    averageRating: (courses.reduce((sum, c) => sum + c.rating, 0) / courses.length).toFixed(1)
-  }
-
-  const handleCreateCourse = () => {
-    // Here you would typically send the data to your API
-    console.log('Creating course:', newCourse)
-    setIsCreateModalOpen(false)
-    setNewCourse({
-      title: '',
-      instructor: '',
-      category: '',
-      level: '',
-      price: '',
-      description: ''
+  const subjectOptions = useMemo(() => {
+    const subjects = new Set<string>()
+    courses.forEach((course) => {
+      const subjectName = getSubjectName(course)
+      if (subjectName && subjectName !== '—') {
+        subjects.add(subjectName)
+      }
     })
+    return ['all', ...Array.from(subjects)]
+  }, [courses])
+
+  const filteredCourses = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase()
+
+    return courses.filter((course) => {
+      const subjectName = getSubjectName(course)
+      const matchesSubject = filterSubject === 'all' || subjectName.toLowerCase() === filterSubject.toLowerCase()
+
+      if (!term) {
+        return matchesSubject
+      }
+
+      const titleMatch = course.title?.toLowerCase().includes(term)
+      const descriptionMatch = course.description?.toLowerCase().includes(term)
+      const subjectMatch = subjectName?.toLowerCase().includes(term)
+      const teacherMatch = getTeacherName(course)?.toLowerCase().includes(term)
+
+      return matchesSubject && (titleMatch || descriptionMatch || subjectMatch || teacherMatch)
+    })
+  }, [courses, searchTerm, filterSubject])
+
+  const handleDeleteCourse = async () => {
+    if (!courseToDelete) return
+
+    const { id, title } = courseToDelete
+    const label = title?.trim() ? title : 'this course'
+
+    setDeletingId(id)
+
+    try {
+      await deleteCourseMutation.mutateAsync(id)
+      addToast({
+        title: 'Course deleted',
+        description: `Course "${label}" has been removed.`,
+        type: 'success',
+      })
+      setDeleteDialogOpen(false)
+      setCourseToDelete(null)
+    } catch (error) {
+      addToast({
+        title: 'Error deleting course',
+        description: error instanceof Error ? error.message : 'Failed to delete course.',
+        type: 'error',
+      })
+    } finally {
+      setDeletingId(null)
+    }
   }
 
-  const handleInputChange = (field: string, value: string) => {
-    setNewCourse(prev => ({
-      ...prev,
-      [field]: value
-    }))
+  const stats = useMemo(() => {
+    if (!courses.length) {
+      return {
+        total: 0,
+        published: 0,
+        draft: 0,
+        totalStudents: 0,
+        averageRating: '0.0',
+      }
+    }
+
+    const publishedCount = courses.filter((course) => getStatus(course) === 'published').length
+    const draftCount = courses.length - publishedCount
+    const studentsTotal = courses.reduce((sum, course) => sum + getStudentsCount(course), 0)
+    const ratings = courses
+      .map((course) => getAverageRating(course))
+      .filter((value) => typeof value === 'number') as number[]
+
+    const averageRating = ratings.length
+      ? (ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length).toFixed(1)
+      : '0.0'
+
+    return {
+      total: courses.length,
+      published: publishedCount,
+      draft: draftCount,
+      totalStudents: studentsTotal,
+      averageRating,
+    }
+  }, [courses])
+
+  if (loading) {
+    return (
+      <Card className="bg-gray-800 border-gray-700">
+        <CardContent className="flex items-center justify-center py-16">
+          <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card className="bg-gray-800 border-gray-700">
+        <CardContent className="py-16 text-center space-y-4">
+          <XCircle className="h-12 w-12 text-red-500 mx-auto" />
+          <h3 className="text-xl font-semibold text-white">Failed to load courses</h3>
+          <p className="text-gray-400">
+            {error instanceof Error ? error.message : 'Please try again later.'}
+          </p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Course Management</h1>
-          <p className="text-gray-600 mt-2">Manage and monitor all courses on the platform</p>
+          <h1 className="text-3xl font-bold text-white">Course Management</h1>
+          <p className="text-gray-400 mt-2">Monitor and manage all courses on the platform</p>
         </div>
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <DialogTrigger asChild>
+        <Link href="/dashboard/course/add-course">
             <Button className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer">
               <Plus className="h-4 w-4 mr-2" />
-              Create New Course
+            Add Course
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl bg-white border shadow-xl">
-            <DialogHeader>
-              <DialogTitle>Create New Course</DialogTitle>
-              <DialogDescription>
-                Fill in the details to create a new course for your students.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="title" className="text-sm font-medium text-gray-700">Course Title</Label>
-                  <Input
-                    id="title"
-                    value={newCourse.title}
-                    onChange={(e) => handleInputChange('title', e.target.value)}
-                    placeholder="Enter course title"
-                    className="w-full"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="instructor" className="text-sm font-medium text-gray-700">Instructor</Label>
-                  <Input
-                    id="instructor"
-                    value={newCourse.instructor}
-                    onChange={(e) => handleInputChange('instructor', e.target.value)}
-                    placeholder="Enter instructor name"
-                    className="w-full"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="category" className="text-sm font-medium text-gray-700">Category</Label>
-                  <select
-                    id="category"
-                    value={newCourse.category}
-                    onChange={(e) => handleInputChange('category', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white"
-                  >
-                    <option value="">Select category</option>
-                    {courseCategories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="level" className="text-sm font-medium text-gray-700">Level</Label>
-                  <select
-                    id="level"
-                    value={newCourse.level}
-                    onChange={(e) => handleInputChange('level', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white"
-                  >
-                    <option value="">Select level</option>
-                    {levels.map(level => (
-                      <option key={level} value={level}>{level}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="price" className="text-sm font-medium text-gray-700">Price ($)</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  value={newCourse.price}
-                  onChange={(e) => handleInputChange('price', e.target.value)}
-                  placeholder="Enter course price"
-                  className="w-full"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="description" className="text-sm font-medium text-gray-700">Description</Label>
-                <textarea
-                  id="description"
-                  value={newCourse.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  placeholder="Enter course description"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
-                  rows={4}
-                />
-              </div>
-              
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsCreateModalOpen(false)} 
-                  className="px-6 py-2 cursor-pointer"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleCreateCourse} 
-                  className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer px-6 py-2"
-                >
-                  Create Course
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        </Link>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="bg-gray-800 border-gray-700">
+          <CardContent className="p-6 flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Courses</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-              </div>
-              <BookOpen className="h-8 w-8 text-blue-500" />
+              <p className="text-sm text-gray-400">Total Courses</p>
+              <p className="text-2xl font-bold text-white">{stats.total}</p>
             </div>
+            <BookOpen className="h-8 w-8 text-orange-500" />
           </CardContent>
         </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+        <Card className="bg-gray-800 border-gray-700">
+          <CardContent className="p-6 flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Published</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.published}</p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-green-500" />
+              <p className="text-sm text-gray-400">Published</p>
+              <p className="text-2xl font-bold text-white">{stats.published}</p>
             </div>
+            <TrendingUp className="h-8 w-8 text-green-500" />
           </CardContent>
         </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+        <Card className="bg-gray-800 border-gray-700">
+          <CardContent className="p-6 flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Students</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalStudents.toLocaleString()}</p>
-              </div>
-              <Users className="h-8 w-8 text-purple-500" />
+              <p className="text-sm text-gray-400">Total Students</p>
+              <p className="text-2xl font-bold text-white">{stats.totalStudents.toLocaleString()}</p>
             </div>
+            <Users className="h-8 w-8 text-purple-500" />
           </CardContent>
         </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+        <Card className="bg-gray-800 border-gray-700">
+          <CardContent className="p-6 flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Average Rating</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.averageRating}</p>
-              </div>
-              <Star className="h-8 w-8 text-yellow-500" />
+              <p className="text-sm text-gray-400">Average Rating</p>
+              <p className="text-2xl font-bold text-white">{stats.averageRating}</p>
             </div>
+            <Star className="h-8 w-8 text-yellow-500" />
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters and Search */}
-      <Card>
-        <CardContent className="p-6">
+      {/* Filters */}
+      <Card className="bg-gray-800 border-gray-700">
+        <CardContent className="p-6 space-y-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search courses by title, instructor, or category..."
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Search by title, subject, or teacher..."
+                  className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500"
                 />
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                value={filterSubject}
+                onChange={(event) => setFilterSubject(event.target.value)}
+                className="px-4 py-2 rounded-md border border-gray-600 bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
-                {categories.map(category => (
-                  <option key={category} value={category === 'All' ? 'all' : category}>
-                    {category}
+                {subjectOptions.map((subject) => (
+                  <option key={subject} value={subject}>
+                    {subject === 'all' ? 'All Subjects' : subject}
                   </option>
                 ))}
               </select>
-              <Button variant="outline">
-                <Filter className="h-4 w-4 mr-2" />
-                More Filters
-              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Courses Table */}
-      <Card>
+      <Card className="bg-gray-800 border-gray-700">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2 pt-5">
+            <BookOpen className="h-5 w-5 text-orange-500" />
+            Courses
+          </CardTitle>
+          <CardDescription className="text-gray-400">
+            Overview of all courses fetched from the Brain Bridge API
+          </CardDescription>
+        </CardHeader>
         <CardContent className="p-0">
+          {filteredCourses.length === 0 ? (
+            <div className="py-12 text-center text-gray-400">
+              No courses found matching your criteria.
+            </div>
+          ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <table className="w-full min-w-[1100px] border-collapse">
+                <thead className="bg-gray-900/60">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Course
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Instructor
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Level
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rating
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Students
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Title</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Subject</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Teacher</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Modules</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Price</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Created At</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredCourses.map((course) => (
-                  <tr key={course.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                            <BookOpen className="h-5 w-5 text-orange-600" />
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{course.title}</div>
-                          <div className="text-sm text-gray-500">{course.duration} • {course.lessons} lessons</div>
-                        </div>
+                <tbody>
+                  {filteredCourses.map((course) => {
+                    const status = getStatus(course)
+                    const subjectName = getSubjectName(course)
+                    const teacherName = getTeacherName(course)
+                    const modulesCount = getModulesCount(course)
+                    const videosCount = getVideosCount(course)
+                    const priceLabel = getPriceLabel(course)
+
+                    return (
+                      <tr key={course.id} className="border-t border-gray-700/60 hover:bg-gray-700/30 transition-colors">
+                        <td className="py-3 px-4">
+                          <div>
+                            <p className="text-sm font-semibold text-white">{course.title || 'Untitled Course'}</p>
+                            <p className="text-xs text-gray-400 line-clamp-2 max-w-[360px]">
+                              {course.description || 'No description provided.'}
+                            </p>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {course.instructor}
+                        <td className="py-3 px-4 text-sm text-gray-300">{subjectName}</td>
+                        <td className="py-3 px-4 text-sm text-gray-300">{teacherName}</td>
+                        <td className="py-3 px-4 text-sm text-gray-300 flex items-center gap-2">
+                          <Layers className="h-4 w-4 text-orange-500" />
+                          {modulesCount}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge variant="outline">{course.category}</Badge>
+                        <td className="py-3 px-4 text-sm text-gray-300 flex items-center gap-2">
+                          <Film className="h-4 w-4 text-orange-500" />
+                          {videosCount}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge variant="secondary">{course.level}</Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge className={course.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
-                        {course.status}
+                        <td className="py-3 px-4">
+                          <Badge className={status === 'published' ? 'bg-green-600/80 text-white' : 'bg-yellow-600/80 text-white'}>
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                        <span className="text-sm font-medium">{course.rating}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {course.students.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      ${course.price}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center space-x-2">
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
+                        <td className="py-3 px-4 text-sm text-gray-300">{priceLabel}</td>
+                        <td className="py-3 px-4 text-sm text-gray-300">{formatDate(course.created_at)}</td>
+                        <td className="py-3 px-4 text-sm text-gray-300">
+                          <div className="flex items-center gap-2">
+                            <Link href={`/dashboard/course/${course.id}/edit`}>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-blue-600 text-blue-400 hover:bg-blue-900/30 cursor-pointer"
+                              >
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit
+                              </Button>
+                            </Link>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-red-700 text-red-400 hover:bg-red-900/30 cursor-pointer"
+                              onClick={() => {
+                                setCourseToDelete({ id: course.id, title: course.title })
+                                setDeleteDialogOpen(true)
+                              }}
+                              disabled={deleteCourseMutation.isPending && deletingId === course.id}
+                            >
+                              {deleteCourseMutation.isPending && deletingId === course.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </td>
                   </tr>
-                ))}
+                    )
+                  })}
               </tbody>
             </table>
           </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Empty State */}
-      {filteredCourses.length === 0 && (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No courses found</h3>
-            <p className="text-gray-500 mb-4">Try adjusting your search or filter criteria</p>
-            <Button className="bg-orange-600 hover:bg-orange-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Create New Course
+      <Dialog open={deleteDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setDeleteDialogOpen(false)
+          setCourseToDelete(null)
+        } else {
+          setDeleteDialogOpen(true)
+        }
+      }}>
+        <DialogContent className="bg-gray-800 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-white">Delete Course</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Are you sure you want to delete
+              {courseToDelete?.title ? ` "${courseToDelete.title}"` : ' this course'}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-end sm:space-x-3 gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false)
+                setCourseToDelete(null)
+              }}
+              className="border-gray-600 text-gray-300 hover:bg-gray-700 cursor-pointer"
+              disabled={deleteCourseMutation.isPending}
+            >
+              Cancel
             </Button>
-          </CardContent>
-        </Card>
-      )}
+            <Button
+              variant="destructive"
+              onClick={handleDeleteCourse}
+              className="bg-red-800 hover:bg-red-900 text-white cursor-pointer"
+              disabled={deleteCourseMutation.isPending}
+            >
+              {deleteCourseMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

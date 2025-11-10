@@ -24,7 +24,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }, [])
 
   return (
-    <div className="h-screen bg-gray-50 flex">
+    <div className="h-screen bg-gray-900 flex">
       {/* Sidebar - Full Height */}
       <Sidebar 
         isCollapsed={sidebarCollapsed} 
@@ -37,7 +37,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <DashboardHeader user={user} />
         
         {/* Main Content */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto bg-gray-900">
           <div className="p-6">
             {children}
           </div>

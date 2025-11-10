@@ -187,9 +187,9 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Recent Activity */}
           <div className="lg:col-span-2">
-            <Card>
+            <Card> 
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 pt-5">
                   <Activity className="h-5 w-5" />
                   Recent Activity
                 </CardTitle>

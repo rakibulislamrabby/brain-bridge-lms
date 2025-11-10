@@ -55,13 +55,13 @@ export default function Hero({ variant = 'default' }: HeroProps) {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
               <Button asChild className="bg-purple-800 hover:bg-purple-900 text-white px-10 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-medium">
-                <Link href="/signup" className="flex items-center gap-2">
+                <Link href="/courses" className="flex items-center gap-2">
                   Start Learning
                   <ArrowRight className="w-6 h-6" />
                 </Link>
               </Button>
               <Button asChild variant="outline" className="border-2 border-white/20 text-black bg-white/60 hover:text-gray-900 hover:bg-white/80 px-10 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-medium">
-                <Link href="/teacher">Become a Master</Link>
+                <Link href="/signin">Become a Master</Link>
               </Button>
             </div>
           </div>

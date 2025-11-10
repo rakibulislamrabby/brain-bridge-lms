@@ -1,47 +1,69 @@
 'use client'
 
-import React from 'react'
-import CourseCard from '../Courses/CourseCard'
-import coursesData from '../../data/courses.json'
+import { useMemo } from 'react'
 import Link from 'next/link'
+import {
+  Laptop,
+  Loader2,
+  XCircle,
+  BookOpen,
+  Layers,
+  Film,
+  Star
+} from 'lucide-react'
 import { Button } from '../ui/button'
-import { Laptop, MapPin, Video, Monitor } from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card'
+import { useCourses } from '@/hooks/course/use-courses'
+
+const getSubjectName = (course: any) => {
+  return course.subject?.name || course.subject_name || 'General'
+}
+
+const getTeacherName = (course: any) => {
+  return course.teacher?.name || course.teacher_name || 'Unknown Instructor'
+}
+
+const getModulesCount = (course: any) => {
+  if (typeof course.modules_count === 'number') {
+    return course.modules_count
+  }
+  if (Array.isArray(course.modules)) {
+    return course.modules.length
+  }
+  return 0
+}
+
+const getVideosCount = (course: any) => {
+  if (typeof course.videos_count === 'number') {
+    return course.videos_count
+  }
+  if (Array.isArray(course.videos)) {
+    return course.videos.length
+  }
+  return 0
+}
+
+const getAverageRating = (course: any) => {
+  return course.average_rating ?? course.rating ?? null
+}
+
+const getPriceLabel = (course: any) => {
+  if (course.price === undefined || course.price === null || course.price === '') {
+    return '—'
+  }
+
+  const priceNumber = Number(course.price)
+  if (!Number.isNaN(priceNumber)) {
+    return `$${priceNumber.toFixed(2)}`
+  }
+
+  return String(course.price)
+}
 
 export default function FeaturedCourses() {
-  // Get courses by delivery method
-  const inPersonCourses = coursesData.courses.filter(course => course.delivery_method === 'in_person').slice(0, 3)
-  const videoCallCourses = coursesData.courses.filter(course => course.delivery_method === 'video_call').slice(0, 3)
-  const onlineCourses = coursesData.courses.filter(course => course.delivery_method === 'online').slice(0, 3)
+  const { data: courses = [], isLoading, error } = useCourses()
 
-  const deliverySections = [
-    {
-      id: 'in_person',
-      title: 'In-Person Lessons',
-      description: 'Learn face-to-face with experienced masters in a personalized setting',
-      icon: MapPin,
-      color: 'orange',
-      courses: inPersonCourses,
-      bgGradient: 'from-orange-900/20 to-transparent'
-    },
-    {
-      id: 'video_call',
-      title: 'Video Call Sessions',
-      description: 'Interactive one-on-one sessions via video calls from anywhere',
-      icon: Video,
-      color: 'purple',
-      courses: videoCallCourses,
-      bgGradient: 'from-purple-900/20 to-transparent'
-    },
-    {
-      id: 'online',
-      title: 'Online-Only Courses',
-      description: 'Self-paced online courses with lifetime access and certificates',
-      icon: Monitor,
-      color: 'blue',
-      courses: onlineCourses,
-      bgGradient: 'from-blue-900/20 to-transparent'
-    }
-  ]
+  const featuredCourses = useMemo(() => courses.slice(0, 6), [courses])
 
   return (
     <section className="pt-12 sm:pt-16 lg:pt-20 pb-6 sm:pb-8 bg-gray-800 -mt-6 sm:-mt-8 lg:-mt-10">
@@ -54,88 +76,85 @@ export default function FeaturedCourses() {
           </div>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4 font-hubot">Pick A Course To Get Started</h2>
           <p className="text-base sm:text-lg lg:text-xl text-gray-300 max-w-2xl mx-auto px-4 font-hubot">
-            Our platform is built on the principles of innovation, quality, and inclusivity, offering flexible learning options to suit your needs
+            Discover the latest courses curated by Brain Bridge. Browse a snapshot of what&apos;s new below, or explore the full catalogue on the courses page.
           </p>
         </div>
 
-        {/* Delivery Method Sections */}
-        <div className="space-y-12 sm:space-y-16 mb-8 sm:mb-12">
-          {deliverySections.map((section) => {
-            const Icon = section.icon
-            const colorClasses = {
-              orange: {
-                icon: 'text-orange-400',
-                border: 'border-orange-500/30',
-                button: 'bg-orange-600 hover:bg-orange-700',
-                badge: 'bg-orange-500/10 text-orange-400 border-orange-500/30'
-              },
-              purple: {
-                icon: 'text-purple-400',
-                border: 'border-purple-500/30',
-                button: 'bg-purple-600 hover:bg-purple-700',
-                badge: 'bg-purple-500/10 text-purple-400 border-purple-500/30'
-              },
-              blue: {
-                icon: 'text-blue-400',
-                border: 'border-blue-500/30',
-                button: 'bg-blue-600 hover:bg-blue-700',
-                badge: 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-              }
-            }
-            const colors = colorClasses[section.color as keyof typeof colorClasses]
+        {/* Content */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-16 space-y-4">
+            <XCircle className="h-12 w-12 text-red-500" />
+            <h3 className="text-xl font-semibold text-white">Failed to load courses</h3>
+            <p className="text-gray-400 text-center max-w-md">
+              {error instanceof Error ? error.message : 'Please try again later.'}
+            </p>
+          </div>
+        ) : featuredCourses.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 space-y-4">
+            <BookOpen className="h-12 w-12 text-gray-500" />
+            <h3 className="text-xl font-semibold text-white">No courses available yet</h3>
+            <p className="text-gray-400 text-center max-w-md">
+              Check back soon—new courses are being added regularly.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-10">
+            {featuredCourses.map((course) => {
+              const subjectName = getSubjectName(course)
+              const teacherName = getTeacherName(course)
+              const modulesCount = getModulesCount(course)
+              const videosCount = getVideosCount(course)
+              const averageRating = getAverageRating(course)
+              const priceLabel = getPriceLabel(course)
 
-            return (
-              <div key={section.id} className={`relative rounded-2xl p-6 sm:p-8 bg-gradient-to-br ${section.bgGradient} border ${colors.border}`}>
-                {/* Section Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className={`p-3 rounded-lg bg-gray-800 ${colors.border} border`}>
-                      <Icon className={`w-6 h-6 sm:w-7 sm:h-7 ${colors.icon}`} />
+              return (
+                <Card key={course.id} className="bg-gray-900 border-gray-700 flex flex-col h-full">
+                  <CardHeader>
+                    <CardTitle className="text-white text-lg line-clamp-2 pt-5">
+                      {course.title || 'Untitled Course'}
+                    </CardTitle>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">{subjectName}</p>
+                  </CardHeader>
+                  <CardContent className="space-y-4 text-sm text-gray-400">
+                    <p className="line-clamp-3">
+                      {course.description || 'No description provided for this course.'}
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div className="flex items-center gap-2">
+                        <Layers className="h-4 w-4 text-orange-500" />
+                        <span className="text-gray-300">{modulesCount} modules</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Film className="h-4 w-4 text-blue-500" />
+                        <span className="text-gray-300">{videosCount} videos</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-yellow-500" />
+                        <span className="text-gray-300">
+                          {averageRating ? averageRating.toFixed(1) : 'No rating yet'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="h-4 w-4 text-purple-500" />
+                        <span className="text-gray-300">{teacherName}</span>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 font-hubot">
-                        {section.title}
-                      </h3>
-                      <p className="text-sm sm:text-base text-gray-400">
-                        {section.description}
-                      </p>
-                    </div>
-                  </div>
-                  <div className={`px-4 py-2 rounded-full border text-sm font-medium ${colors.badge}`}>
-                    {section.courses.length} Courses Available
-                  </div>
-                </div>
-
-                {/* Course Grid */}
-                {section.courses.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-6">
-                    {section.courses.map((course) => (
-                      <CourseCard key={course.id} course={course as any} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-400">
-                    <p>No courses available in this category yet.</p>
-                  </div>
-                )}
-
-                {/* View More Button */}
-                {section.courses.length > 0 && (
-                  <div className="text-center">
-                    <Button 
-                      asChild 
-                      className={`${colors.button} text-white px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-base`}
-                    >
-                      <Link href={`/courses?delivery=${section.id}`}>
-                        View All {section.title}
-                      </Link>
+                  </CardContent>
+                  <CardFooter className="flex items-center justify-between">
+                    <span className="text-xl font-semibold text-white">{priceLabel}</span>
+                    <Button asChild variant="outline" className="border-gray-600 text-gray-200 hover:bg-gray-700 cursor-pointer">
+                      <Link href={`/courses/${course.id}`}>View Course</Link>
                     </Button>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
+                  </CardFooter>
+                </Card>
+              )
+            })}
+          </div>
+        )}
 
         {/* View All Courses Button */}
         <div className="text-center">

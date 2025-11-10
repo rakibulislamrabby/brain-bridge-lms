@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, use } from 'react'
-import { notFound } from 'next/navigation'
+import React, { useMemo, useState } from 'react'
+import { notFound, useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { AppHeader } from '@/components/app-header'
@@ -9,8 +9,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Footer from '@/components/shared/Footer'
-import CourseCard from '@/components/Courses/CourseCard'
-import coursesData from '../../../data/courses.json'
 import { 
   Star, 
   Clock, 
@@ -25,104 +23,76 @@ import {
   ChevronDown,
   ChevronRight
 } from 'lucide-react'
+import { useCourse, useCourses } from '@/hooks/course/use-courses'
+import { Loader2, XCircle } from 'lucide-react'
 
-interface CourseDetailPageProps {
-  params: Promise<{
-    id: string
-  }>
+const fallbackImage = 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80'
+const MEDIA_BASE_URL = 'https://brainbridge.mitwebsolutions.com/'
+
+const resolveMediaUrl = (path?: string | null, fallback?: string) => {
+  if (!path) {
+    return fallback
+  }
+
+  if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+
+  const base = MEDIA_BASE_URL.endsWith('/') ? MEDIA_BASE_URL : `${MEDIA_BASE_URL}/`
+  const cleanedPath = path.replace(/^\/?storage\//, '').replace(/^\/+/, '')
+  return `${base}storage/${cleanedPath}`
 }
 
-export default function CourseDetailPage({ params }: CourseDetailPageProps) {
-  const resolvedParams = use(params)
-  const course = coursesData.courses.find(c => c.id === parseInt(resolvedParams.id))
-  
-  if (!course) {
+const getSubjectName = (course: any) => {
+  return course?.subject?.name || course?.subject_name || 'General'
+}
+
+const getTeacherName = (course: any) => {
+  return course?.teacher?.name || course?.teacher_name || 'Unknown Instructor'
+}
+
+const getModules = (course: any) => {
+  if (Array.isArray(course?.modules)) {
+    return course.modules
+  }
+  return []
+}
+
+const getModuleVideos = (module: any) => {
+  if (Array.isArray(module?.video_lessons)) {
+    return module.video_lessons
+  }
+  if (Array.isArray(module?.videos)) {
+    return module.videos
+  }
+  return []
+}
+
+const getPriceLabel = (course: any) => {
+  if (!course?.price && course?.price !== 0) {
+    return '—'
+  }
+  const priceNumber = Number(course.price)
+  if (Number.isNaN(priceNumber)) {
+    return String(course.price)
+  }
+  return `$${priceNumber.toFixed(2)}`
+}
+
+export default function CourseDetailPage() {
+  const params = useParams<{ id: string }>()
+  const courseId = Number(params?.id)
+
+  if (!courseId) {
     notFound()
   }
 
-  // Get related courses (same category, excluding current course)
-  const relatedCourses = coursesData.courses
-    .filter(c => c.category === course.category && c.id !== course.id)
-    .slice(0, 3)
+  const { data: course, isLoading, error } = useCourse(courseId)
+  const { data: allCourses = [] } = useCourses()
 
-  // Mock curriculum data with lessons
-  const curriculum = [
-    { 
-      id: 1, 
-      title: "Introduction to the Course", 
-      duration: "15 min", 
-      lessons: [
-        { id: 1, title: "Welcome to the Course", duration: "5 min", type: "video" },
-        { id: 2, title: "Course Overview", duration: "5 min", type: "video" },
-        { id: 3, title: "What You'll Learn", duration: "5 min", type: "video" }
-      ]
-    },
-    { 
-      id: 2, 
-      title: "Getting Started", 
-      duration: "45 min", 
-      lessons: [
-        { id: 4, title: "Setting Up Your Environment", duration: "10 min", type: "video" },
-        { id: 5, title: "First Steps", duration: "15 min", type: "video" },
-        { id: 6, title: "Basic Concepts", duration: "10 min", type: "video" },
-        { id: 7, title: "Practice Exercise", duration: "5 min", type: "quiz" },
-        { id: 8, title: "Review and Q&A", duration: "5 min", type: "video" }
-      ]
-    },
-    { 
-      id: 3, 
-      title: "Core Concepts", 
-      duration: "2 hours", 
-      lessons: [
-        { id: 9, title: "Understanding the Fundamentals", duration: "20 min", type: "video" },
-        { id: 10, title: "Key Principles", duration: "25 min", type: "video" },
-        { id: 11, title: "Best Practices", duration: "15 min", type: "video" },
-        { id: 12, title: "Common Mistakes", duration: "10 min", type: "video" },
-        { id: 13, title: "Hands-on Practice", duration: "20 min", type: "exercise" },
-        { id: 14, title: "Case Study Analysis", duration: "15 min", type: "video" },
-        { id: 15, title: "Quiz: Core Concepts", duration: "10 min", type: "quiz" },
-        { id: 16, title: "Discussion Forum", duration: "5 min", type: "discussion" }
-      ]
-    },
-    { 
-      id: 4, 
-      title: "Advanced Topics", 
-      duration: "1.5 hours", 
-      lessons: [
-        { id: 17, title: "Advanced Techniques", duration: "20 min", type: "video" },
-        { id: 18, title: "Complex Scenarios", duration: "15 min", type: "video" },
-        { id: 19, title: "Performance Optimization", duration: "15 min", type: "video" },
-        { id: 20, title: "Advanced Exercise", duration: "25 min", type: "exercise" },
-        { id: 21, title: "Troubleshooting Guide", duration: "10 min", type: "video" },
-        { id: 22, title: "Final Assessment", duration: "5 min", type: "quiz" }
-      ]
-    },
-    { 
-      id: 5, 
-      title: "Practical Applications", 
-      duration: "1 hour", 
-      lessons: [
-        { id: 23, title: "Real-world Project Setup", duration: "15 min", type: "video" },
-        { id: 24, title: "Building Your First Project", duration: "25 min", type: "exercise" },
-        { id: 25, title: "Testing and Debugging", duration: "10 min", type: "video" },
-        { id: 26, title: "Project Review", duration: "10 min", type: "video" }
-      ]
-    },
-    { 
-      id: 6, 
-      title: "Final Project", 
-      duration: "30 min", 
-      lessons: [
-        { id: 27, title: "Project Requirements", duration: "10 min", type: "video" },
-        { id: 28, title: "Project Submission", duration: "20 min", type: "exercise" }
-      ]
-    }
-  ]
+  const [expandedSections, setExpandedSections] = useState<Array<number | string>>([])
 
-  // State for accordion
-  const [expandedSections, setExpandedSections] = useState<number[]>([])
-
-  const toggleSection = (sectionId: number) => {
+  const toggleSection = (sectionId: number | string) => {
     setExpandedSections(prev => 
       prev.includes(sectionId) 
         ? prev.filter(id => id !== sectionId)
@@ -130,7 +100,14 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     )
   }
 
-  // Mock reviews data
+  const relatedCourses = useMemo(() => {
+    if (!course) return []
+    return allCourses
+      .filter((item) => item.id !== course.id && (item.subject_id === course.subject_id || getSubjectName(item) === getSubjectName(course)))
+      .slice(0, 3)
+  }, [allCourses, course])
+
+  // Mock reviews data (placeholder until API provides reviews)
   const reviews = [
     {
       id: 1,
@@ -155,11 +132,52 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     }
   ]
 
+  if (isLoading) {
+    return (
+      <>
+        <AppHeader />
+        <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
+        </div>
+        <Footer />
+      </>
+    )
+  }
+
+  if (error || !course) {
+    return (
+      <>
+        <AppHeader />
+        <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center gap-4 px-4 text-center">
+          <XCircle className="h-16 w-16 text-red-500" />
+          <h2 className="text-2xl font-bold text-white">Unable to load course</h2>
+          <p className="text-gray-400 max-w-md">
+            {error instanceof Error ? error.message : 'The requested course could not be retrieved. Please try again later.'}
+          </p>
+          <Button asChild className="bg-orange-600 hover:bg-orange-700 text-white">
+            <Link href="/courses">Back to Courses</Link>
+          </Button>
+        </div>
+        <Footer />
+      </>
+    )
+  }
+
+  const modules = getModules(course)
+  const subjectName = getSubjectName(course)
+  const teacherName = getTeacherName(course)
+  const priceLabel = getPriceLabel(course)
+  const originalPrice = course.old_price ?? course.original_price
+  const averageRating = course.average_rating ?? course.rating
+  const studentsCount = course.students_count ?? course.total_students ?? 0
+  const duration = course.duration ?? `${modules.length} modules`
+  const language = course.language ?? 'English'
+  const thumbnail = resolveMediaUrl(course.thumbnail_url, fallbackImage) || fallbackImage
   return (
     <>
       <AppHeader />
       <div className="min-h-screen bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto px-4 py-8 pb-20">
           {/* Back Button */}
           <div className="mb-6">
             <Link href="/courses" className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
@@ -174,11 +192,12 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               {/* Course Header */}
               <div className="bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-700">
                 <div className="relative h-64 md:h-80">
-                  <Image
-                    src={course.image}
-                    alt={course.course_title}
+                   <Image
+                     src={thumbnail}
+                    alt={course.title || 'Course thumbnail'}
                     fill
                     className="object-cover"
+                    unoptimized
                   />
                   <div className="absolute top-4 right-4 flex gap-2">
                     <Button size="sm" variant="secondary" className="bg-gray-800/90 text-white border-gray-600">
@@ -192,16 +211,16 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                 
                 <div className="p-6">
                   <div className="flex gap-2 mb-4">
-                    <Badge className="bg-blue-500 text-white">{course.category}</Badge>
-                    <Badge className="bg-green-500 text-white">{course.level}</Badge>
+                    <Badge className="bg-blue-500 text-white">{subjectName}</Badge>
+                    {course.level && <Badge className="bg-green-500 text-white">{course.level}</Badge>}
                   </div>
                   
                   <h1 className="text-3xl font-bold text-white mb-4">
-                    {course.course_title}
+                    {course.title || 'Untitled Course'}
                   </h1>
                   
                   <p className="text-gray-300 text-lg mb-6">
-                    {course.description}
+                    {course.description || 'No description provided for this course.'}
                   </p>
 
                   {/* Course Stats */}
@@ -209,28 +228,28 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     <div className="flex items-center gap-2">
                       <Star className="w-5 h-5 text-yellow-500" />
                       <div>
-                        <p className="font-semibold text-white">{course.ratings}</p>
+                        <p className="font-semibold text-white">{averageRating ? averageRating.toFixed(1) : 'No rating'}</p>
                         <p className="text-sm text-gray-400">Rating</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Users className="w-5 h-5 text-blue-500" />
                       <div>
-                        <p className="font-semibold text-white">{course.students_enrolled.toLocaleString()}</p>
+                        <p className="font-semibold text-white">{studentsCount.toLocaleString()}</p>
                         <p className="text-sm text-gray-400">Students</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Clock className="w-5 h-5 text-green-500" />
                       <div>
-                        <p className="font-semibold text-white">{course.duration}</p>
+                        <p className="font-semibold text-white">{duration}</p>
                         <p className="text-sm text-gray-400">Duration</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Globe className="w-5 h-5 text-purple-500" />
                       <div>
-                        <p className="font-semibold text-white">{course.language}</p>
+                        <p className="font-semibold text-white">{language}</p>
                         <p className="text-sm text-gray-400">Language</p>
                       </div>
                     </div>
@@ -242,21 +261,14 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               <div className="bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-700">
                 <h2 className="text-2xl font-bold text-white mb-4">Instructor</h2>
                 <div className="flex items-center gap-4">
-                  <Image
-                    src={course.instructor.avatar}
-                    alt={course.instructor.name}
-                    width={80}
-                    height={80}
-                    className="rounded-full"
-                  />
                   <div>
-                    <h3 className="text-xl font-semibold text-white">{course.instructor.name}</h3>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Star className="w-4 h-4 text-yellow-500" />
-                      <span className="font-medium text-white">{course.instructor.rating}</span>
-                      <span className="text-gray-400">({course.instructor.students.toLocaleString()} students)</span>
-                    </div>
-                    <p className="text-gray-300">Expert instructor with years of experience in {course.category.toLowerCase()}.</p>
+                    <h3 className="text-xl font-semibold text-white">{teacherName}</h3>
+                    {course.teacher?.email && (
+                      <p className="text-sm text-gray-400 mb-1">{course.teacher.email}</p>
+                    )}
+                    <p className="text-gray-300">
+                      {course.teacher?.bio || 'Experienced instructor ready to guide you through the course content.'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -264,14 +276,21 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               {/* Curriculum */}
               <div className="bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-700">
                 <h2 className="text-2xl font-bold text-white mb-4">Course Curriculum</h2>
-                <div className="space-y-2 cursor-pointer">
-                  {curriculum.map((section, index) => {
-                    const isExpanded = expandedSections.includes(section.id)
+                <div className="space-y-2">
+                  {modules.length === 0 && (
+                    <div className="text-center py-6 text-gray-400 border border-dashed border-gray-600 rounded-lg">
+                      Curriculum details are not available yet.
+                    </div>
+                  )}
+                  {modules.map((module: any, index: number) => {
+                    const sectionId = module.id ?? module.order_index ?? index
+                    const isExpanded = expandedSections.includes(sectionId)
+                    const videos = getModuleVideos(module)
                     return (
-                      <div key={section.id} className="border border-gray-600 rounded-lg overflow-hidden">
+                      <div key={sectionId} className="border border-gray-600 rounded-lg overflow-hidden">
                         {/* Section Header */}
                         <button
-                          onClick={() => toggleSection(section.id)}
+                          onClick={() => toggleSection(sectionId)}
                           className="w-full p-4 text-left hover:bg-gray-700 cursor-pointer transition-colors"
                         >
                           <div className="flex items-center justify-between">
@@ -280,9 +299,9 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                 {index + 1}
                               </div>
                               <div>
-                                <h3 className="font-semibold text-white">{section.title}</h3>
+                                <h3 className="font-semibold text-white">{module.title || `Module ${index + 1}`}</h3>
                                 <p className="text-sm text-gray-400">
-                                  {section.lessons.length} lessons • {section.duration}
+                                  {videos.length} lessons{module.description ? ` • ${module.description}` : ''}
                                 </p>
                               </div>
                             </div>
@@ -303,28 +322,81 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                         {isExpanded && (
                           <div className="border-t border-gray-600 bg-gray-700">
                             <div className="p-4 space-y-3">
-                              {section.lessons.map((lesson, lessonIndex) => (
-                                <div key={lesson.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg border border-gray-600">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-6 h-6 bg-gray-600 text-gray-300 rounded-full flex items-center justify-center text-xs font-medium">
-                                      {lessonIndex + 1}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      {lesson.type === 'video' && <Play className="w-4 h-4 text-blue-500" />}
-                                      {lesson.type === 'quiz' && <CheckCircle className="w-4 h-4 text-green-500" />}
-                                      {lesson.type === 'exercise' && <Award className="w-4 h-4 text-purple-500" />}
-                                      {lesson.type === 'discussion' && <Users className="w-4 h-4 text-orange-500" />}
-                                      <span className="text-sm font-medium text-white">{lesson.title}</span>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-300 bg-gray-600 px-2 py-1 rounded">
-                                      {lesson.type}
-                                    </span>
-                                    <span className="text-sm text-gray-400">{lesson.duration}</span>
-                                  </div>
+                              {videos.length === 0 && (
+                                <div className="text-sm text-gray-300">
+                                  Lesson details will be added soon.
                                 </div>
-                              ))}
+                              )}
+                              {videos.map((lesson: any, lessonIndex: number) => {
+                                const lessonType = lesson.type || 'video'
+                                const videoUrl = lesson.video_url ? resolveMediaUrl(lesson.video_url) : undefined
+                                const durationLabel =
+                                  lesson.duration_hours !== undefined && lesson.duration_hours !== null
+                                    ? `${Number(lesson.duration_hours).toFixed(1)} hrs`
+                                    : lesson.duration
+
+                                return (
+                                  <div
+                                    key={lesson.id ?? lessonIndex}
+                                    className="space-y-3 p-3 bg-gray-800 rounded-lg border border-gray-600"
+                                  >
+                                    <div className="flex items-center justify-between gap-3">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-6 h-6 bg-gray-600 text-gray-300 rounded-full flex items-center justify-center text-xs font-medium">
+                                          {lessonIndex + 1}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          {lessonType === 'video' && <Play className="w-4 h-4 text-blue-500" />}
+                                          {lessonType === 'quiz' && <CheckCircle className="w-4 h-4 text-green-500" />}
+                                          {lessonType === 'exercise' && <Award className="w-4 h-4 text-purple-500" />}
+                                          {lessonType === 'discussion' && <Users className="w-4 h-4 text-orange-500" />}
+                                          <span className="text-sm font-medium text-white">
+                                            {lesson.title || `Lesson ${lessonIndex + 1}`}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        {lessonType && (
+                                          <span className="text-xs text-gray-300 bg-gray-600 px-2 py-1 rounded capitalize">
+                                            {lessonType.replace(/_/g, ' ')}
+                                          </span>
+                                        )}
+                                        {durationLabel && (
+                                          <span className="text-sm text-gray-400">
+                                            {durationLabel}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {lesson.description && (
+                                      <p className="text-xs text-gray-400 leading-relaxed">
+                                        {lesson.description}
+                                      </p>
+                                    )}
+                                    {videoUrl ? (
+                                      <div className="rounded-lg overflow-hidden border border-gray-700 bg-black">
+                                        <div
+                                          className="relative w-full"
+                                          style={{ paddingBottom: '56.25%' }} // 16:9 aspect ratio
+                                        >
+                                          <video
+                                            controls
+                                            className="absolute inset-0 h-full w-full object-cover"
+                                            preload="metadata"
+                                          >
+                                            <source src={videoUrl} type="video/mp4" />
+                                            Your browser does not support the video tag.
+                                          </video>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <p className="text-xs text-gray-500 italic">
+                                        Video not available for this lesson.
+                                      </p>
+                                    )}
+                                  </div>
+                                )
+                              })}
                             </div>
                           </div>
                         )}
@@ -335,7 +407,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               </div>
 
               {/* Reviews */}
-              <div className="bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-700">
+              {/* <div className="bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-700">
                 <h2 className="text-2xl font-bold text-white mb-4">Student Reviews</h2>
                 <div className="space-y-4">
                   {reviews.map((review) => (
@@ -358,7 +430,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     </div>
                   ))}
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Sidebar */}
@@ -369,24 +441,28 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   <CardContent className="p-6">
                     <div className="text-center mb-6">
                       <div className="flex items-center justify-center gap-2 mb-2">
-                        <span className="text-4xl font-bold text-white">${course.price}</span>
-                        {course.original_price > course.price && (
-                          <span className="text-lg text-gray-400 line-through">${course.original_price}</span>
+                        <span className="text-4xl font-bold text-white">{priceLabel}</span>
+                        {originalPrice && Number(originalPrice) > Number(course.price) && (
+                          <span className="text-lg text-gray-400 line-through">${Number(originalPrice).toFixed(2)}</span>
                         )}
                       </div>
-                      {course.original_price > course.price && (
+                      {originalPrice && Number(originalPrice) > Number(course.price) && (
                         <Badge className="bg-green-500 text-white">
-                          Save ${(course.original_price - course.price).toFixed(2)}
+                          Save ${(Number(originalPrice) - Number(course.price)).toFixed(2)}
                         </Badge>
                       )}
                     </div>
                     
-                    <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 mb-4">
+                    <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 mb-4 cursor-pointer">
                       Enroll Now
                     </Button>
                     
                     <div className="space-y-3 text-sm">
-                      {course.features.map((feature, index) => (
+                      {(course.features ?? [
+                        'Lifetime access',
+                        'Certificate of completion',
+                        'Community support'
+                      ]).map((feature: string, index: number) => (
                         <div key={index} className="flex items-center gap-2">
                           <CheckCircle className="w-4 h-4 text-green-500" />
                           <span className="text-gray-300">{feature}</span>
@@ -403,19 +479,19 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     <div className="space-y-3 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-400">Last Updated</span>
-                        <span className="text-white">{new Date(course.last_updated).toLocaleDateString()}</span>
+                        <span className="text-white">{course.updated_at ? new Date(course.updated_at).toLocaleDateString() : '—'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">Category</span>
-                        <span className="text-white">{course.category}</span>
+                        <span className="text-white">{subjectName}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">Level</span>
-                        <span className="text-white">{course.level}</span>
+                        <span className="text-white">{course.level || 'All levels'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">Language</span>
-                        <span className="text-white">{course.language}</span>
+                        <span className="text-white">{language}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -430,13 +506,23 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               <h2 className="text-3xl font-bold text-white mb-8">Related Courses</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {relatedCourses.map((relatedCourse) => (
-                  <CourseCard 
-                    key={relatedCourse.id} 
-                    course={{
-                      ...relatedCourse,
-                      delivery_method: relatedCourse.delivery_method as 'online' | 'video_call' | 'in_person'
-                    }} 
-                  />
+                  <div key={relatedCourse.id} className="bg-gray-800 border border-gray-700 rounded-lg p-5 space-y-4">
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-semibold text-white line-clamp-2">
+                        {relatedCourse.title || 'Untitled Course'}
+                      </h3>
+                      <p className="text-sm text-gray-400 line-clamp-3">
+                        {relatedCourse.description || 'No description provided.'}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-gray-400">
+                      <span>{getSubjectName(relatedCourse)}</span>
+                      <span>{getPriceLabel(relatedCourse)}</span>
+                    </div>
+                    <Button asChild variant="outline" className="border-gray-600 text-gray-200 hover:bg-gray-700 cursor-pointer w-full">
+                      <Link href={`/courses/${relatedCourse.id}`}>View Course</Link>
+                    </Button>
+                  </div>
                 ))}
               </div>
             </div>
