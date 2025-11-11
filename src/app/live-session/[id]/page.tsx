@@ -172,7 +172,7 @@ export default function LiveSessionDetailPage() {
         <div className="max-w-5xl mx-auto px-4">
           <Button
             variant="ghost"
-            className="text-gray-300 hover:text-white hover:bg-gray-800/70 mb-6"
+            className="text-gray-300 hover:text-white hover:bg-gray-800/70 mb-6 cursor-pointer"
             onClick={() => router.back()}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -211,7 +211,7 @@ export default function LiveSessionDetailPage() {
             <div className="space-y-8">
               <Card className="bg-gray-800/80 border border-gray-700">
                 <CardHeader className="border-b border-gray-700/70 pb-6">
-                  <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex flex-wrap items-start justify-between gap-4 pt-5">
                     <div>
                       <Badge className="bg-purple-600/20 text-purple-300 border border-purple-600/40 mb-2">
                         {data.type === 'one_to_one' ? 'One-to-One Session' : (data.type ?? 'Live Session')}

@@ -1,7 +1,9 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useCourses } from '@/hooks/course/use-courses'
+import { useLiveSessions } from '@/hooks/live-session/use-live-session'
 import CourseCard from './CourseCard'
 import {
   Laptop,
@@ -68,8 +70,45 @@ const DELIVERY_METHODS = [
   { id: 'live_session', label: 'Live Session (Soon)', icon: Users, disabled: true }
 ]
 
+const formatDateTime = (dateString: string, timeString: string) => {
+  let parsedDate: Date | null = null
+
+  if (dateString) {
+    if (dateString.includes('T')) {
+      parsedDate = new Date(dateString)
+    } else if (timeString) {
+      parsedDate = new Date(`${dateString}T${timeString}`)
+    } else {
+      parsedDate = new Date(dateString)
+    }
+  }
+
+  if (!parsedDate || Number.isNaN(parsedDate.getTime())) {
+    return {
+      dateLabel: dateString,
+      timeLabel: timeString,
+    }
+  }
+
+  const dateLabel = parsedDate.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+
+  const timeLabel = timeString
+    ? timeString
+    : parsedDate.toLocaleTimeString(undefined, {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+
+  return { dateLabel, timeLabel }
+}
+
 export default function AllCourse() {
   const { data: courses = [], isLoading, error } = useCourses()
+  const { data: liveSessions = [], isLoading: liveLoading, error: liveError } = useLiveSessions()
   const [selectedCategory, setSelectedCategory] = useState('All Categories')
   const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState<'all' | 'video_course' | 'live_session'>('video_course')
 
@@ -93,6 +132,11 @@ export default function AllCourse() {
     })
   }, [courses, selectedCategory, selectedDeliveryMethod])
 
+  const hasCourses = courses.length > 0
+  const displayCourses = filteredCourses.length > 0 ? filteredCourses : courses
+  const hasLiveSessions = liveSessions.length > 0
+  const displayLiveSessions = liveSessions.slice(0, 4)
+
   return (
     <section className="py-20 bg-gray-900">
       <div className="max-w-7xl mx-auto px-4">
@@ -109,7 +153,7 @@ export default function AllCourse() {
         </div>
 
         {/* Delivery Method Filter */}
-        <div className="mb-8">
+        {/* <div className="mb-8">
           <div className="text-center mb-4">
             <h3 className="text-xl font-semibold text-white mb-2">Choose Your Learning Style</h3>
             <p className="text-gray-400">Select how you&apos;d like to learn</p>
@@ -147,7 +191,7 @@ export default function AllCourse() {
               )
             })}
           </div>
-        </div>
+        </div> */}
 
         {/* Category Filter */}
         <div className="flex flex-wrap justify-center gap-3 mb-16">
@@ -183,9 +227,9 @@ export default function AllCourse() {
               {error instanceof Error ? error.message : 'Failed to load courses. Please try again later.'}
             </p>
           </div>
-        ) : filteredCourses.length > 0 ? (
+        ) : hasCourses ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredCourses.map((course) => (
+            {displayCourses.map((course) => (
               <CourseCard key={course.id} course={course as any} />
             ))}
           </div>
@@ -203,6 +247,61 @@ export default function AllCourse() {
             </Button>
           </div>
         )}
+
+        {/* Live Sessions */}
+        <div className="mt-20">
+          <div className="text-center mb-6">
+            <h3 className="text-4xl font-semibold text-white">Live Sessions</h3>
+            <p className="text-gray-400 text-xl">Join upcoming one-to-one sessions with expert mentors.</p>
+          </div>
+
+          {liveLoading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+            </div>
+          ) : liveError ? (
+            <div className="text-center py-10 text-gray-400">
+              {liveError instanceof Error ? liveError.message : 'Live sessions are unavailable right now.'}
+            </div>
+          ) : hasLiveSessions ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {displayLiveSessions.map((session) => {
+                const { dateLabel, timeLabel } = formatDateTime(session.date, session.time)
+                return (
+                  <Link
+                    key={session.id}
+                    href={`/live-session/${session.id}`}
+                    className="group relative block border border-gray-700 bg-gray-800/80 rounded-xl p-5 space-y-4 transition-all duration-300 ease-out hover:border-blue-500/70 hover:bg-gray-800 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  >
+                    <span className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    <div className="space-y-1">
+                      <p className="text-lg font-semibold text-white leading-tight">
+                        {session.teacher?.name || 'Unknown Instructor'}
+                      </p>
+                      <p className="text-base text-gray-300">
+                        {session.subject?.name || 'General Subject'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400">One-to-one live session</p>
+                    </div>
+                    <div className="flex items-center justify-between text-base text-gray-200">
+                      <span>{dateLabel}</span>
+                      <span>{timeLabel}</span>
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      {session.available_seats} seats available
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-10 text-gray-400">
+              Live sessions will be announced soon. Stay tuned!
+            </div>
+          )}
+        </div>
       </div>
     </section>
   )
