@@ -19,11 +19,11 @@ const formatStudents = (value?: number | string | null) => {
   if (Number.isNaN(num)) {
     return '0'
   }
-  if (num >= 1000) {
-    return `${(num / 1000).toFixed(1)}K`
+    if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}K`
+    }
+    return num.toString()
   }
-  return num.toString()
-}
 
 const formatRatings = (value?: number | string | null) => {
   if (value === undefined || value === null) {
@@ -33,11 +33,11 @@ const formatRatings = (value?: number | string | null) => {
   if (Number.isNaN(num)) {
     return '0'
   }
-  if (num >= 1000) {
-    return `${(num / 1000).toFixed(1)}k`
+    if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}k`
+    }
+    return num.toString()
   }
-  return num.toString()
-}
 
 const resolveMediaUrl = (path?: string | null, fallback?: string) => {
   if (!path || typeof path !== 'string') {
@@ -96,18 +96,18 @@ export default function CourseCard({ course }: CourseCardProps) {
           
           {/* Instructor Avatar */}
           {instructorAvatar && (
-            <div className="absolute bottom-0 right-4 translate-y-1/2">
-              <div className="w-12 h-12 rounded-full border-2 border-gray-800 overflow-hidden bg-gray-800">
-                <Image
+          <div className="absolute bottom-0 right-4 translate-y-1/2">
+            <div className="w-12 h-12 rounded-full border-2 border-gray-800 overflow-hidden bg-gray-800">
+              <Image
                   src={instructorAvatar}
                   alt={course.instructor?.name || 'Instructor'}
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-cover"
+                width={48}
+                height={48}
+                className="w-full h-full object-cover"
                   unoptimized
-                />
-              </div>
+              />
             </div>
+          </div>
           )}
         </div>
 

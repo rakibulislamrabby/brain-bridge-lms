@@ -109,14 +109,19 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
         <div className="hidden md:flex items-center gap-6">
           <NavigationMenu>
             <NavigationMenuList>
-              <NavigationMenuItem>
+              {/* <NavigationMenuItem>
                 <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
                   <Link href="/teacher">Master</Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem> */}
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
+                  <Link href="/courses">Vedio Courses</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
-                  <Link href="/courses">Courses</Link>
+                  <Link href="/live-session">Live Session</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
