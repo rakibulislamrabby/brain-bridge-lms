@@ -1,12 +1,14 @@
 'use client'
 
 import { useMemo } from 'react'
-import { CalendarDays, Clock, Users, GraduationCap, Loader2, XCircle } from 'lucide-react'
+import Link from 'next/link'
+import { CalendarDays, Clock, Users, GraduationCap, Loader2, XCircle, ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useLiveSessions } from '@/hooks/live-session/use-live-session'
 import { AppHeader } from '@/components/app-header'
 import Footer from '@/components/shared/Footer'
+import { Button } from '@/components/ui/button'
 
 const formatDate = (isoDate: string) => {
   try {
@@ -103,39 +105,51 @@ export default function LiveSessionPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {groupedSlots.map((group, index) => (
-              <Card key={`${group.teacherName}-${group.subjectName}-${index}`} className="bg-gray-800/80 border border-gray-700 hover:border-purple-500/50 transition-colors">
-                <CardHeader>
-                  <CardTitle className="text-xl text-white flex flex-col gap-1">
-                    <span className="text-purple-300 text-sm font-semibold uppercase tracking-wide pt-5">{group.subjectName}</span>
-                    <span>{group.teacherName}</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 text-gray-300">
-                  {group.sessions.map((session) => (
-                    <div key={session.id} className="rounded-lg bg-gray-900/40 border border-gray-700/60 p-4 space-y-3">
-                      <div className="flex items-center gap-2">
-                        <CalendarDays className="w-4 h-4 text-purple-400" />
-                        <span>{formatDate(session.date)}</span>
+            {groupedSlots.map((group, index) => {
+              const primarySessionId = group.sessions[0]?.id
+
+              return (
+                <Card key={`${group.teacherName}-${group.subjectName}-${index}`} className="bg-gray-800/80 border border-gray-700 hover:border-purple-500/50 transition-colors">
+                  <CardHeader>
+                    <CardTitle className="text-xl text-white flex flex-col gap-1">
+                      <span className="text-purple-300 text-sm font-semibold uppercase tracking-wide pt-5">{group.subjectName}</span>
+                      <span>{group.teacherName}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4 text-gray-300">
+                    {group.sessions.map((session) => (
+                      <div key={session.id} className="rounded-lg bg-gray-900/40 border border-gray-700/60 p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <CalendarDays className="w-4 h-4 text-purple-400" />
+                          <span>{formatDate(session.date)}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-purple-400" />
+                          <span>{session.time}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-purple-400" />
+                          <span>{session.available_seats} seat{session.available_seats === 1 ? '' : 's'} left</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-purple-400" />
-                        <span>{session.time}</span>
+                    ))}
+                    {group.teacherEmail && (
+                      <div className="text-sm text-gray-400">
+                        Contact: <span className="text-gray-200">{group.teacherEmail}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-purple-400" />
-                        <span>{session.available_seats} seat{session.available_seats === 1 ? '' : 's'} left</span>
-                      </div>
-                    </div>
-                  ))}
-                  {group.teacherEmail && (
-                    <div className="text-sm text-gray-400">
-                      Contact: <span className="text-gray-200">{group.teacherEmail}</span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                    )}
+                    {primarySessionId && (
+                      <Link href={`/live-session/${primarySessionId}`}>
+                        <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center gap-2 cursor-pointer">
+                          View Details
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         )}
       </div>
