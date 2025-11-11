@@ -16,11 +16,10 @@ import {
   Briefcase,
   Paintbrush,
   ChefHat,
-  MapPin,
   Video,
-  Monitor,
   Loader2,
-  XCircle
+  XCircle,
+  Users
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -28,11 +27,22 @@ const getCategoryLabel = (course: any) => {
   return course.subject?.name || course.subject_name || course.category || 'General'
 }
 
-const getDeliveryMethod = (course: any): 'in_person' | 'video_call' | 'online' | 'all' => {
-  if (course.delivery_method === 'in_person' || course.delivery_method === 'video_call' || course.delivery_method === 'online') {
-    return course.delivery_method
+const getDeliveryMethod = (course: any): 'video_course' | 'live_session' | 'all' => {
+  const rawMethod = (course.delivery_method || course.deliveryType || course.type || '').toString().toLowerCase().trim()
+
+  if (!rawMethod) {
+    return 'video_course'
   }
-  return 'all'
+
+  if (['online', 'video', 'video_course', 'self_paced', 'recorded'].includes(rawMethod)) {
+    return 'video_course'
+  }
+
+  if (['in_person', 'video_call', 'live', 'live_session', 'hybrid', 'webinar'].includes(rawMethod)) {
+    return 'live_session'
+  }
+
+  return 'video_course'
 }
 
 const getIconForCategory = (category: string) => {
@@ -53,16 +63,15 @@ const getIconForCategory = (category: string) => {
 }
 
 const DELIVERY_METHODS = [
-  { id: 'all', label: 'All Options', icon: Grid3X3 },
-  { id: 'in_person', label: 'In-Person', icon: MapPin },
-  { id: 'video_call', label: 'Video Call', icon: Video },
-  { id: 'online', label: 'Online-Only', icon: Monitor }
+  { id: 'all', label: 'All Options', icon: Grid3X3, disabled: false },
+  { id: 'video_course', label: 'Video Course', icon: Video, disabled: false },
+  { id: 'live_session', label: 'Live Session (Soon)', icon: Users, disabled: true }
 ]
 
 export default function AllCourse() {
   const { data: courses = [], isLoading, error } = useCourses()
   const [selectedCategory, setSelectedCategory] = useState('All Categories')
-  const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState<'all' | 'in_person' | 'video_call' | 'online'>('all')
+  const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState<'all' | 'video_course' | 'live_session'>('video_course')
 
   const categories = useMemo(() => {
     const unique = new Set<string>()
@@ -109,23 +118,30 @@ export default function AllCourse() {
             {DELIVERY_METHODS.map((method) => {
               const Icon = method.icon
               const isActive = selectedDeliveryMethod === method.id
+              const isDisabled = method.disabled
+
               return (
                 <button
                   key={method.id}
-                  onClick={() => setSelectedDeliveryMethod(method.id as typeof selectedDeliveryMethod)}
+                  onClick={() => {
+                    if (!isDisabled) {
+                      setSelectedDeliveryMethod(method.id as typeof selectedDeliveryMethod)
+                    }
+                  }}
+                  disabled={isDisabled}
                   className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
                     isActive
-                      ? method.id === 'in_person'
-                        ? 'bg-orange-600 text-white shadow-lg shadow-orange-500/50'
-                        : method.id === 'video_call'
-                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/50'
-                        : method.id === 'online'
+                      ? method.id === 'video_course'
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50'
+                        : method.id === 'live_session'
+                        ? 'bg-purple-600/70 text-white cursor-not-allowed'
                         : 'bg-gray-700 text-white'
+                      : isDisabled
+                      ? 'bg-gray-800/60 text-gray-500 border border-gray-700 cursor-not-allowed'
                       : 'bg-gray-800 text-gray-300 border border-gray-700 hover:border-gray-600 hover:text-white'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className={isDisabled ? 'w-4 h-4 opacity-60' : 'w-4 h-4'} />
                   {method.label}
                 </button>
               )
@@ -179,7 +195,7 @@ export default function AllCourse() {
             <Button 
               onClick={() => {
                 setSelectedCategory('All Categories')
-                setSelectedDeliveryMethod('all')
+                setSelectedDeliveryMethod('video_course')
               }}
               className="mt-4 bg-blue-600 hover:bg-blue-700 text-white"
             >
