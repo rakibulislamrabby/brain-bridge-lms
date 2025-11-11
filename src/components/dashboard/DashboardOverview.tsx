@@ -42,7 +42,7 @@ export default function DashboardOverview() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -79,7 +79,7 @@ export default function DashboardOverview() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
+        {/* <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -89,11 +89,11 @@ export default function DashboardOverview() {
               <DollarSign className="h-8 w-8 text-green-500" />
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       {/* Additional Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -130,7 +130,7 @@ export default function DashboardOverview() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
+        {/* <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -140,7 +140,7 @@ export default function DashboardOverview() {
               <TrendingUp className="h-8 w-8 text-green-500" />
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       {/* Recent Activity */}
