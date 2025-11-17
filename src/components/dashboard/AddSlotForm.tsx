@@ -35,7 +35,9 @@ export default function AddSlotForm() {
 
   const [formData, setFormData] = useState({
     subject_id: '',
-    available_date: '',
+    title: '',
+    from_date: '',
+    to_date: '',
     type: 'one_to_one',
     price: '',
     max_students: '1',
@@ -76,7 +78,9 @@ export default function AddSlotForm() {
   const resetForm = () => {
     setFormData({
       subject_id: '',
-      available_date: '',
+      title: '',
+      from_date: '',
+      to_date: '',
       type: 'one_to_one',
       price: '',
       max_students: '1',
@@ -88,11 +92,11 @@ export default function AddSlotForm() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (!formData.subject_id || !formData.available_date || !formData.price) {
+    if (!formData.subject_id || !formData.title || !formData.from_date || !formData.to_date || !formData.price) {
       addToast({
         type: 'error',
         title: 'Missing Information',
-        description: 'Subject, date, and price are required.',
+        description: 'Subject, title, dates, and price are required.',
         duration: 5000,
       })
       return
@@ -111,7 +115,9 @@ export default function AddSlotForm() {
 
     const payload = {
       subject_id: Number(formData.subject_id),
-      available_date: formData.available_date,
+      title: formData.title,
+      from_date: formData.from_date,
+      to_date: formData.to_date,
       type: formData.type,
       price: Number(formData.price),
       max_students: Number(formData.max_students),
@@ -145,8 +151,8 @@ export default function AddSlotForm() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-white">Add One-to-One Session</h1>
-        <p className="text-gray-400 mt-2">Create new availability slots for your students.</p>
+        <h1 className="text-3xl font-bold text-white">Schedule Live Session</h1>
+        <p className="text-gray-400 mt-2">Configure availability windows, pricing, and time slots for your live class.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -183,21 +189,52 @@ export default function AddSlotForm() {
                 </select>
               </div>
               <div>
-                <Label htmlFor="available_date" className="text-sm font-medium text-gray-300">
-                  Available Date <span className="text-red-400">*</span>
+                <Label htmlFor="title" className="text-sm font-medium text-gray-300">
+                  Session Title <span className="text-red-400">*</span>
                 </Label>
                 <Input
-                  id="available_date"
-                  name="available_date"
-                  type="date"
-                  value={formData.available_date}
+                  id="title"
+                  name="title"
+                  type="text"
+                  value={formData.title}
                   onChange={handleInputChange}
+                  placeholder="Live Math Class"
                   required
                   className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
                 />
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="from_date" className="text-sm font-medium text-gray-300">
+                  Available From <span className="text-red-400">*</span>
+                </Label>
+                <Input
+                  id="from_date"
+                  name="from_date"
+                  type="date"
+                  value={formData.from_date}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
+                />
+              </div>
+              <div>
+                <Label htmlFor="to_date" className="text-sm font-medium text-gray-300">
+                  Available To <span className="text-red-400">*</span>
+                </Label>
+                <Input
+                  id="to_date"
+                  name="to_date"
+                  type="date"
+                  value={formData.to_date}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
+                />
+              </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label className="text-sm font-medium text-gray-300">

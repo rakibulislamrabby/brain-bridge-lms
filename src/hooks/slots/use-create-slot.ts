@@ -41,7 +41,9 @@ export interface SlotTimeRange {
 
 export interface CreateSlotRequest {
   subject_id: number
-  available_date: string
+  title: string
+  from_date: string
+  to_date: string
   slots: SlotTimeRange[]
   type: string
   price: number
