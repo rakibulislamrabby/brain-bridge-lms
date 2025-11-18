@@ -42,16 +42,34 @@ export interface LiveSessionDetailTeacher {
   email?: string
 }
 
+export interface LiveSessionDetailSubject {
+  id: number
+  name: string
+}
+
+export interface LiveSessionDetailSlot {
+  id: number
+  title: string
+  teacher: LiveSessionDetailTeacher
+  subject: LiveSessionDetailSubject
+  from_date: string
+  to_date: string
+  time: string
+  available_seats: number
+  type: string
+  price: string
+}
+
 export interface LiveSessionDetailResponse {
   id: number
+  title?: string
   teacher: LiveSessionDetailTeacher
   subject_id?: number
-  subject?: {
-    id: number
-    name: string
-  }
-  available_date: string
-  slots: LiveSessionTimeSlot[]
+  subject?: LiveSessionDetailSubject
+  from_date?: string
+  to_date?: string
+  available_date?: string
+  slots?: LiveSessionTimeSlot[] | LiveSessionDetailSlot[]
   type?: string
   price?: string
   description?: string

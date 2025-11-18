@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import Link from 'next/link'
-import { CalendarDays, Clock, Users, GraduationCap, Loader2, XCircle, ArrowRight } from 'lucide-react'
+import { Users, GraduationCap, Loader2, XCircle, ArrowRight, Calendar } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useLiveSessions } from '@/hooks/live-session/use-live-session'
@@ -61,12 +61,13 @@ export default function LiveSessionPage() {
     return Array.from(map.values()).map((group) => ({
       ...group,
       sessions: group.sessions.sort((a, b) => {
-        const dateA = new Date(a.date).getTime()
-        const dateB = new Date(b.date).getTime()
+        const dateA = a.from_date ? new Date(a.from_date).getTime() : (a.date ? new Date(a.date).getTime() : 0)
+        const dateB = b.from_date ? new Date(b.from_date).getTime() : (b.date ? new Date(b.date).getTime() : 0)
         if (dateA !== dateB) {
           return dateA - dateB
         }
-        return a.time.localeCompare(b.time)
+        // Fallback to ID if dates are the same
+        return a.id - b.id
       }),
     }))
   }, [slots])
@@ -117,27 +118,30 @@ export default function LiveSessionPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 text-gray-300">
-                    {group.sessions.map((session) => (
-                      <div key={session.id} className="rounded-lg bg-gray-900/40 border border-gray-700/60 p-4 space-y-3">
-                        <div className="flex items-center gap-2">
-                          <CalendarDays className="w-4 h-4 text-purple-400" />
-                          <span>{formatDate(session.date)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-purple-400" />
-                          <span>{session.time}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-purple-400" />
-                          <span>{session.available_seats} seat{session.available_seats === 1 ? '' : 's'} left</span>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-white">
+                        <Users className="w-5 h-5 text-purple-400" />
+                        <div>
+                          <p className="font-semibold">{group.teacherName}</p>
+                          {group.teacherEmail && (
+                            <p className="text-sm text-gray-400">{group.teacherEmail}</p>
+                          )}
                         </div>
                       </div>
-                    ))}
-                    {group.teacherEmail && (
-                      <div className="text-sm text-gray-400">
-                        Contact: <span className="text-gray-200">{group.teacherEmail}</span>
+                      
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="w-5 h-5 text-purple-400" />
+                        <span className="text-gray-200">{group.subjectName}</span>
                       </div>
-                    )}
+                      
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-5 h-5 text-purple-400" />
+                        <span className="text-gray-200">
+                          {group.sessions.length} slot{group.sessions.length === 1 ? '' : 's'} available
+                        </span>
+                      </div>
+                    </div>
+                    
                     {primarySessionId && (
                       <Link href={`/live-session/${primarySessionId}`}>
                         <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center gap-2 cursor-pointer">

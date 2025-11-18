@@ -10,9 +10,12 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useLiveSessionDetail } from '@/hooks/live-session/use-live-session-detail'
 
-const toDateOnlyKey = (date: Date | string) => {
+const toDateOnlyKey = (date: Date | string | null | undefined) => {
+  if (!date) {
+    return null
+  }
   const parsed = typeof date === 'string' ? new Date(date) : date
-  if (Number.isNaN(parsed.getTime())) {
+  if (!parsed || !(parsed instanceof Date) || Number.isNaN(parsed.getTime())) {
     return null
   }
   return parsed.toISOString().split('T')[0]
@@ -99,11 +102,34 @@ export default function LiveSessionDetailPage() {
     if (!data) {
       return [] as Date[]
     }
-    const key = toDateOnlyKey(data.available_date)
-    if (!key) {
-      return []
+    
+    // Handle new format with from_date and to_date
+    if (data.from_date && data.to_date) {
+      const fromDate = new Date(data.from_date)
+      const toDate = new Date(data.to_date)
+      const dates: Date[] = []
+      
+      if (!Number.isNaN(fromDate.getTime()) && !Number.isNaN(toDate.getTime())) {
+        const current = new Date(fromDate)
+        while (current <= toDate) {
+          dates.push(new Date(current))
+          current.setDate(current.getDate() + 1)
+        }
+      }
+      
+      return dates
     }
-    return [new Date(data.available_date)]
+    
+    // Handle old format with available_date
+    if (data.available_date) {
+      const key = toDateOnlyKey(data.available_date)
+      if (!key) {
+        return []
+      }
+      return [new Date(data.available_date)]
+    }
+    
+    return []
   }, [data])
 
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -136,14 +162,41 @@ export default function LiveSessionDetailPage() {
   const calendarCells = useMemo(() => buildCalendarGrid(currentMonth), [currentMonth])
 
   const slotsForSelectedDate = useMemo(() => {
-    if (!data || !selectedDateKey) {
+    if (!data || !selectedDateKey || !Array.isArray(data.slots)) {
       return []
     }
-    const dateKey = toDateOnlyKey(data.available_date)
-    if (dateKey !== selectedDateKey) {
-      return []
+    
+    // Handle new format: slots with individual from_date/to_date or time string
+    if (data.from_date && data.to_date) {
+      return data.slots.filter((slot: any) => {
+        // If slot has its own date range, check if selected date is within it
+        if (slot.from_date && slot.to_date) {
+          const slotFromKey = toDateOnlyKey(slot.from_date)
+          const slotToKey = toDateOnlyKey(slot.to_date)
+          if (slotFromKey && slotToKey) {
+            return selectedDateKey >= slotFromKey && selectedDateKey <= slotToKey
+          }
+        }
+        // If slot doesn't have its own date range, check if selected date is within parent date range
+        const parentFromKey = toDateOnlyKey(data.from_date)
+        const parentToKey = toDateOnlyKey(data.to_date)
+        if (parentFromKey && parentToKey) {
+          return selectedDateKey >= parentFromKey && selectedDateKey <= parentToKey
+        }
+        return false
+      })
     }
-    return Array.isArray(data.slots) ? data.slots : []
+    
+    // Handle old format with available_date and start_time/end_time
+    if (data.available_date) {
+      const dateKey = toDateOnlyKey(data.available_date)
+      if (dateKey !== selectedDateKey) {
+        return []
+      }
+      return data.slots
+    }
+    
+    return []
   }, [data, selectedDateKey])
 
   const handlePrevMonth = () => {
@@ -217,7 +270,7 @@ export default function LiveSessionDetailPage() {
                         {data.type === 'one_to_one' ? 'One-to-One Session' : (data.type ?? 'Live Session')}
                       </Badge>
                       <CardTitle className="text-3xl text-white">
-                        {data.teacher?.name || 'Expert Mentor'}
+                        {data.title || data.teacher?.name || 'Expert Mentor'}
                       </CardTitle>
                       <p className="text-gray-300 mt-2 max-w-xl">
                         {data.description || 'Connect live with the mentor for personalized guidance and actionable feedback during this session.'}
@@ -299,17 +352,39 @@ export default function LiveSessionDetailPage() {
                       {selectedDate && availableDateKeys.has(toDateOnlyKey(selectedDate) || '') ? (
                         slotsForSelectedDate.length > 0 ? (
                           <div className="space-y-3">
-                            {slotsForSelectedDate.map((slot, index) => (
-                              <div key={`${slot.start_time}-${slot.end_time}-${index}`} className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900/50 px-4 py-3">
-                                <div className="flex items-center gap-3 text-white">
-                                  <Clock className="w-4 h-4 text-purple-400" />
-                                  <span>{formatTimeRange(slot.start_time, slot.end_time)}</span>
+                            {slotsForSelectedDate.map((slot: any, index: number) => {
+                              // Handle new format with time string
+                              const timeDisplay = slot.time 
+                                ? slot.time 
+                                : slot.start_time && slot.end_time 
+                                ? formatTimeRange(slot.start_time, slot.end_time)
+                                : 'Time TBD'
+                              
+                              const slotId = slot.id || index
+                              const availableSeats = slot.available_seats ?? slot.max_students ?? 0
+                              
+                              return (
+                                <div key={`${slotId}-${index}`} className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900/50 px-4 py-3">
+                                  <div className="flex items-center gap-3 text-white">
+                                    <Clock className="w-4 h-4 text-purple-400" />
+                                    <div className="flex flex-col">
+                                      <span>{timeDisplay}</span>
+                                      {availableSeats > 0 && (
+                                        <span className="text-xs text-gray-400">
+                                          {availableSeats} {availableSeats === 1 ? 'seat' : 'seats'} available
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <Button 
+                                    className="bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
+                                    disabled={availableSeats === 0}
+                                  >
+                                    {availableSeats === 0 ? 'Full' : 'Reserve Slot'}
+                                  </Button>
                                 </div>
-                                <Button className="bg-purple-600 hover:bg-purple-700 text-white cursor-pointer">
-                                  Reserve Slot
-                                </Button>
-                              </div>
-                            ))}
+                              )
+                            })}
                           </div>
                         ) : (
                           <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-6 text-center text-gray-400">
@@ -332,6 +407,15 @@ export default function LiveSessionDetailPage() {
                         <p className="font-medium text-white">{data.teacher?.name ?? 'Mashter'}</p>
                         {data.teacher?.email && <p className="text-gray-400">{data.teacher.email}</p>}
                       </div>
+                      {data.subject && (
+                        <>
+                          <div className="flex items-center gap-2 text-white pt-2">
+                            <Info className="w-4 h-4 text-blue-400" />
+                            <span>Subject</span>
+                          </div>
+                          <div className="pl-6 text-gray-200">{data.subject.name}</div>
+                        </>
+                      )}
                       <div className="flex items-center gap-2 text-white pt-2">
                         <DollarSign className="w-4 h-4 text-green-400" />
                         <span>Price</span>

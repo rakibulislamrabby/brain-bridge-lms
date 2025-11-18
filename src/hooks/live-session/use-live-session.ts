@@ -44,11 +44,17 @@ export interface LiveSessionTeacher {
 
 export interface LiveSessionSlot {
   id: number
+  title?: string
   teacher: LiveSessionTeacher
   subject: LiveSessionSubject
-  date: string
-  time: string
-  available_seats: number
+  date?: string
+  from_date?: string
+  to_date?: string
+  time?: string
+  available_seats?: number
+  type?: string
+  price?: string
+  description?: string
 }
 
 const normalizeSlots = (result: any): LiveSessionSlot[] => {
