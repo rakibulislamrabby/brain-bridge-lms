@@ -92,6 +92,7 @@ export const useCreateSlot = () => {
     mutationFn: createSlot,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['slots'] })
+      queryClient.invalidateQueries({ queryKey: ['teacher-slots'] })
     },
   })
 }

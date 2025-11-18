@@ -131,21 +131,33 @@ export default function AddSlotForm() {
       return
     }
 
-    // Format times to ensure they're in HH:MM:SS format
+    // Format times to ensure they're in HH:MM format (as expected by API)
     const formatTime = (time: string): string => {
       if (!time) return time
-      // If time is already in HH:MM:SS format, return as is
-      if (time.split(':').length === 3) return time
-      // If time is in HH:MM format, add :00 for seconds
-      if (time.split(':').length === 2) return `${time}:00`
+      // Remove seconds if present (convert HH:MM:SS to HH:MM)
+      if (time.split(':').length === 3) {
+        const [hours, minutes] = time.split(':')
+        return `${hours}:${minutes}`
+      }
+      // If already in HH:MM format, return as is
       return time
+    }
+
+    // Ensure dates are in YYYY-MM-DD format (not datetime)
+    const formatDate = (date: string): string => {
+      if (!date) return date
+      // If date includes time, extract just the date part
+      if (date.includes('T')) {
+        return date.split('T')[0]
+      }
+      return date
     }
 
     const payload = {
       subject_id: Number(formData.subject_id),
       title: formData.title,
-      from_date: formData.from_date,
-      to_date: formData.to_date,
+      from_date: formatDate(formData.from_date),
+      to_date: formatDate(formData.to_date),
       type: formData.type,
       price: Number(formData.price),
       max_students: Number(formData.max_students),
