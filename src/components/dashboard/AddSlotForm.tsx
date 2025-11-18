@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,8 +9,9 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/toast'
 import { useSubjects } from '@/hooks/subject/use-subject'
-import { useCreateSlot } from '@/hooks/slots/use-create-slot'
+import { useCreateSlot, useUpdateSlot } from '@/hooks/slots/use-create-slot'
 import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Clock, Users, DollarSign, ClipboardList } from 'lucide-react'
+import { TeacherSlot } from '@/hooks/slots/teacher/use-teacher-slot'
 
 interface SlotTimeForm {
   start_time: string
@@ -21,10 +23,18 @@ const SLOT_TYPES = [
   { value: 'group', label: 'Group' },
 ]
 
-export default function AddSlotForm() {
+interface AddSlotFormProps {
+  slotId?: number
+  initialData?: TeacherSlot
+}
+
+export default function AddSlotForm({ slotId, initialData }: AddSlotFormProps = {}) {
   const { data: subjects = [] } = useSubjects()
   const { addToast } = useToast()
+  const router = useRouter()
   const createSlotMutation = useCreateSlot()
+  const updateSlotMutation = useUpdateSlot()
+  const isEditMode = !!slotId && !!initialData
 
   const subjectOptions = useMemo(() => (
     subjects.map((subject) => ({
@@ -47,6 +57,47 @@ export default function AddSlotForm() {
   const [slotTimes, setSlotTimes] = useState<SlotTimeForm[]>([
     { start_time: '', end_time: '' },
   ])
+
+  // Initialize form with slot data if in edit mode
+  useEffect(() => {
+    if (isEditMode && initialData) {
+      // Format date from ISO string to YYYY-MM-DD
+      const formatDateForInput = (dateString?: string): string => {
+        if (!dateString) return ''
+        const date = new Date(dateString)
+        if (Number.isNaN(date.getTime())) return ''
+        return date.toISOString().split('T')[0]
+      }
+
+      // Format time from HH:MM:SS to HH:MM
+      const formatTimeForInput = (timeString?: string): string => {
+        if (!timeString) return ''
+        if (timeString.split(':').length === 3) {
+          const [hours, minutes] = timeString.split(':')
+          return `${hours}:${minutes}`
+        }
+        return timeString
+      }
+
+      setFormData({
+        subject_id: initialData.subject_id.toString(),
+        title: initialData.title || '',
+        from_date: formatDateForInput(initialData.from_date),
+        to_date: formatDateForInput(initialData.to_date),
+        type: initialData.type || 'one_to_one',
+        price: initialData.price || '',
+        max_students: initialData.max_students?.toString() || '1',
+        description: initialData.description || '',
+      })
+
+      setSlotTimes([
+        {
+          start_time: formatTimeForInput(initialData.start_time),
+          end_time: formatTimeForInput(initialData.end_time),
+        },
+      ])
+    }
+  }, [isEditMode, initialData])
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target
@@ -169,16 +220,29 @@ export default function AddSlotForm() {
     }
 
     try {
-      const result = await createSlotMutation.mutateAsync(payload)
-      addToast({
-        type: 'success',
-        title: 'Slot Created',
-        description: result?.message || 'One-to-one slot created successfully!',
-        duration: 5000,
-      })
-      resetForm()
+      if (isEditMode && slotId) {
+        const result = await updateSlotMutation.mutateAsync({ id: slotId, payload })
+        addToast({
+          type: 'success',
+          title: 'Slot Updated',
+          description: result?.message || 'Slot updated successfully!',
+          duration: 5000,
+        })
+        router.push('/dashboard/one-to-one-session')
+      } else {
+        const result = await createSlotMutation.mutateAsync(payload)
+        addToast({
+          type: 'success',
+          title: 'Slot Created',
+          description: result?.message || 'One-to-one slot created successfully!',
+          duration: 5000,
+        })
+        resetForm()
+      }
     } catch (error) {
-      let errorMessage = 'Failed to create slot. Please try again.'
+      let errorMessage = isEditMode 
+        ? 'Failed to update slot. Please try again.'
+        : 'Failed to create slot. Please try again.'
       
       if (error instanceof Error) {
         errorMessage = error.message
@@ -190,7 +254,7 @@ export default function AddSlotForm() {
       
       addToast({
         type: 'error',
-        title: 'Error Creating Slot',
+        title: isEditMode ? 'Error Updating Slot' : 'Error Creating Slot',
         description: errorMessage,
         duration: 6000,
       })
@@ -200,8 +264,14 @@ export default function AddSlotForm() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-white">Schedule Live Session</h1>
-        <p className="text-gray-400 mt-2">Configure availability windows, pricing, and time slots for your live class.</p>
+        <h1 className="text-3xl font-bold text-white">
+          {isEditMode ? 'Edit Live Session' : 'Schedule Live Session'}
+        </h1>
+        <p className="text-gray-400 mt-2">
+          {isEditMode 
+            ? 'Update the availability windows, pricing, and time slots for your live class.'
+            : 'Configure availability windows, pricing, and time slots for your live class.'}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -435,19 +505,30 @@ export default function AddSlotForm() {
           </CardContent>
         </Card>
 
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-4">
+          {isEditMode && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push('/dashboard/one-to-one-session')}
+              className="border-gray-600 text-gray-300 hover:bg-gray-700 cursor-pointer"
+              disabled={createSlotMutation.isPending || updateSlotMutation.isPending}
+            >
+              Cancel
+            </Button>
+          )}
           <Button
             type="submit"
-            disabled={createSlotMutation.isPending}
+            disabled={createSlotMutation.isPending || updateSlotMutation.isPending}
             className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
           >
-            {createSlotMutation.isPending ? (
+            {(createSlotMutation.isPending || updateSlotMutation.isPending) ? (
               <>
                 <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                Creating Slot...
+                {isEditMode ? 'Updating Slot...' : 'Creating Slot...'}
               </>
             ) : (
-              'Create Slot'
+              isEditMode ? 'Update Slot' : 'Create Slot'
             )}
           </Button>
         </div>
