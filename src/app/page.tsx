@@ -3,6 +3,7 @@ import LandingHero from "@/components/Home/LandingHero"
 import ChooseUs from "@/components/Home/ChooseUs"
 import OurFeature from "@/components/Home/OurFeature"
 import AllCourse from "@/components/Courses/AllCourse"
+import LiveSessions from "@/components/Home/LiveSessions"
 import LearningReimagined from "@/components/Reviews/LearningReimagined"
 import PointSystem from "@/components/Point/PointSystem"
 import Contact from "@/components/shared/Contact"
@@ -20,6 +21,7 @@ export default function Home() {
       <RandomSkill/>
       {/* <Partner/> */}
       <AllCourse/>
+      <LiveSessions/>
 
       {/* Why Choose Us Section */}
       <ChooseUs/>

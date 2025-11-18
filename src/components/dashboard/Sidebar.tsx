@@ -48,7 +48,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       ]
     },
     {
-      title: 'One to One Session',
+      title: 'Live Session',
       icon: Video,
       href: '/dashboard/one-to-one-session',
       items: [

@@ -83,7 +83,7 @@ export default function OneToOneSessionPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white">One-to-One Sessions</h1>
+            <h1 className="text-3xl font-bold text-white">Live Session</h1>
             <p className="text-gray-400 mt-2">Manage and monitor all your one-to-one teaching slots.</p>
           </div>
           <Button asChild className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer">

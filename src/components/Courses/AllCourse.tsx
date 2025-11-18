@@ -249,7 +249,7 @@ export default function AllCourse() {
         )}
 
         {/* Live Sessions */}
-        {/* <div className="mt-20">
+        <div className="mt-20">
           <div className="text-center mb-6">
             <h3 className="text-4xl font-semibold text-white">Live Sessions</h3>
             <p className="text-gray-400 text-xl">Join upcoming one-to-one sessions with expert mentors.</p>
@@ -301,7 +301,7 @@ export default function AllCourse() {
               Live sessions will be announced soon. Stay tuned!
             </div>
           )}
-        </div> */}
+        </div>
       </div>
     </section>
   )

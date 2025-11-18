@@ -57,24 +57,34 @@ export interface LiveSessionSlot {
   description?: string
 }
 
-const normalizeSlots = (result: any): LiveSessionSlot[] => {
-  if (!result) {
-    return []
-  }
-
-  if (Array.isArray(result)) {
-    return result as LiveSessionSlot[]
-  }
-
-  if (Array.isArray(result?.slots)) {
-    return result.slots as LiveSessionSlot[]
-  }
-
-  return []
+export interface PaginationLink {
+  url: string | null
+  label: string
+  active: boolean
 }
 
-const fetchLiveSessions = async (): Promise<LiveSessionSlot[]> => {
-  const url = joinUrl('slots')
+export interface PaginatedSlotsResponse {
+  current_page: number
+  data: LiveSessionSlot[]
+  first_page_url: string
+  from: number | null
+  last_page: number
+  last_page_url: string
+  links: PaginationLink[]
+  next_page_url: string | null
+  path: string
+  per_page: number
+  prev_page_url: string | null
+  to: number | null
+  total: number
+}
+
+export interface LiveSessionsResponse {
+  slots: PaginatedSlotsResponse
+}
+
+const fetchLiveSessions = async (page: number = 1): Promise<PaginatedSlotsResponse> => {
+  const url = joinUrl(`slots?page=${page}`)
   const headers = getAuthHeaders()
 
   try {
@@ -84,14 +94,71 @@ const fetchLiveSessions = async (): Promise<LiveSessionSlot[]> => {
     })
 
     const text = await response.text()
-    const result = text ? JSON.parse(text) : null
+    const result: LiveSessionsResponse | any = text ? JSON.parse(text) : null
 
     if (!response.ok) {
       const errorMessage = result?.message || result?.error || `Failed to fetch live sessions (${response.status})`
       throw new Error(errorMessage)
     }
 
-    return normalizeSlots(result)
+    // Handle paginated response
+    if (result?.slots) {
+      return result.slots as PaginatedSlotsResponse
+    }
+
+    // Fallback for non-paginated response
+    if (Array.isArray(result)) {
+      return {
+        current_page: 1,
+        data: result as LiveSessionSlot[],
+        first_page_url: '',
+        from: 1,
+        last_page: 1,
+        last_page_url: '',
+        links: [],
+        next_page_url: null,
+        path: '',
+        per_page: result.length,
+        prev_page_url: null,
+        to: result.length,
+        total: result.length,
+      }
+    }
+
+    // If result.slots is an array (old format)
+    if (Array.isArray(result?.slots)) {
+      return {
+        current_page: 1,
+        data: result.slots as LiveSessionSlot[],
+        first_page_url: '',
+        from: 1,
+        last_page: 1,
+        last_page_url: '',
+        links: [],
+        next_page_url: null,
+        path: '',
+        per_page: result.slots.length,
+        prev_page_url: null,
+        to: result.slots.length,
+        total: result.slots.length,
+      }
+    }
+
+    return {
+      current_page: 1,
+      data: [],
+      first_page_url: '',
+      from: null,
+      last_page: 1,
+      last_page_url: '',
+      links: [],
+      next_page_url: null,
+      path: '',
+      per_page: 10,
+      prev_page_url: null,
+      to: null,
+      total: 0,
+    }
   } catch (error) {
     if (error instanceof Error) {
       throw error
@@ -100,10 +167,10 @@ const fetchLiveSessions = async (): Promise<LiveSessionSlot[]> => {
   }
 }
 
-export const useLiveSessions = () => {
+export const useLiveSessions = (page: number = 1) => {
   return useQuery({
-    queryKey: ['live-sessions'],
-    queryFn: fetchLiveSessions,
+    queryKey: ['live-sessions', page],
+    queryFn: () => fetchLiveSessions(page),
     staleTime: 60 * 1000,
   })
 }
