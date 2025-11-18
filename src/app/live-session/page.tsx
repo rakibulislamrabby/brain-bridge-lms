@@ -216,7 +216,7 @@ export default function LiveSessionPage() {
                                 handlePageChange(currentPage - 1)
                               }
                             }}
-                            className={!pagination.hasPrevPage || isLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            className={!pagination.hasPrevPage || isLoading ? "pointer-events-none opacity-50 cursor-not-allowed" : "cursor-pointer"}
                           />
                         </PaginationItem>
                         
@@ -266,7 +266,7 @@ export default function LiveSessionPage() {
                                 handlePageChange(currentPage + 1)
                               }
                             }}
-                            className={!pagination.hasNextPage || isLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            className={!pagination.hasNextPage || isLoading ? "pointer-events-none opacity-50 cursor-not-allowed" : "cursor-pointer"}
                           />
                         </PaginationItem>
                       </PaginationContent>
