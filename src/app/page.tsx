@@ -21,7 +21,7 @@ export default function Home() {
       <RandomSkill/>
       {/* <Partner/> */}
       <AllCourse/>
-      <LiveSessions/>
+      <LiveSessions limit={6} showShowMore={true} />
 
       {/* Why Choose Us Section */}
       <ChooseUs/>
