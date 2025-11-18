@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import { getStoredUser } from '@/hooks/useAuth'
-import { useSlots } from '@/hooks/slots/use-slots'
+import { useTeacherSlots } from '@/hooks/slots/teacher/use-teacher-slot'
 import { useDeleteSlot } from '@/hooks/slots/use-delete-slot'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from '@/components/ui/toast'
 import { Loader2, Plus, Calendar, Clock, Users, DollarSign, BookOpen, XCircle, Trash2 } from 'lucide-react'
 import Link from 'next/link'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 
 const formatDate = (value?: string) => {
   if (!value) return '—'
@@ -41,20 +50,40 @@ const formatTime = (value?: string) => {
 export default function OneToOneSessionPage() {
   const [user, setUser] = useState<{ id: number; name: string; email: string } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
   const router = useRouter()
-  const { data: slots = [], isLoading: slotsLoading, error: slotsError } = useSlots()
+  const { data: paginatedData, isLoading: slotsLoading, error: slotsError } = useTeacherSlots(currentPage)
+  const slots = paginatedData?.data || []
   const deleteSlotMutation = useDeleteSlot()
   const { addToast } = useToast()
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [slotToDelete, setSlotToDelete] = useState<{ id: number; label: string } | null>(null)
 
-  const totalSlots = slots.length
+  const pagination = paginatedData ? {
+    currentPage: paginatedData.current_page,
+    lastPage: paginatedData.last_page,
+    total: paginatedData.total,
+    from: paginatedData.from,
+    to: paginatedData.to,
+    hasNextPage: paginatedData.next_page_url !== null,
+    hasPrevPage: paginatedData.prev_page_url !== null,
+  } : null
+
+  const totalSlots = paginatedData?.total || 0
   const bookedSlots = slots.filter((slot) => slot.is_booked || slot.booked_count > 0).length
   const upcomingSlots = useMemo(() => {
     const now = new Date()
-    return slots.filter((slot) => new Date(slot.available_date) >= now).length
+    return slots.filter((slot) => {
+      const fromDate = slot.from_date ? new Date(slot.from_date) : null
+      return fromDate && fromDate >= now
+    }).length
   }, [slots])
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   useEffect(() => {
     const storedUser = getStoredUser()
@@ -172,14 +201,23 @@ export default function OneToOneSessionPage() {
                       <tr key={slot.id} className="border-t border-gray-700/60 hover:bg-gray-700/30 transition-colors">
                         <td className="py-3 px-4">
                           <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-white">{slot.subject?.name || '—'}</span>
+                            <span className="text-sm font-semibold text-white">{slot.title || slot.subject?.name || '—'}</span>
                             <span className="text-xs text-gray-400">
-                              {slot.description || 'No description provided.'}
+                              {slot.subject?.name || 'No subject'}
                             </span>
+                            {slot.description && (
+                              <span className="text-xs text-gray-500 mt-1">
+                                {slot.description}
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-300">
-                          {formatDate(slot.available_date)}
+                          {slot.from_date && slot.to_date ? (
+                            formatDate(slot.from_date) === formatDate(slot.to_date) 
+                              ? formatDate(slot.from_date)
+                              : `${formatDate(slot.from_date)} - ${formatDate(slot.to_date)}`
+                          ) : slot.from_date ? formatDate(slot.from_date) : '—'}
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-300">
                           <div className="flex items-center gap-2">
@@ -212,7 +250,14 @@ export default function OneToOneSessionPage() {
                             size="sm"
                             className="border-red-700 text-red-400 hover:bg-red-900/30 cursor-pointer"
                             onClick={() => {
-                              setSlotToDelete({ id: slot.id, label: `${slot.subject?.name || 'Slot'} • ${formatDate(slot.available_date)}` })
+                              const dateLabel = slot.from_date && slot.to_date 
+                                ? (formatDate(slot.from_date) === formatDate(slot.to_date) 
+                                    ? formatDate(slot.from_date)
+                                    : `${formatDate(slot.from_date)} - ${formatDate(slot.to_date)}`)
+                                : slot.from_date 
+                                ? formatDate(slot.from_date)
+                                : 'Slot'
+                              setSlotToDelete({ id: slot.id, label: `${slot.title || slot.subject?.name || 'Slot'} • ${dateLabel}` })
                               setDeleteDialogOpen(true)
                             }}
                             disabled={deleteSlotMutation.isPending && deletingId === slot.id}
@@ -298,6 +343,87 @@ export default function OneToOneSessionPage() {
       </Dialog>
                   </tbody>
                 </table>
+              </div>
+            )}
+            
+            {/* Pagination */}
+            {pagination && pagination.lastPage > 1 && (
+              <div className="border-t border-gray-700 pt-6 px-4 pb-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+                  <div className="text-sm text-gray-400">
+                    {pagination.from && pagination.to ? (
+                      <>Showing <span className="text-white font-medium">{pagination.from}</span> to <span className="text-white font-medium">{pagination.to}</span> of <span className="text-white font-medium">{pagination.total}</span> results</>
+                    ) : (
+                      <>Total: <span className="text-white font-medium">{pagination.total}</span> results</>
+                    )}
+                  </div>
+                </div>
+                
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          if (pagination.hasPrevPage && !slotsLoading) {
+                            handlePageChange(currentPage - 1)
+                          }
+                        }}
+                        className={!pagination.hasPrevPage || slotsLoading ? "pointer-events-none opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: pagination.lastPage }, (_, i) => i + 1).map((page) => {
+                      const showPage = 
+                        page === 1 ||
+                        page === pagination.lastPage ||
+                        (page >= currentPage - 1 && page <= currentPage + 1)
+                      
+                      if (!showPage) {
+                        if (page === currentPage - 2 || page === currentPage + 2) {
+                          return (
+                            <PaginationItem key={page}>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          )
+                        }
+                        return null
+                      }
+                      
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              if (!slotsLoading) {
+                                handlePageChange(page)
+                              }
+                            }}
+                            isActive={page === currentPage}
+                            className={slotsLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )
+                    })}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          if (pagination.hasNextPage && !slotsLoading) {
+                            handlePageChange(currentPage + 1)
+                          }
+                        }}
+                        className={!pagination.hasNextPage || slotsLoading ? "pointer-events-none opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
               </div>
             )}
           </CardContent>

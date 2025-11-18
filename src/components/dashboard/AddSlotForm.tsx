@@ -113,6 +113,34 @@ export default function AddSlotForm() {
       return
     }
 
+    // Validate that end_time is after start_time for each slot
+    const invalidTimeRange = slotTimes.some((slot, index) => {
+      if (!slot.start_time || !slot.end_time) return false
+      const start = new Date(`1970-01-01T${slot.start_time}`)
+      const end = new Date(`1970-01-01T${slot.end_time}`)
+      return end <= start
+    })
+    
+    if (invalidTimeRange) {
+      addToast({
+        type: 'error',
+        title: 'Invalid Time Range',
+        description: 'End time must be after start time for each slot.',
+        duration: 5000,
+      })
+      return
+    }
+
+    // Format times to ensure they're in HH:MM:SS format
+    const formatTime = (time: string): string => {
+      if (!time) return time
+      // If time is already in HH:MM:SS format, return as is
+      if (time.split(':').length === 3) return time
+      // If time is in HH:MM format, add :00 for seconds
+      if (time.split(':').length === 2) return `${time}:00`
+      return time
+    }
+
     const payload = {
       subject_id: Number(formData.subject_id),
       title: formData.title,
@@ -123,8 +151,8 @@ export default function AddSlotForm() {
       max_students: Number(formData.max_students),
       description: formData.description,
       slots: slotTimes.map((slot) => ({
-        start_time: slot.start_time,
-        end_time: slot.end_time,
+        start_time: formatTime(slot.start_time),
+        end_time: formatTime(slot.end_time),
       })),
     }
 
@@ -138,7 +166,16 @@ export default function AddSlotForm() {
       })
       resetForm()
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create slot. Please try again.'
+      let errorMessage = 'Failed to create slot. Please try again.'
+      
+      if (error instanceof Error) {
+        errorMessage = error.message
+        // Check if it's a validation error about time
+        if (error.message.includes('end_time') && error.message.includes('start_time')) {
+          errorMessage = 'End time must be after start time for all slots. Please check your time ranges.'
+        }
+      }
+      
       addToast({
         type: 'error',
         title: 'Error Creating Slot',
@@ -344,6 +381,7 @@ export default function AddSlotForm() {
                       value={slot.start_time}
                       onChange={(event) => handleSlotChange(index, 'start_time', event.target.value)}
                       required
+                      min={slot.end_time ? undefined : undefined}
                       className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
                     />
                   </div>
@@ -356,8 +394,19 @@ export default function AddSlotForm() {
                       value={slot.end_time}
                       onChange={(event) => handleSlotChange(index, 'end_time', event.target.value)}
                       required
+                      min={slot.start_time || undefined}
                       className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
                     />
+                    {slot.start_time && slot.end_time && (
+                      (() => {
+                        const start = new Date(`1970-01-01T${slot.start_time}`)
+                        const end = new Date(`1970-01-01T${slot.end_time}`)
+                        const isValid = end > start
+                        return !isValid ? (
+                          <p className="text-xs text-red-400 mt-1">End time must be after start time</p>
+                        ) : null
+                      })()
+                    )}
                   </div>
                 </div>
               </div>
