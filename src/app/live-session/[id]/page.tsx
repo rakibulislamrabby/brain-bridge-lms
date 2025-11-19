@@ -2,13 +2,15 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Calendar, Clock, Users, DollarSign, Info, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, Users, DollarSign, Info, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { AppHeader } from '@/components/app-header'
 import Footer from '@/components/shared/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useLiveSessionDetail } from '@/hooks/live-session/use-live-session-detail'
+import { useBookingIntent } from '@/hooks/slots/use-bookings-intent'
+import { useToast } from '@/components/ui/toast'
 
 const toDateOnlyKey = (date: Date | string | null | undefined) => {
   if (!date) {
@@ -97,6 +99,8 @@ export default function LiveSessionDetailPage() {
   }, [params])
 
   const { data, isLoading, error } = useLiveSessionDetail(sessionId)
+  const bookingIntentMutation = useBookingIntent()
+  const { addToast } = useToast()
 
   const availableDates = useMemo(() => {
     if (!data || !data.from_date || !data.to_date) {
@@ -181,6 +185,50 @@ export default function LiveSessionDetailPage() {
       return
     }
     setSelectedDateKey(key)
+  }
+
+  const handleReserveSlot = async () => {
+    if (!data || !selectedDate) {
+      addToast({
+        type: 'error',
+        title: 'Missing Information',
+        description: 'Please select a date to reserve the slot.',
+        duration: 5000,
+      })
+      return
+    }
+
+    if (data.available_seats === 0) {
+      addToast({
+        type: 'error',
+        title: 'Slot Full',
+        description: 'This slot is already full. Please select another date.',
+        duration: 5000,
+      })
+      return
+    }
+
+    try {
+      const result = await bookingIntentMutation.mutateAsync({
+        slot_id: data.id,
+        scheduled_date: selectedDate,
+      })
+
+      addToast({
+        type: 'success',
+        title: 'Slot Reserved',
+        description: result?.message || 'Your slot reservation has been submitted successfully!',
+        duration: 5000,
+      })
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to reserve slot. Please try again.'
+      addToast({
+        type: 'error',
+        title: 'Reservation Failed',
+        description: errorMessage,
+        duration: 6000,
+      })
+    }
   }
 
   return (
@@ -329,9 +377,19 @@ export default function LiveSessionDetailPage() {
                           </div>
                           <Button 
                             className="bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
-                            disabled={data.available_seats === 0}
+                            disabled={data.available_seats === 0 || bookingIntentMutation.isPending}
+                            onClick={handleReserveSlot}
                           >
-                            {data.available_seats === 0 ? 'Full' : 'Reserve Slot'}
+                            {bookingIntentMutation.isPending ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Reserving...
+                              </>
+                            ) : data.available_seats === 0 ? (
+                              'Full'
+                            ) : (
+                              'Reserve Slot'
+                            )}
                           </Button>
                         </div>
                       ) : (
