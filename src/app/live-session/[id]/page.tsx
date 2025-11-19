@@ -214,12 +214,27 @@ export default function LiveSessionDetailPage() {
         scheduled_date: selectedDate,
       })
 
-      addToast({
-        type: 'success',
-        title: 'Slot Reserved',
-        description: result?.message || 'Your slot reservation has been submitted successfully!',
-        duration: 5000,
-      })
+      // Check if payment is required
+      if (result?.requires_payment && result?.client_secret) {
+        // Store payment data in sessionStorage for the payment page
+        sessionStorage.setItem('payment_data', JSON.stringify({
+          client_secret: result.client_secret,
+          payment_intent_id: result.payment_intent_id,
+          amount: result.amount,
+          slot: result.slot,
+        }))
+        
+        // Redirect to payment page
+        router.push('/payment')
+      } else {
+        // No payment required, show success message
+        addToast({
+          type: 'success',
+          title: 'Slot Reserved',
+          description: result?.message || 'Your slot reservation has been submitted successfully!',
+          duration: 5000,
+        })
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to reserve slot. Please try again.'
       addToast({

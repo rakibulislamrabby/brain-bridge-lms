@@ -39,7 +39,23 @@ export interface BookingIntentRequest {
   scheduled_date: Date
 }
 
+export interface SlotInfo {
+  id: number
+  subject: string
+  teacher: string
+  scheduled_date: string
+  start_time: string
+  end_time: string
+  price: string
+}
+
 export interface BookingIntentResponse {
+  success?: boolean
+  requires_payment?: boolean
+  client_secret?: string
+  payment_intent_id?: string
+  amount?: string
+  slot?: SlotInfo
   message?: string
   [key: string]: unknown
 }
