@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { getStoredUser } from '@/hooks/useAuth'
+import { useMe } from '@/hooks/use-me'
 import Sidebar from './Sidebar'
 import DashboardHeader from './DashboardHeader'
 
@@ -11,24 +11,28 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [user, setUser] = useState<{ id: number; name: string; email: string } | null>(null)
+  const { data: user, isLoading } = useMe()
 
   const toggleSidebar = () => { 
     setSidebarCollapsed(!sidebarCollapsed)
   }
 
-  // Get user data for header
-  React.useEffect(() => {
-    const storedUser = getStoredUser()
-    setUser(storedUser)
-  }, [])
+  // Show loading state while fetching user data
+  if (isLoading) {
+    return (
+      <div className="h-screen bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="h-screen bg-gray-900 flex">
       {/* Sidebar - Full Height */}
       <Sidebar 
         isCollapsed={sidebarCollapsed} 
-        onToggle={toggleSidebar} 
+        onToggle={toggleSidebar}
+        user={user}
       />
       
       {/* Main Content Area */}

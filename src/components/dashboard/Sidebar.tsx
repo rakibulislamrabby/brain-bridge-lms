@@ -4,6 +4,7 @@ import React, { useState, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { UserProfile } from '@/hooks/use-me'
 import { 
   LayoutDashboard,
   BookOpen,
@@ -25,13 +26,20 @@ import {
 interface SidebarProps {
   isCollapsed: boolean
   onToggle: () => void
+  user?: UserProfile | null
 }
 
-export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
+export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   const pathname = usePathname()
   const [expandedItems, setExpandedItems] = useState<string[]>([])
 
-  const navigation = useMemo(() => [
+  // Check if user is admin
+  const isAdmin = useMemo(() => {
+    return user?.roles?.some(role => role.name === 'admin') || false
+  }, [user])
+
+  const navigation = useMemo(() => {
+    const allNavigation = [
     {
       title: 'Dashboard',
       icon: LayoutDashboard,
@@ -85,7 +93,8 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       title: 'User List',
       icon: Users,
       href: '/dashboard/user-list',
-      items: []
+      items: [],
+      requiresAdmin: true // Only admin can see this
     },
     {
       title: 'Settings',
@@ -93,7 +102,16 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       href: '/dashboard/settings',
       items: []
     }
-  ], [])
+    ]
+
+    // Filter navigation based on user role
+    return allNavigation.filter(item => {
+      if (item.requiresAdmin && !isAdmin) {
+        return false
+      }
+      return true
+    })
+  }, [isAdmin])
 
   const isActive = useCallback((href: string) => {
     if (href === '/dashboard') {

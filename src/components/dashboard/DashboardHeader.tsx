@@ -5,13 +5,10 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Home, User, LogOut, Settings, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { UserProfile } from '@/hooks/use-me'
 
 interface DashboardHeaderProps {
-  user?: {
-    id: number
-    name: string
-    email: string
-  } | null
+  user?: UserProfile | null
 }
 
 export default function DashboardHeader({ user }: DashboardHeaderProps) {
