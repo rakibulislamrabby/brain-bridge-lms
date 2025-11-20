@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useCourses } from '@/hooks/course/use-courses'
+import { usePublicCourses } from '@/hooks/course/public/use-public-courses'
 import { useLiveSessions } from '@/hooks/live-session/use-live-session'
 import CourseCard from './CourseCard'
 import {
@@ -107,7 +107,7 @@ const formatDateTime = (dateString: string, timeString: string) => {
 }
 
 export default function AllCourse() {
-  const { data: courses = [], isLoading, error } = useCourses()
+  const { data: courses = [], isLoading, error } = usePublicCourses()
   const { data: paginatedLiveSessions, isLoading: liveLoading, error: liveError } = useLiveSessions(1)
   const liveSessions = paginatedLiveSessions?.data || []
   const [selectedCategory, setSelectedCategory] = useState('All Categories')
