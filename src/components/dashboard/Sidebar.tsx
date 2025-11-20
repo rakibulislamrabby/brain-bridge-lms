@@ -33,9 +33,17 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   const pathname = usePathname()
   const [expandedItems, setExpandedItems] = useState<string[]>([])
 
-  // Check if user is admin
+  // Check user roles
   const isAdmin = useMemo(() => {
     return user?.roles?.some(role => role.name === 'admin') || false
+  }, [user])
+
+  const isStudent = useMemo(() => {
+    return user?.roles?.some(role => role.name === 'student') || false
+  }, [user])
+
+  const isTeacher = useMemo(() => {
+    return user?.roles?.some(role => role.name === 'teacher') || false
   }, [user])
 
   const navigation = useMemo(() => {
@@ -44,7 +52,8 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       title: 'Dashboard',
       icon: LayoutDashboard,
       href: '/dashboard',
-      items: []
+      items: [],
+      allowedRoles: ['admin', 'teacher', 'student'] // Everyone can see Dashboard
     },
     {
       title: 'Course',
@@ -53,7 +62,8 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       items: [
         { title: 'All Courses', href: '/dashboard/course', icon: BookOpen },
         { title: 'Add Course', href: '/dashboard/course/add-course', icon: FileText }
-      ]
+      ],
+      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     {
       title: 'Live Session',
@@ -62,19 +72,22 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       items: [
         { title: 'All Slots', href: '/dashboard/one-to-one-session', icon: Video },
         { title: 'Add Slot', href: '/dashboard/one-to-one-session/add-slot', icon: FileText },
-      ]
+      ],
+      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     {
       title: 'Subject',
       icon: FolderOpen,
       href: '/dashboard/subject',
-      items: []
+      items: [],
+      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     {
       title: 'Skills',
       icon: Target,
       href: '/dashboard/skills',
-      items: []
+      items: [],
+      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     // {
     //   title: 'Teacher',
@@ -94,24 +107,37 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       icon: Users,
       href: '/dashboard/user-list',
       items: [],
-      requiresAdmin: true // Only admin can see this
+      allowedRoles: ['admin'] // Only admin can see this
     },
     {
       title: 'Settings',
       icon: Settings,
       href: '/dashboard/settings',
-      items: []
+      items: [],
+      allowedRoles: ['admin', 'teacher', 'student'] // Everyone can see Settings
     }
     ]
 
     // Filter navigation based on user role
     return allNavigation.filter(item => {
-      if (item.requiresAdmin && !isAdmin) {
-        return false
+      // If user is a student, only show Dashboard and Settings
+      if (isStudent) {
+        return item.allowedRoles?.includes('student') || false
       }
-      return true
+      
+      // For admin and teacher, check if they have the required role
+      if (isAdmin) {
+        return true // Admin can see everything
+      }
+      
+      if (isTeacher) {
+        return item.allowedRoles?.includes('teacher') || false
+      }
+      
+      // Default: if no role matches, don't show the item
+      return false
     })
-  }, [isAdmin])
+  }, [isAdmin, isStudent, isTeacher])
 
   const isActive = useCallback((href: string) => {
     if (href === '/dashboard') {
