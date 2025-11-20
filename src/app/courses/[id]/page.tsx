@@ -43,6 +43,25 @@ const resolveMediaUrl = (path?: string | null, fallback?: string) => {
   return `${base}storage/${cleanedPath}`
 }
 
+const resolveThumbnailUrl = (path?: string | null, fallback?: string) => {
+  if (!path) {
+    return fallback
+  }
+
+  if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+
+  const base = MEDIA_BASE_URL.endsWith('/') ? MEDIA_BASE_URL : `${MEDIA_BASE_URL}/`
+  // Remove any leading storage/thumbnails/ or thumbnails/ or storage/ or slashes
+  const cleanedPath = path
+    .replace(/^\/?storage\/thumbnails\//, '')
+    .replace(/^\/?thumbnails\//, '')
+    .replace(/^\/?storage\//, '')
+    .replace(/^\/+/, '')
+  return `${base}storage/thumbnails/${cleanedPath}`
+}
+
 const getSubjectName = (course: any) => {
   return course?.subject?.name || course?.subject_name || 'General'
 }
@@ -172,7 +191,7 @@ export default function CourseDetailPage() {
   const studentsCount = course.students_count ?? course.total_students ?? 0
   const duration = course.duration ?? `${modules.length} modules`
   const language = course.language ?? 'English'
-  const thumbnail = resolveMediaUrl(course.thumbnail_url, fallbackImage) || fallbackImage
+  const thumbnail = resolveThumbnailUrl(course.thumbnail_url, fallbackImage) || fallbackImage
   return (
     <>
       <AppHeader />

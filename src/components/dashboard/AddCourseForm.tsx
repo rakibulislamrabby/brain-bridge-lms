@@ -223,11 +223,40 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     }
 
     try {
+      // Format modules and videos according to the API structure
+      const formattedModules = modules.map((module, moduleIndex) => ({
+        title: module.title,
+        description: module.description,
+        order_index: module.order_index,
+        videos: module.videos.map((video, videoIndex) => ({
+          title: video.title,
+          description: video.description,
+          duration_hours: parseFloat(video.duration_hours) || 0,
+          is_published: video.is_published ? 1 : 0,
+        })),
+      }))
+
+      // Collect video files with keys for reference
+      const videoFiles: Record<string, File> = {}
+      modules.forEach((module, moduleIndex) => {
+        module.videos.forEach((video, videoIndex) => {
+          if (video.file) {
+            const videoFileKey = `${moduleIndex}_${videoIndex}`
+            videoFiles[videoFileKey] = video.file
+          }
+        })
+      })
+
       const payload = {
-        ...courseInfo,
-        teacher_id: teacherId,
+        title: courseInfo.title,
+        description: courseInfo.description,
+        subject_id: parseInt(courseInfo.subject_id, 10),
+        price: parseFloat(courseInfo.price) || 0,
+        old_price: courseInfo.old_price ? parseFloat(courseInfo.old_price) : undefined,
+        is_published: courseInfo.is_published ? 1 : 0,
+        modules: formattedModules,
         thumbnail: thumbnailFile,
-        modules,
+        videoFiles: Object.keys(videoFiles).length > 0 ? videoFiles : undefined,
       }
 
       const result = await createCourseMutation.mutateAsync(payload)

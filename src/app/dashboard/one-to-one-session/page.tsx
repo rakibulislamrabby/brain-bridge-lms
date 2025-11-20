@@ -116,7 +116,7 @@ export default function OneToOneSessionPage() {
             <p className="text-gray-400 mt-2">Manage and monitor all your one-to-one teaching slots.</p>
           </div>
           <Button asChild className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer">
-            <Link href="/dashboard/one-to-one-session/add-session">
+            <Link href="/dashboard/one-to-one-session/add-slot">
               <Plus className="h-4 w-4 mr-2" />
               Add Session
             </Link>
