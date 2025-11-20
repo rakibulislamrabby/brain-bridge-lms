@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { CheckCircle2, Calendar, Clock, Users, ArrowRight } from 'lucide-react'
+import { CheckCircle2, Calendar, Clock, Users, ArrowRight, BookOpen } from 'lucide-react'
 import { AppHeader } from '@/components/app-header'
 import Footer from '@/components/shared/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,9 +18,15 @@ export default function PaymentSuccessPage() {
     start_time: string
     end_time: string
   } | null>(null)
+  const [courseInfo, setCourseInfo] = useState<{
+    title: string
+    subject: string
+    teacher: string
+    price: number
+  } | null>(null)
 
   useEffect(() => {
-    // Get slot info from sessionStorage
+    // Get payment info from sessionStorage
     const storedPaymentData = sessionStorage.getItem('payment_data')
     if (storedPaymentData) {
       try {
@@ -32,6 +38,14 @@ export default function PaymentSuccessPage() {
             scheduled_date: data.slot.scheduled_date,
             start_time: data.slot.start_time,
             end_time: data.slot.end_time,
+          })
+        }
+        if (data.course) {
+          setCourseInfo({
+            title: data.course.title,
+            subject: data.course.subject,
+            teacher: data.course.teacher,
+            price: data.course.price || 0,
           })
         }
         // Clean up sessionStorage after displaying the data
@@ -87,7 +101,11 @@ export default function PaymentSuccessPage() {
               </CardTitle>
               
               <p className="text-gray-300 mb-8">
-                Your slot has been reserved successfully. You will receive a confirmation email shortly.
+                {slotInfo 
+                  ? 'Your slot has been reserved successfully. You will receive a confirmation email shortly.'
+                  : courseInfo
+                  ? 'You have been enrolled in the course successfully! You will receive a confirmation email shortly.'
+                  : 'Your payment was processed successfully. You will receive a confirmation email shortly.'}
               </p>
 
               {slotInfo && (
@@ -121,21 +139,78 @@ export default function PaymentSuccessPage() {
                 </Card>
               )}
 
+              {courseInfo && (
+                <Card className="bg-gray-900/50 border border-gray-700 mb-6">
+                  <CardHeader>
+                    <CardTitle className="text-white text-lg">Course Enrollment Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm text-left">
+                    <div className="flex items-center gap-3">
+                      <BookOpen className="w-4 h-4 text-purple-400" />
+                      <div>
+                        <span className="text-gray-400">Course: </span>
+                        <span className="text-white font-medium">{courseInfo.title}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-gray-400">Subject: </span>
+                      <span className="text-white font-medium">{courseInfo.subject}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Users className="w-4 h-4 text-purple-400" />
+                      <div>
+                        <span className="text-gray-400">Instructor: </span>
+                        <span className="text-white font-medium">{courseInfo.teacher}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               <div className="flex gap-4 justify-center">
-                <Button
-                  variant="outline"
-                  onClick={() => router.push('/live-session')}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
-                >
-                  Browse More Sessions
-                </Button>
-                <Button
-                  onClick={() => router.push('/dashboard')}
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
-                >
-                  Go to Dashboard
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
+                {slotInfo ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => router.push('/live-session')}
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    >
+                      Browse More Sessions
+                    </Button>
+                    <Button
+                      onClick={() => router.push('/dashboard')}
+                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      Go to Dashboard
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </>
+                ) : courseInfo ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => router.push('/courses')}
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    >
+                      Browse More Courses
+                    </Button>
+                    <Button
+                      onClick={() => router.push('/dashboard')}
+                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      Go to Dashboard
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    onClick={() => router.push('/dashboard')}
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    Go to Dashboard
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>

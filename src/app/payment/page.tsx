@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { useConfirmBooking } from '@/hooks/slots/use-confirm-booking'
+import { useConfirmPurchase } from '@/hooks/course/use-confirm-purchase'
 
 // Try multiple possible environment variable names for Stripe publishable key
 // Note: In Next.js, only variables prefixed with NEXT_PUBLIC_ are available on the client side
@@ -71,6 +72,7 @@ function PaymentForm({ clientSecret, amount, slotInfo, courseInfo, paymentIntent
   const router = useRouter()
   const { addToast } = useToast()
   const confirmBookingMutation = useConfirmBooking()
+  const confirmPurchaseMutation = useConfirmPurchase()
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'succeeded' | 'failed'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -159,22 +161,50 @@ console.log("paymentIntentId",paymentIntentId)
             setIsProcessing(false)
           }
         } else if (courseInfo) {
-          // For courses, payment confirmation is handled by the backend
-          // Just show success and redirect
-          setPaymentStatus('succeeded')
-          addToast({
-            type: 'success',
-            title: 'Payment Successful',
-            description: 'You have been enrolled in the course successfully!',
-            duration: 5000,
-          })
-          
-          // Redirect to success page after a short delay
-          setTimeout(() => {
-            router.push(`/payment/success?payment_intent=${paymentIntentId}`)
-          }, 2000)
-          
-          setIsProcessing(false)
+          // Step 3: Call backend API to confirm course purchase
+          try {
+            await confirmPurchaseMutation.mutateAsync({
+              course_id: courseInfo.id,
+              payment_intent_id: paymentIntentId,
+            })
+            
+            setPaymentStatus('succeeded')
+            addToast({
+              type: 'success',
+              title: 'Payment Successful',
+              description: 'You have been enrolled in the course successfully!',
+              duration: 5000,
+            })
+            
+            // Redirect to success page after a short delay
+            setTimeout(() => {
+              router.push(`/payment/success?payment_intent=${paymentIntentId}`)
+            }, 2000)
+            setIsProcessing(false)
+          } catch (confirmError) {
+            // Payment succeeded but purchase confirmation failed
+            console.error('🔴 Purchase confirmation error:', confirmError)
+            const errorMsg = confirmError instanceof Error ? confirmError.message : 'Failed to confirm purchase'
+            
+            // Even if backend API fails, payment was successful, so we can still show success
+            // but log the error for debugging
+            console.warn('⚠️ Payment succeeded but purchase confirmation failed. Payment Intent ID:', paymentIntentId)
+            
+            setPaymentStatus('succeeded')
+            addToast({
+              type: 'success',
+              title: 'Payment Successful',
+              description: 'Your payment was processed successfully. If you encounter any issues, please contact support with Payment ID: ' + paymentIntentId.substring(0, 20) + '...',
+              duration: 8000,
+            })
+            
+            // Still redirect to success page since payment was successful
+            setTimeout(() => {
+              router.push(`/payment/success?payment_intent=${paymentIntentId}`)
+            }, 2000)
+            
+            setIsProcessing(false)
+          }
         }
       } else {
         // Payment not completed
