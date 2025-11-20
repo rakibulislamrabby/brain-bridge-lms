@@ -77,6 +77,8 @@ const createBookingIntent = async (payload: BookingIntentRequest): Promise<Booki
     scheduled_date: formatDateToString(payload.scheduled_date),
   }
 
+  console.log('🟢 Booking Intent Request:', { url, requestBody })
+
   try {
     const response = await fetch(url, {
       method: 'POST',
@@ -85,16 +87,40 @@ const createBookingIntent = async (payload: BookingIntentRequest): Promise<Booki
     })
 
     const text = await response.text()
-    const result = text ? JSON.parse(text) : {}
+    console.log('🟢 Booking Intent Response Status:', response.status)
+    console.log('🟢 Booking Intent Response Text:', text)
+
+    let result: BookingIntentResponse = {}
+    try {
+      result = text ? JSON.parse(text) : {}
+    } catch (parseError) {
+      console.error('🔴 JSON Parse Error:', parseError)
+      throw new Error('Invalid response from server')
+    }
+
+    console.log('🟢 Booking Intent Response Data:', result)
 
     if (!response.ok) {
-      const errorMessage = result?.message || result?.error || `Failed to create booking intent (${response.status})`
+      const errorMessage = result?.message || (result as any)?.error || `Failed to create booking intent (${response.status})`
+      console.error('🔴 Booking Intent Error:', errorMessage)
       throw new Error(errorMessage)
+    }
+
+    // Log success details
+    if (result.requires_payment) {
+      console.log('✅ Payment required:', {
+        client_secret: result.client_secret ? 'Present' : 'Missing',
+        payment_intent_id: result.payment_intent_id,
+        amount: result.amount,
+        slot: result.slot,
+      })
+    } else {
+      console.log('✅ No payment required')
     }
 
     return result
   } catch (error) {
-    console.error('Create booking intent error:', error)
+    console.error('🔴 Create booking intent error:', error)
     if (error instanceof Error) {
       throw error
     }
