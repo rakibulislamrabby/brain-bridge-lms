@@ -29,21 +29,28 @@ const getAuthHeaders = (): Record<string, string> => {
   return headers;
 };
 
-interface CreateCourseSlotRequest {
-  start_time: string;
-  end_time: string;
+export interface VideoRequest {
+  title: string;
+  description: string;
+  duration_hours: number;
+  is_published: number | boolean;
+}
+
+export interface ModuleRequest {
+  title: string;
+  description: string;
+  order_index: number;
+  videos: VideoRequest[];
 }
 
 export interface CreateCourseRequest {
-  subject_id: number;
   title: string;
-  from_date: string;
-  to_date: string;
-  slots: CreateCourseSlotRequest[];
-  type: string;
-  price: number;
-  max_students: number;
   description: string;
+  subject_id: number;
+  price: number;
+  old_price?: number;
+  is_published: number | boolean;
+  modules: ModuleRequest[];
 }
 
 interface CreateCourseResponse {
@@ -52,14 +59,88 @@ interface CreateCourseResponse {
   data?: unknown;
 }
 
-const createCourse = async (payload: CreateCourseRequest): Promise<CreateCourseResponse> => {
-  const headers = {
+const createCourse = async (payload: CreateCourseRequest & { thumbnail?: File | null; videoFiles?: Record<string, File> }): Promise<CreateCourseResponse> => {
+  const url = joinUrl('courses');
+  
+  // Check if we need to send files (FormData) or just JSON
+  const hasFiles = payload.thumbnail || (payload.videoFiles && Object.keys(payload.videoFiles).length > 0);
+  
+  let body: FormData | string;
+  const headers: Record<string, string> = {
     ...getAuthHeaders(),
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
   };
 
-  const url = joinUrl('courses');
+  if (hasFiles) {
+    // Use FormData for file uploads
+    const formData = new FormData();
+    
+    // Add course fields
+    formData.append('title', payload.title);
+    formData.append('description', payload.description);
+    formData.append('subject_id', payload.subject_id.toString());
+    formData.append('price', payload.price.toString());
+    if (payload.old_price !== undefined) {
+      formData.append('old_price', payload.old_price.toString());
+    }
+    formData.append('is_published', payload.is_published ? '1' : '0');
+    
+    // Add thumbnail if present
+    if (payload.thumbnail) {
+      formData.append('thumbnail', payload.thumbnail);
+    }
+    
+    // Add modules as JSON string (nested structure)
+    payload.modules.forEach((module, moduleIndex) => {
+      formData.append(`modules[${moduleIndex}][title]`, module.title);
+      formData.append(`modules[${moduleIndex}][description]`, module.description);
+      formData.append(`modules[${moduleIndex}][order_index]`, module.order_index.toString());
+      
+      module.videos.forEach((video, videoIndex) => {
+        formData.append(`modules[${moduleIndex}][videos][${videoIndex}][title]`, video.title);
+        formData.append(`modules[${moduleIndex}][videos][${videoIndex}][description]`, video.description);
+        formData.append(`modules[${moduleIndex}][videos][${videoIndex}][duration_hours]`, video.duration_hours.toString());
+        formData.append(`modules[${moduleIndex}][videos][${videoIndex}][is_published]`, video.is_published ? '1' : '0');
+        
+        // Add video file if present
+        const videoFileKey = `${moduleIndex}_${videoIndex}`;
+        if (payload.videoFiles && payload.videoFiles[videoFileKey]) {
+          formData.append(`modules[${moduleIndex}][videos][${videoIndex}][file]`, payload.videoFiles[videoFileKey]);
+        }
+      });
+    });
+    
+    body = formData;
+    // Don't set Content-Type for FormData, browser will set it with boundary
+  } else {
+    // Use JSON if no files
+    headers['Accept'] = 'application/json';
+    headers['Content-Type'] = 'application/json';
+    
+    const jsonPayload: any = {
+      title: payload.title,
+      description: payload.description,
+      subject_id: payload.subject_id,
+      price: payload.price,
+      is_published: payload.is_published ? 1 : 0,
+      modules: payload.modules.map(module => ({
+        title: module.title,
+        description: module.description,
+        order_index: module.order_index,
+        videos: module.videos.map(video => ({
+          title: video.title,
+          description: video.description,
+          duration_hours: video.duration_hours,
+          is_published: video.is_published ? 1 : 0,
+        })),
+      })),
+    };
+    
+    if (payload.old_price !== undefined) {
+      jsonPayload.old_price = payload.old_price;
+    }
+    
+    body = JSON.stringify(jsonPayload);
+  }
 
   let response: Response;
 
@@ -67,7 +148,7 @@ const createCourse = async (payload: CreateCourseRequest): Promise<CreateCourseR
     response = await fetch(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify(payload),
+      body,
     });
   } catch (networkError) {
     console.error('Create course network error:', networkError);

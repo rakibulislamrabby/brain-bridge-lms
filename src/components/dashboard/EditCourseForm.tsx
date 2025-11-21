@@ -317,26 +317,45 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
     }
 
     try {
+      // Format modules and videos according to the API structure
+      const formattedModules = modules.map((moduleState, moduleIndex) => ({
+        id: moduleState.id,
+        title: moduleState.title,
+        description: moduleState.description,
+        order_index: moduleState.order_index || moduleIndex + 1,
+        videos: moduleState.videos.map((video) => ({
+          id: video.id,
+          title: video.title,
+          description: video.description,
+          duration_hours: parseFloat(video.duration_hours) || 0,
+          is_published: video.is_published ? 1 : 0,
+          file: video.file || null,
+          video_url: video.file ? undefined : video.video_url,
+          type: video.type,
+        })),
+      }))
+
+      // Collect video files with keys for reference
+      const videoFiles: Record<string, File> = {}
+      modules.forEach((module, moduleIndex) => {
+        module.videos.forEach((video, videoIndex) => {
+          if (video.file) {
+            const videoFileKey = `${moduleIndex}_${videoIndex}`
+            videoFiles[videoFileKey] = video.file
+          }
+        })
+      })
+
       const payload: UpdateCourseRequest = {
-        ...courseInfo,
-        teacher_id: teacherId,
+        title: courseInfo.title,
+        description: courseInfo.description,
+        subject_id: parseInt(courseInfo.subject_id, 10),
+        price: parseFloat(courseInfo.price) || 0,
+        old_price: courseInfo.old_price ? parseFloat(courseInfo.old_price) : undefined,
+        is_published: courseInfo.is_published ? 1 : 0,
         thumbnail: thumbnailFile || undefined,
-        modules: modules.map((moduleState, moduleIndex) => ({
-          id: moduleState.id,
-          title: moduleState.title,
-          description: moduleState.description,
-          order_index: moduleState.order_index || moduleIndex + 1,
-          videos: moduleState.videos.map((video) => ({
-            id: video.id,
-            title: video.title,
-            description: video.description,
-            duration_hours: video.duration_hours,
-            is_published: video.is_published,
-            file: video.file,
-            video_url: video.file ? undefined : video.video_url,
-            type: video.type,
-          })),
-        })) as UpdateModuleRequest[],
+        videoFiles: Object.keys(videoFiles).length > 0 ? videoFiles : undefined,
+        modules: formattedModules,
       }
 
       const result = await updateCourseMutation.mutateAsync({

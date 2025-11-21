@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card'
-import { useCourses } from '@/hooks/course/use-courses'
+import { usePublicCourses } from '@/hooks/course/public/use-public-courses'
 
 const getSubjectName = (course: any) => {
   return course.subject?.name || course.subject_name || 'General'
@@ -61,7 +61,7 @@ const getPriceLabel = (course: any) => {
 }
 
 export default function FeaturedCourses() {
-  const { data: courses = [], isLoading, error } = useCourses()
+  const { data: courses = [], isLoading, error } = usePublicCourses()
 
   const featuredCourses = useMemo(() => courses.slice(0, 6), [courses])
 

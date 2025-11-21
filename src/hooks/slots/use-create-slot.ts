@@ -37,6 +37,7 @@ const getAuthHeaders = (): Record<string, string> => {
 export interface SlotTimeRange {
   start_time: string
   end_time: string
+  meeting_link: string
 }
 
 export interface CreateSlotRequest {
@@ -85,6 +86,35 @@ const createSlot = async (payload: CreateSlotRequest): Promise<CreateSlotRespons
   }
 }
 
+const updateSlot = async (id: number, payload: CreateSlotRequest): Promise<CreateSlotResponse> => {
+  const url = joinUrl(`teacher/slots/${id}`)
+  const headers = getAuthHeaders()
+
+  try {
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(payload),
+    })
+
+    const text = await response.text()
+    const result = text ? JSON.parse(text) : {}
+
+    if (!response.ok) {
+      const errorMessage = result?.message || result?.error || `Failed to update slot (${response.status})`
+      throw new Error(errorMessage)
+    }
+
+    return result
+  } catch (error) {
+    console.error('Update slot error:', error)
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('Network error: Failed to update slot')
+  }
+}
+
 export const useCreateSlot = () => {
   const queryClient = useQueryClient()
 
@@ -92,6 +122,19 @@ export const useCreateSlot = () => {
     mutationFn: createSlot,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['slots'] })
+      queryClient.invalidateQueries({ queryKey: ['teacher-slots'] })
+    },
+  })
+}
+
+export const useUpdateSlot = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: CreateSlotRequest }) => updateSlot(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['slots'] })
+      queryClient.invalidateQueries({ queryKey: ['teacher-slots'] })
     },
   })
 }

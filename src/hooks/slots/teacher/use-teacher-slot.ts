@@ -1,3 +1,5 @@
+'use client'
+
 import { useQuery } from '@tanstack/react-query'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_MAIN_BASE_URL || ''
@@ -25,36 +27,39 @@ const getAuthHeaders = (): Record<string, string> => {
 
   const token = getAuthToken()
   if (token) {
-    headers.Authorization = `Bearer ${token}`
+    headers['Authorization'] = `Bearer ${token}`
   }
 
   return headers
 }
 
-export interface LiveSessionSubject {
+export interface TeacherSlotSubject {
   id: number
   name: string
+  parent_id?: number | null
+  created_at?: string
+  updated_at?: string
 }
 
-export interface LiveSessionTeacher {
+export interface TeacherSlot {
   id: number
-  name: string
-  email?: string
-}
-
-export interface LiveSessionSlot {
-  id: number
-  title?: string
-  teacher: LiveSessionTeacher
-  subject: LiveSessionSubject
-  date?: string
-  from_date?: string
-  to_date?: string
-  time?: string
-  available_seats?: number
-  type?: string
-  price?: string
-  description?: string
+  teacher_id: number
+  subject_id: number
+  title: string
+  type: string
+  price: string
+  description: string
+  from_date: string
+  to_date: string
+  start_time: string
+  end_time: string
+  meeting_link?: string
+  is_booked: boolean
+  max_students: number
+  booked_count: number
+  created_at?: string
+  updated_at?: string
+  subject?: TeacherSlotSubject
 }
 
 export interface PaginationLink {
@@ -63,9 +68,9 @@ export interface PaginationLink {
   active: boolean
 }
 
-export interface PaginatedSlotsResponse {
+export interface PaginatedTeacherSlotsResponse {
   current_page: number
-  data: LiveSessionSlot[]
+  data: TeacherSlot[]
   first_page_url: string
   from: number | null
   last_page: number
@@ -79,12 +84,13 @@ export interface PaginatedSlotsResponse {
   total: number
 }
 
-export interface LiveSessionsResponse {
-  slots: PaginatedSlotsResponse
+export interface TeacherSlotsResponse {
+  success: boolean
+  slots: PaginatedTeacherSlotsResponse
 }
 
-const fetchLiveSessions = async (page: number = 1): Promise<PaginatedSlotsResponse> => {
-  const url = joinUrl(`slots?page=${page}`)
+const fetchTeacherSlots = async (page: number = 1): Promise<PaginatedTeacherSlotsResponse> => {
+  const url = joinUrl(`teacher/slots?page=${page}`)
   const headers = getAuthHeaders()
 
   try {
@@ -94,23 +100,23 @@ const fetchLiveSessions = async (page: number = 1): Promise<PaginatedSlotsRespon
     })
 
     const text = await response.text()
-    const result: LiveSessionsResponse | any = text ? JSON.parse(text) : null
+    const result: TeacherSlotsResponse | any = text ? JSON.parse(text) : {}
 
     if (!response.ok) {
-      const errorMessage = result?.message || result?.error || `Failed to fetch live sessions (${response.status})`
+      const errorMessage = result?.message || result?.error || `Failed to fetch teacher slots (${response.status})`
       throw new Error(errorMessage)
     }
 
-    // Handle paginated response
-    if (result?.slots) {
-      return result.slots as PaginatedSlotsResponse
+    // Handle paginated response with success wrapper
+    if (result?.success && result?.slots) {
+      return result.slots as PaginatedTeacherSlotsResponse
     }
 
     // Fallback for non-paginated response
     if (Array.isArray(result)) {
       return {
         current_page: 1,
-        data: result as LiveSessionSlot[],
+        data: result as TeacherSlot[],
         first_page_url: '',
         from: 1,
         last_page: 1,
@@ -129,7 +135,7 @@ const fetchLiveSessions = async (page: number = 1): Promise<PaginatedSlotsRespon
     if (Array.isArray(result?.slots)) {
       return {
         current_page: 1,
-        data: result.slots as LiveSessionSlot[],
+        data: result.slots as TeacherSlot[],
         first_page_url: '',
         from: 1,
         last_page: 1,
@@ -160,17 +166,19 @@ const fetchLiveSessions = async (page: number = 1): Promise<PaginatedSlotsRespon
       total: 0,
     }
   } catch (error) {
+    console.error('Fetch teacher slots error:', error)
     if (error instanceof Error) {
       throw error
     }
-    throw new Error('Network error: Failed to fetch live sessions')
+    throw new Error('Network error: Failed to fetch teacher slots')
   }
 }
 
-export const useLiveSessions = (page: number = 1) => {
+export const useTeacherSlots = (page: number = 1) => {
   return useQuery({
-    queryKey: ['live-sessions', page],
-    queryFn: () => fetchLiveSessions(page),
+    queryKey: ['teacher-slots', page],
+    queryFn: () => fetchTeacherSlots(page),
     staleTime: 60 * 1000,
   })
 }
+

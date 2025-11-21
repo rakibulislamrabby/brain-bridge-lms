@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
-import { notFound, useParams } from 'next/navigation'
+import { notFound, useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { AppHeader } from '@/components/app-header'
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Footer from '@/components/shared/Footer'
+import { useToast } from '@/components/ui/toast'
 import { 
   Star, 
   Clock, 
@@ -23,7 +24,8 @@ import {
   ChevronDown,
   ChevronRight
 } from 'lucide-react'
-import { useCourse, useCourses } from '@/hooks/course/use-courses'
+import { usePublicCourse, usePublicCourses } from '@/hooks/course/public/use-public-courses'
+import { useCoursePaymentIntent } from '@/hooks/course/use-course-payment-intent'
 import { Loader2, XCircle } from 'lucide-react'
 
 const fallbackImage = 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80'
@@ -39,8 +41,34 @@ const resolveMediaUrl = (path?: string | null, fallback?: string) => {
   }
 
   const base = MEDIA_BASE_URL.endsWith('/') ? MEDIA_BASE_URL : `${MEDIA_BASE_URL}/`
+  
+  // Handle different path formats: videos/, storage/, thumbnails/
+  if (path.startsWith('videos/') || path.startsWith('/videos/')) {
+    const cleanedPath = path.replace(/^\/?videos\//, '').replace(/^\/+/, '')
+    return `${base}storage/videos/${cleanedPath}`
+  }
+  
   const cleanedPath = path.replace(/^\/?storage\//, '').replace(/^\/+/, '')
   return `${base}storage/${cleanedPath}`
+}
+
+const resolveThumbnailUrl = (path?: string | null, fallback?: string) => {
+  if (!path) {
+    return fallback
+  }
+
+  if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+
+  const base = MEDIA_BASE_URL.endsWith('/') ? MEDIA_BASE_URL : `${MEDIA_BASE_URL}/`
+  // Remove any leading storage/thumbnails/ or thumbnails/ or storage/ or slashes
+  const cleanedPath = path
+    .replace(/^\/?storage\/thumbnails\//, '')
+    .replace(/^\/?thumbnails\//, '')
+    .replace(/^\/?storage\//, '')
+    .replace(/^\/+/, '')
+  return `${base}storage/thumbnails/${cleanedPath}`
 }
 
 const getSubjectName = (course: any) => {
@@ -81,14 +109,17 @@ const getPriceLabel = (course: any) => {
 
 export default function CourseDetailPage() {
   const params = useParams<{ id: string }>()
+  const router = useRouter()
+  const { addToast } = useToast()
   const courseId = Number(params?.id)
 
   if (!courseId) {
     notFound()
   }
 
-  const { data: course, isLoading, error } = useCourse(courseId)
-  const { data: allCourses = [] } = useCourses()
+  const { data: course, isLoading, error } = usePublicCourse(courseId)
+  const { data: allCourses = [] } = usePublicCourses()
+  const coursePaymentIntentMutation = useCoursePaymentIntent()
 
   const [expandedSections, setExpandedSections] = useState<Array<number | string>>([])
 
@@ -98,6 +129,64 @@ export default function CourseDetailPage() {
         ? prev.filter(id => id !== sectionId)
         : [...prev, sectionId]
     )
+  }
+
+  const handleEnroll = async () => {
+    if (!course) {
+      addToast({
+        type: 'error',
+        title: 'Course Not Available',
+        description: 'Course information is not available. Please try again.',
+        duration: 5000,
+      })
+      return
+    }
+
+    try {
+      const result = await coursePaymentIntentMutation.mutateAsync({
+        course_id: course.id,
+      })
+
+      // Check if payment is required
+      if (result?.requires_payment && result?.client_secret) {
+        // Build URL with payment data as query parameters
+        const paymentParams = new URLSearchParams({
+          client_secret: result.client_secret,
+          amount: String(result.amount),
+          payment_intent: result.payment_intent_id || '',
+        })
+        
+        // Add course info (URLSearchParams handles encoding automatically)
+        const courseInfo = result.course || {
+          id: course.id,
+          title: course.title || 'Course',
+          subject: getSubjectName(course),
+          teacher: getTeacherName(course),
+          price: Number(course.price) || 0,
+          old_price: course.old_price ? Number(course.old_price) : undefined,
+        }
+        paymentParams.set('course', JSON.stringify(courseInfo))
+        
+        // Redirect to payment page with URL parameters
+        router.push(`/payment?${paymentParams.toString()}`)
+      } else {
+        // No payment required, show success message
+        addToast({
+          type: 'success',
+          title: 'Enrolled Successfully',
+          description: result?.message || 'You have been enrolled in the course successfully!',
+          duration: 5000,
+        })
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to enroll in course. Please try again.'
+      addToast({
+        type: 'error',
+        title: 'Enrollment Failed',
+        description: errorMessage,
+        duration: 6000,
+      })
+    }
   }
 
   const relatedCourses = useMemo(() => {
@@ -172,7 +261,7 @@ export default function CourseDetailPage() {
   const studentsCount = course.students_count ?? course.total_students ?? 0
   const duration = course.duration ?? `${modules.length} modules`
   const language = course.language ?? 'English'
-  const thumbnail = resolveMediaUrl(course.thumbnail_url, fallbackImage) || fallbackImage
+  const thumbnail = resolveThumbnailUrl(course.thumbnail_url, fallbackImage) || fallbackImage
   return (
     <>
       <AppHeader />
@@ -329,7 +418,9 @@ export default function CourseDetailPage() {
                               )}
                               {videos.map((lesson: any, lessonIndex: number) => {
                                 const lessonType = lesson.type || 'video'
-                                const videoUrl = lesson.video_url ? resolveMediaUrl(lesson.video_url) : undefined
+                                // Handle both video_url and video_path from API
+                                const videoSource = lesson.video_url || lesson.video_path
+                                const videoUrl = videoSource ? resolveMediaUrl(videoSource) : undefined
                                 const durationLabel =
                                   lesson.duration_hours !== undefined && lesson.duration_hours !== null
                                     ? `${Number(lesson.duration_hours).toFixed(1)} hrs`
@@ -453,8 +544,19 @@ export default function CourseDetailPage() {
                       )}
                     </div>
                     
-                    <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 mb-4 cursor-pointer">
-                      Enroll Now
+                    <Button 
+                      onClick={handleEnroll}
+                      disabled={!course || coursePaymentIntentMutation.isPending}
+                      className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 mb-4 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {coursePaymentIntentMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        'Enroll Now'
+                      )}
                     </Button>
                     
                     <div className="space-y-3 text-sm">
