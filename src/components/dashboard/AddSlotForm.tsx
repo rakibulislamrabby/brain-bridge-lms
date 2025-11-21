@@ -10,12 +10,13 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/toast'
 import { useSubjects } from '@/hooks/subject/use-subject'
 import { useCreateSlot, useUpdateSlot } from '@/hooks/slots/use-create-slot'
-import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Clock, Users, DollarSign, ClipboardList } from 'lucide-react'
+import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Clock, Users, DollarSign, ClipboardList, Link as LinkIcon } from 'lucide-react'
 import { TeacherSlot } from '@/hooks/slots/teacher/use-teacher-slot'
 
 interface SlotTimeForm {
   start_time: string
   end_time: string
+  meeting_link: string
 }
 
 const SLOT_TYPES = [
@@ -55,7 +56,7 @@ export default function AddSlotForm({ slotId, initialData }: AddSlotFormProps = 
   })
 
   const [slotTimes, setSlotTimes] = useState<SlotTimeForm[]>([
-    { start_time: '', end_time: '' },
+    { start_time: '', end_time: '', meeting_link: '' },
   ])
 
   // Initialize form with slot data if in edit mode
@@ -94,6 +95,7 @@ export default function AddSlotForm({ slotId, initialData }: AddSlotFormProps = 
         {
           start_time: formatTimeForInput(initialData.start_time),
           end_time: formatTimeForInput(initialData.end_time),
+          meeting_link: initialData.meeting_link || '',
         },
       ])
     }
@@ -119,7 +121,7 @@ export default function AddSlotForm({ slotId, initialData }: AddSlotFormProps = 
   }
 
   const addTimeRange = () => {
-    setSlotTimes((prev) => [...prev, { start_time: '', end_time: '' }])
+    setSlotTimes((prev) => [...prev, { start_time: '', end_time: '', meeting_link: '' }])
   }
 
   const removeTimeRange = (index: number) => {
@@ -137,7 +139,7 @@ export default function AddSlotForm({ slotId, initialData }: AddSlotFormProps = 
       max_students: '1',
       description: '',
     })
-    setSlotTimes([{ start_time: '', end_time: '' }])
+    setSlotTimes([{ start_time: '', end_time: '', meeting_link: '' }])
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -216,6 +218,7 @@ export default function AddSlotForm({ slotId, initialData }: AddSlotFormProps = 
       slots: slotTimes.map((slot) => ({
         start_time: formatTime(slot.start_time),
         end_time: formatTime(slot.end_time),
+        meeting_link: slot.meeting_link || '',
       })),
     }
 
@@ -490,6 +493,24 @@ export default function AddSlotForm({ slotId, initialData }: AddSlotFormProps = 
                       })()
                     )}
                   </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-300">
+                    Meeting Link
+                  </Label>
+                  <div className="mt-2 flex items-center gap-2 bg-gray-700 border border-gray-600 rounded-md px-3 py-2">
+                    <LinkIcon className="h-4 w-4 text-blue-400 flex-shrink-0" />
+                    <Input
+                      type="url"
+                      value={slot.meeting_link}
+                      onChange={(event) => handleSlotChange(index, 'meeting_link', event.target.value)}
+                      placeholder="https://meet.google.com/abc-defg-hij"
+                      className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-white"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Enter the meeting link for this time slot (e.g., Google Meet, Zoom, etc.)
+                  </p>
                 </div>
               </div>
             ))}

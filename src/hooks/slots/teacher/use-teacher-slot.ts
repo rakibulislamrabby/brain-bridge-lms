@@ -53,6 +53,7 @@ export interface TeacherSlot {
   to_date: string
   start_time: string
   end_time: string
+  meeting_link?: string
   is_booked: boolean
   max_students: number
   booked_count: number

@@ -25,10 +25,12 @@ import { useToast } from '@/components/ui/toast'
 export default function TeacherBookedSlotsPage() {
   const [user, setUser] = useState<{ id: number; name: string; email: string } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
   const router = useRouter()
   const { addToast } = useToast()
   
-  const { data: bookedSlots, isLoading, error, refetch } = useTeacherBookedSlots()
+  const { data: paginatedData, isLoading, error, refetch } = useTeacherBookedSlots(currentPage)
+  const bookedSlots = paginatedData?.data || []
 
   useEffect(() => {
     const storedUser = getStoredUser()
@@ -120,20 +122,32 @@ export default function TeacherBookedSlotsPage() {
     }
   }
 
-  const getProgressPercentage = (progress: string | null | undefined) => {
-    if (!progress) return 0
-    const numProgress = parseFloat(progress)
-    return isNaN(numProgress) ? 0 : Math.round(numProgress)
+
+  const formatTime = (timeString: string | null | undefined) => {
+    if (!timeString) return '—'
+    try {
+      const [hours, minutes] = timeString.split(':').map(Number)
+      const date = new Date(1970, 0, 1, hours, minutes)
+      return new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+      }).format(date)
+    } catch {
+      return timeString
+    }
   }
 
   // Calculate summary stats
   const totalBookings = bookedSlots?.length || 0
-  const totalRevenue = bookedSlots?.reduce((sum, booking) => {
-    const amount = parseFloat(booking.amount_paid || '0')
-    return sum + (isNaN(amount) ? 0 : amount)
+  const totalRevenue = bookedSlots?.reduce((sum, slot) => {
+    if (slot.session) {
+      const amount = parseFloat(slot.session.amount_paid || '0')
+      return sum + (isNaN(amount) ? 0 : amount)
+    }
+    return sum
   }, 0) || 0
-  const activeBookings = bookedSlots?.filter(b => b.status === 'active').length || 0
-  const paidBookings = bookedSlots?.filter(b => b.payment_status === 'paid').length || 0
+  const activeBookings = bookedSlots?.filter(slot => slot.session && (slot.session.status === 'active' || slot.session.status === 'scheduled' || slot.session.status === 'confirmed')).length || 0
+  const paidBookings = bookedSlots?.filter(slot => slot.session && slot.session.payment_status === 'paid').length || 0
 
   if (loading || isLoading) {
     return (
@@ -251,11 +265,11 @@ export default function TeacherBookedSlotsPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1200px] border-collapse">
+                <table className="w-full border-collapse">
                   <thead className="bg-gray-900/60">
                     <tr>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                        Course
+                        Slot
                       </th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                         Subject
@@ -264,7 +278,7 @@ export default function TeacherBookedSlotsPage() {
                         Student
                       </th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                        Amount Paid
+                        Date & Time
                       </th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                         Payment Status
@@ -273,95 +287,82 @@ export default function TeacherBookedSlotsPage() {
                         Status
                       </th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                        Progress
-                      </th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                        Booked At
-                      </th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                        Actions
+                        Meeting Link
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {bookedSlots.map((booking) => {
-                      const course = booking.course
-                      const progress = getProgressPercentage(booking.progress_percentage)
+                    {bookedSlots.map((slot) => {
+                      const session = slot.session
+                      if (!session) return null
+                      
+                      // Parse scheduled_start_time and scheduled_end_time
+                      const parseDateTime = (dateTimeStr: string) => {
+                        try {
+                          const date = new Date(dateTimeStr)
+                          return {
+                            date: date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+                            time: date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+                          }
+                        } catch {
+                          return { date: dateTimeStr, time: dateTimeStr }
+                        }
+                      }
+                      
+                      const startDateTime = parseDateTime(session.scheduled_start_time)
+                      const endDateTime = parseDateTime(session.scheduled_end_time)
                       
                       return (
                         <tr
-                          key={booking.id}
+                          key={slot.id}
                           className="border-t border-gray-700/60 hover:bg-gray-700/30 transition-colors"
                         >
                           <td className="py-4 px-4">
-                            <div>
-                              <p className="text-sm font-semibold text-white">
-                                {course.title || 'Untitled Course'}
-                              </p>
-                              <p className="text-xs text-gray-400 line-clamp-2 max-w-[300px] mt-1">
-                                {course.description || 'No description provided.'}
-                              </p>
-                            </div>
+                            <p className="text-sm font-semibold text-white">
+                              {slot.title || 'Untitled Slot'}
+                            </p>
                           </td>
                           <td className="py-4 px-4 text-sm text-gray-300">
-                            {course.subject?.name || '—'}
+                            {slot.subject?.name || '—'}
                           </td>
                           <td className="py-4 px-4 text-sm text-gray-300">
                             <div className="flex items-center gap-1">
                               <User className="h-4 w-4 text-purple-400" />
-                              <span>{booking.student?.name || `Student #${booking.student_id}`}</span>
+                              <span>{session.student?.name || `Student #${session.student_id}`}</span>
                             </div>
-                            {booking.student?.email && (
-                              <p className="text-xs text-gray-400 mt-1">
-                                {booking.student.email}
-                              </p>
-                            )}
                           </td>
                           <td className="py-4 px-4 text-sm text-gray-300">
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="h-4 w-4 text-green-500" />
-                              {formatCurrency(booking.amount_paid, booking.currency)}
-                            </div>
-                          </td>
-                          <td className="py-4 px-4">
-                            {getPaymentStatusBadge(booking.payment_status)}
-                          </td>
-                          <td className="py-4 px-4">
-                            {getStatusBadge(booking.status)}
-                          </td>
-                          <td className="py-4 px-4">
-                            <div className="flex items-center gap-2 min-w-[120px]">
-                              <TrendingUp className="h-4 w-4 text-blue-500" />
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
-                                  <span>{progress}%</span>
-                                </div>
-                                <div className="w-full bg-gray-700 rounded-full h-2">
-                                  <div
-                                    className="bg-blue-500 h-2 rounded-full transition-all"
-                                    style={{ width: `${progress}%` }}
-                                  />
-                                </div>
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4 text-green-400" />
+                                <span>{startDateTime.date}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-4 w-4 text-orange-400" />
+                                <span>{startDateTime.time} - {endDateTime.time}</span>
                               </div>
                             </div>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-300">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-4 w-4 text-purple-400" />
-                              {formatDate(booking.enrolled_at)}
-                            </div>
+                          <td className="py-4 px-4">
+                            {getPaymentStatusBadge(session.payment_status)}
                           </td>
                           <td className="py-4 px-4">
-                            <Link href={`/courses/${course.id}`}>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="border-blue-600 text-blue-400 hover:bg-blue-900/30 cursor-pointer"
+                            {getStatusBadge(session.status)}
+                          </td>
+                          <td className="py-4 px-4">
+                            {session.meeting_link ? (
+                              <a
+                                href={session.meeting_link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1"
                               >
-                                <ExternalLink className="h-4 w-4 mr-2" />
-                                View Course
-                              </Button>
-                            </Link>
+                                <Video className="h-4 w-4" />
+                                Join
+                              </a>
+                            ) : (
+                              <span className="text-gray-500 text-sm">—</span>
+                            )}
                           </td>
                         </tr>
                       )

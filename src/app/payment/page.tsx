@@ -409,18 +409,20 @@ console.log("paymentIntentId",paymentIntentId)
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
-                <PaymentElement 
-                  options={{
-                    fields: {
-                      billingDetails: 'auto',
-                    },
-                    layout: 'tabs',
-                    wallets: {
-                      applePay: 'never',
-                      googlePay: 'never',
-                    },
-                  }}
-                />
+                <div className="stripe-payment-element-dark">
+                  <PaymentElement 
+                    options={{
+                      fields: {
+                        billingDetails: 'auto',
+                      },
+                      layout: 'tabs',
+                      wallets: {
+                        applePay: 'never',
+                        googlePay: 'never',
+                      },
+                    }}
+                  />
+                </div>
               </div>
               
               {errorMessage && (
@@ -530,7 +532,57 @@ function PaymentPageContent() {
   }
 
   return (
-    <Elements stripe={stripePromise} options={{ clientSecret }}>
+    <Elements 
+      stripe={stripePromise} 
+      options={{ 
+        clientSecret,
+        appearance: {
+          theme: 'night',
+          variables: {
+            colorPrimary: '#8B5CF6',
+            colorBackground: '#1F2937',
+            colorText: '#FFFFFF',
+            colorDanger: '#EF4444',
+            fontFamily: "'Hubot Sans', Inter, sans-serif",
+            spacingUnit: '4px',
+            borderRadius: '0.5rem',
+          },
+          rules: {
+            '.Input': {
+              backgroundColor: '#374151',
+              borderColor: '#4B5563',
+              color: '#FFFFFF',
+              padding: '12px',
+            },
+            '.Input:focus': {
+              borderColor: '#8B5CF6',
+              boxShadow: '0 0 0 1px #8B5CF6',
+            },
+            '.Label': {
+              color: '#D1D5DB',
+              fontWeight: '500',
+              marginBottom: '8px',
+            },
+            '.Tab': {
+              backgroundColor: '#374151',
+              borderColor: '#4B5563',
+              color: '#D1D5DB',
+            },
+            '.Tab--selected': {
+              backgroundColor: '#8B5CF6',
+              borderColor: '#8B5CF6',
+              color: '#FFFFFF',
+            },
+            '.TabLabel': {
+              color: 'inherit',
+            },
+            '.Error': {
+              color: '#EF4444',
+            },
+          },
+        },
+      }}
+    >
       <PaymentForm
         clientSecret={clientSecret}
         amount={amount}

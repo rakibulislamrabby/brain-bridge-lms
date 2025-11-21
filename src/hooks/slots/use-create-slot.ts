@@ -37,6 +37,7 @@ const getAuthHeaders = (): Record<string, string> => {
 export interface SlotTimeRange {
   start_time: string
   end_time: string
+  meeting_link: string
 }
 
 export interface CreateSlotRequest {

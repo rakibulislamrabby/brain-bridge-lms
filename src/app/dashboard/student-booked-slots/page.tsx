@@ -12,12 +12,9 @@ import { useStudentBookedSlots } from '@/hooks/student/use-booked-slots'
 import { 
   Calendar, 
   Loader2, 
-  ExternalLink,
-  DollarSign,
   Clock,
   Video,
   User,
-  MapPin,
 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 import {
@@ -223,11 +220,11 @@ export default function StudentBookedSlotsPage() {
             ) : (
               <>
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[1200px] border-collapse">
+                  <table className="w-full border-collapse">
                     <thead className="bg-gray-900/60">
                       <tr>
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                          Slot Title
+                          Slot
                         </th>
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                           Subject
@@ -236,13 +233,7 @@ export default function StudentBookedSlotsPage() {
                           Teacher
                         </th>
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                          Date
-                        </th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                          Time
-                        </th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                          Amount Paid
+                          Date & Time
                         </th>
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                           Payment Status
@@ -259,20 +250,31 @@ export default function StudentBookedSlotsPage() {
                       {bookedSlots.map((booking) => {
                         const slot = booking.slot
                         
+                        // Parse scheduled_start_time and scheduled_end_time
+                        const parseDateTime = (dateTimeStr: string) => {
+                          try {
+                            const date = new Date(dateTimeStr)
+                            return {
+                              date: date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+                              time: date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+                            }
+                          } catch {
+                            return { date: dateTimeStr, time: dateTimeStr }
+                          }
+                        }
+                        
+                        const startDateTime = parseDateTime(booking.scheduled_start_time)
+                        const endDateTime = parseDateTime(booking.scheduled_end_time)
+                        
                         return (
                           <tr
                             key={booking.id}
                             className="border-t border-gray-700/60 hover:bg-gray-700/30 transition-colors"
                           >
                             <td className="py-4 px-4">
-                              <div>
-                                <p className="text-sm font-semibold text-white">
-                                  {slot.title || 'Untitled Slot'}
-                                </p>
-                                <p className="text-xs text-gray-400 line-clamp-2 max-w-[250px] mt-1">
-                                  {slot.description || 'No description provided.'}
-                                </p>
-                              </div>
+                              <p className="text-sm font-semibold text-white">
+                                {slot.title || 'Untitled Slot'}
+                              </p>
                             </td>
                             <td className="py-4 px-4 text-sm text-gray-300">
                               {slot.subject?.name || '—'}
@@ -282,28 +284,17 @@ export default function StudentBookedSlotsPage() {
                                 <User className="h-4 w-4 text-purple-400" />
                                 <span>{slot.teacher?.name || '—'}</span>
                               </div>
-                              {slot.teacher?.email && (
-                                <p className="text-xs text-gray-400 mt-1">
-                                  {slot.teacher.email}
-                                </p>
-                              )}
                             </td>
                             <td className="py-4 px-4 text-sm text-gray-300">
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-4 w-4 text-purple-400" />
-                                {formatDate(booking.scheduled_date)}
-                              </div>
-                            </td>
-                            <td className="py-4 px-4 text-sm text-gray-300">
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-4 w-4 text-blue-400" />
-                                {formatTime(booking.scheduled_start_time)} - {formatTime(booking.scheduled_end_time)}
-                              </div>
-                            </td>
-                            <td className="py-4 px-4 text-sm text-gray-300">
-                              <div className="flex items-center gap-1">
-                                <DollarSign className="h-4 w-4 text-green-500" />
-                                {formatCurrency(booking.amount_paid, booking.currency)}
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="h-4 w-4 text-green-400" />
+                                  <span>{startDateTime.date}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4 text-orange-400" />
+                                  <span>{startDateTime.time} - {endDateTime.time}</span>
+                                </div>
                               </div>
                             </td>
                             <td className="py-4 px-4">
@@ -312,19 +303,19 @@ export default function StudentBookedSlotsPage() {
                             <td className="py-4 px-4">
                               {getStatusBadge(booking.status)}
                             </td>
-                            <td className="py-4 px-4 text-sm text-gray-300">
+                            <td className="py-4 px-4">
                               {booking.meeting_link ? (
                                 <a
                                   href={booking.meeting_link}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                                  className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1"
                                 >
-                                  <ExternalLink className="h-4 w-4" />
-                                  Join Meeting
+                                  <Video className="h-4 w-4" />
+                                  Join
                                 </a>
                               ) : (
-                                <span className="text-gray-500">—</span>
+                                <span className="text-gray-500 text-sm">—</span>
                               )}
                             </td>
                           </tr>

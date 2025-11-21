@@ -106,6 +106,9 @@ export const useConfirmBooking = () => {
       queryClient.invalidateQueries({ queryKey: ['live-session'] })
       queryClient.invalidateQueries({ queryKey: ['live-sessions'] })
       queryClient.invalidateQueries({ queryKey: ['slots'] })
+      queryClient.invalidateQueries({ queryKey: ['teacher-slots'] })
+      queryClient.invalidateQueries({ queryKey: ['teacher-booked-slots'] })
+      queryClient.invalidateQueries({ queryKey: ['student-booked-slots'] })
     },
   })
 }
