@@ -118,7 +118,7 @@ export default function OneToOneSessionPage() {
           <Button asChild className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer">
             <Link href="/dashboard/one-to-one-session/add-slot">
               <Plus className="h-4 w-4 mr-2" />
-              Add Session
+              Add Slot
             </Link>
           </Button>
         </div>

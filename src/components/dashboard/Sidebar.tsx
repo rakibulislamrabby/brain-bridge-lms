@@ -20,7 +20,8 @@ import {
   Video,
   FolderOpen,
   Target,
-  Users
+  Users,
+  Calendar
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -54,6 +55,34 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       href: '/dashboard',
       items: [],
       allowedRoles: ['admin', 'teacher', 'student'] // Everyone can see Dashboard
+    },
+    {
+      title: 'My Courses',
+      icon: BookOpen,
+      href: '/dashboard/enrolled-courses',
+      items: [],
+      allowedRoles: ['student'] // Students only
+    },
+    {
+      title: 'My Booked Slots',
+      icon: Calendar,
+      href: '/dashboard/student-booked-slots',
+      items: [],
+      allowedRoles: ['student'] // Students only
+    },
+    {
+      title: 'Course Enrollments',
+      icon: Users,
+      href: '/dashboard/teacher-enrolled-courses',
+      items: [],
+      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
+    },
+    {
+      title: 'Booked Slots',
+      icon: Calendar,
+      href: '/dashboard/teacher-booked-slots',
+      items: [],
+      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     {
       title: 'Course',
