@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { CheckCircle2, Calendar, Clock, Users, ArrowRight, BookOpen } from 'lucide-react'
 import { AppHeader } from '@/components/app-header'
@@ -8,53 +8,31 @@ import Footer from '@/components/shared/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [slotInfo, setSlotInfo] = useState<{
-    subject: string
-    teacher: string
-    scheduled_date: string
-    start_time: string
-    end_time: string
-  } | null>(null)
-  const [courseInfo, setCourseInfo] = useState<{
-    title: string
-    subject: string
-    teacher: string
-    price: number
-  } | null>(null)
-
-  useEffect(() => {
-    // Get payment info from sessionStorage
-    const storedPaymentData = sessionStorage.getItem('payment_data')
-    if (storedPaymentData) {
-      try {
-        const data = JSON.parse(storedPaymentData)
-        if (data.slot) {
-          setSlotInfo({
-            subject: data.slot.subject,
-            teacher: data.slot.teacher,
-            scheduled_date: data.slot.scheduled_date,
-            start_time: data.slot.start_time,
-            end_time: data.slot.end_time,
-          })
-        }
-        if (data.course) {
-          setCourseInfo({
-            title: data.course.title,
-            subject: data.course.subject,
-            teacher: data.course.teacher,
-            price: data.course.price || 0,
-          })
-        }
-        // Clean up sessionStorage after displaying the data
-        sessionStorage.removeItem('payment_data')
-      } catch (error) {
-        console.error('Error parsing payment data:', error)
-      }
+  
+  // Parse slot info if present
+  let slotInfo = null
+  const slotParam = searchParams.get('slot')
+  if (slotParam) {
+    try {
+      slotInfo = JSON.parse(slotParam)
+    } catch (error) {
+      console.error('🔴 Error parsing slot info:', error)
     }
-  }, [])
+  }
+  
+  // Parse course info if present
+  let courseInfo = null
+  const courseParam = searchParams.get('course')
+  if (courseParam) {
+    try {
+      courseInfo = JSON.parse(courseParam)
+    } catch (error) {
+      console.error('🔴 Error parsing course info:', error)
+    }
+  }
 
   const formatDate = (dateString: string) => {
     try {
@@ -84,12 +62,8 @@ export default function PaymentSuccessPage() {
   }
 
   return (
-    <div>
-      <AppHeader />
-      <main className="bg-gray-900 min-h-screen py-14">
-        <div className="max-w-2xl mx-auto px-4">
-          <Card className="bg-gray-800/80 border border-gray-700">
-            <CardContent className="py-12 text-center">
+    <Card className="bg-gray-800/80 border border-gray-700">
+      <CardContent className="py-12 text-center">
               <div className="flex justify-center mb-6">
                 <div className="rounded-full bg-green-500/20 p-4">
                   <CheckCircle2 className="h-16 w-16 text-green-400" />
@@ -211,13 +185,30 @@ export default function PaymentSuccessPage() {
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-      <Footer />
-    </div>
+      </div>
+    </CardContent>
+  </Card>
   )
 }
 
+export default function PaymentSuccessPage() {
+  return (
+    <>
+      <AppHeader />
+      <main className="bg-gray-900 min-h-screen py-14">
+        <div className="max-w-2xl mx-auto px-4">
+          <Suspense fallback={
+            <Card className="bg-gray-800/80 border border-gray-700">
+              <CardContent className="py-12 text-center">
+                <div className="text-white">Loading payment details...</div>
+              </CardContent>
+            </Card>
+          }>
+            <PaymentSuccessContent />
+          </Suspense>
+        </div>
+      </main>
+      <Footer />
+    </>
+  )
+}

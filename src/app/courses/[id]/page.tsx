@@ -149,23 +149,26 @@ export default function CourseDetailPage() {
 
       // Check if payment is required
       if (result?.requires_payment && result?.client_secret) {
-        // Store payment data in sessionStorage for the payment page
-        sessionStorage.setItem('payment_data', JSON.stringify({
+        // Build URL with payment data as query parameters
+        const paymentParams = new URLSearchParams({
           client_secret: result.client_secret,
-          payment_intent_id: result.payment_intent_id,
-          amount: result.amount,
-          course: result.course || {
-            id: course.id,
-            title: course.title || 'Course',
-            subject: getSubjectName(course),
-            teacher: getTeacherName(course),
-            price: Number(course.price) || 0,
-            old_price: course.old_price ? Number(course.old_price) : undefined,
-          },
-        }))
+          amount: String(result.amount),
+          payment_intent: result.payment_intent_id || '',
+        })
         
-        // Redirect to payment page
-        router.push('/payment')
+        // Add course info (URLSearchParams handles encoding automatically)
+        const courseInfo = result.course || {
+          id: course.id,
+          title: course.title || 'Course',
+          subject: getSubjectName(course),
+          teacher: getTeacherName(course),
+          price: Number(course.price) || 0,
+          old_price: course.old_price ? Number(course.old_price) : undefined,
+        }
+        paymentParams.set('course', JSON.stringify(courseInfo))
+        
+        // Redirect to payment page with URL parameters
+        router.push(`/payment?${paymentParams.toString()}`)
       } else {
         // No payment required, show success message
         addToast({

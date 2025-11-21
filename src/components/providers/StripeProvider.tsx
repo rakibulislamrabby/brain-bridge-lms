@@ -21,9 +21,15 @@ interface StripeProviderProps {
 }
 
 export function StripeProvider({ children, clientSecret, options }: StripeProviderProps) {
+  if (!clientSecret) {
+    return <>{children}</>;
+  }
+
+  // When using clientSecret, we can only use clientSecret-compatible options
+  // Properties like mode, currency, amount, etc. are not allowed with clientSecret
   const elementsOptions: StripeElementsOptions = {
     clientSecret,
-    appearance: {
+    appearance: options?.appearance || {
       theme: 'night',
       variables: {
         colorPrimary: '#9333ea',
@@ -35,12 +41,7 @@ export function StripeProvider({ children, clientSecret, options }: StripeProvid
         borderRadius: '8px',
       },
     },
-    ...options,
   };
-
-  if (!clientSecret) {
-    return <>{children}</>;
-  }
 
   return (
     <Elements stripe={stripePromise} options={elementsOptions}>

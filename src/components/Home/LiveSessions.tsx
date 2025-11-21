@@ -96,7 +96,8 @@ export default function LiveSessions({
 }: LiveSessionsProps = {}) {
   const [currentPage, setCurrentPage] = useState(1)
   const { data: paginatedData, isLoading, error } = useLiveSessions(currentPage)
-  const slots = paginatedData?.data || []
+
+  const slots = useMemo(() => paginatedData?.data || [], [paginatedData?.data])
 
   const pagination = paginatedData ? {
     currentPage: paginatedData.current_page,
@@ -147,7 +148,7 @@ export default function LiveSessions({
             {showPagination ? (
               <>
                 <Badge className="bg-purple-600/20 text-purple-300 border border-purple-600/40 mb-4">Live Sessions</Badge>
-                <h1 className="text-4xl font-bold text-white mb-3">Book a Live Session with Expert Mashter's</h1>
+                <h1 className="text-4xl font-bold text-white mb-3">Book a Live Session with Expert Masters</h1>
                 <p className="text-gray-300 max-w-2xl mx-auto">
                   Explore upcoming live sessions hosted by our verified instructors. Reserve your seat to get personal guidance in real time.
                 </p>

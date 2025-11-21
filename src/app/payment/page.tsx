@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
@@ -131,9 +131,15 @@ console.log("paymentIntentId",paymentIntentId)
               duration: 5000,
             })
             
-            // Redirect to success page after a short delay
+            // Redirect to success page after a short delay with slot info
             setTimeout(() => {
-              router.push(`/payment/success?payment_intent=${paymentIntentId}`)
+              const successParams = new URLSearchParams({
+                payment_intent: paymentIntentId,
+              })
+              if (slotInfo) {
+                successParams.set('slot', JSON.stringify(slotInfo))
+              }
+              router.push(`/payment/success?${successParams.toString()}`)
             }, 2000)
             setIsProcessing(false)
           } catch (confirmError) {
@@ -155,7 +161,13 @@ console.log("paymentIntentId",paymentIntentId)
             
             // Still redirect to success page since payment was successful
             setTimeout(() => {
-              router.push(`/payment/success?payment_intent=${paymentIntentId}`)
+              const successParams = new URLSearchParams({
+                payment_intent: paymentIntentId,
+              })
+              if (slotInfo) {
+                successParams.set('slot', JSON.stringify(slotInfo))
+              }
+              router.push(`/payment/success?${successParams.toString()}`)
             }, 2000)
             
             setIsProcessing(false)
@@ -176,9 +188,15 @@ console.log("paymentIntentId",paymentIntentId)
               duration: 5000,
             })
             
-            // Redirect to success page after a short delay
+            // Redirect to success page after a short delay with slot info
             setTimeout(() => {
-              router.push(`/payment/success?payment_intent=${paymentIntentId}`)
+              const successParams = new URLSearchParams({
+                payment_intent: paymentIntentId,
+              })
+              if (slotInfo) {
+                successParams.set('slot', JSON.stringify(slotInfo))
+              }
+              router.push(`/payment/success?${successParams.toString()}`)
             }, 2000)
             setIsProcessing(false)
           } catch (confirmError) {
@@ -460,267 +478,81 @@ console.log("paymentIntentId",paymentIntentId)
   )
 }
 
-export default function PaymentPage() {
-  const router = useRouter()
+function PaymentPageContent() {
   const searchParams = useSearchParams()
-  const { addToast } = useToast()
-  const [isLoading, setIsLoading] = useState(true)
-  const [paymentData, setPaymentData] = useState<{
-    clientSecret: string
-    amount: string
-    slotInfo?: {
-      id: number
-      subject: string
-      teacher: string
-      scheduled_date: string
-      start_time: string
-      end_time: string
+  
+  const clientSecret = searchParams.get('client_secret')
+  const amount = searchParams.get('amount')
+  const paymentIntentId = searchParams.get('payment_intent')
+  
+  // Parse slot info if present
+  let slotInfo = null
+  const slotParam = searchParams.get('slot')
+  if (slotParam) {
+    try {
+      slotInfo = JSON.parse(slotParam)
+      console.log('✅ Parsed slot info:', slotInfo)
+    } catch (error) {
+      console.error('🔴 Error parsing slot info:', error, 'Raw slot param:', slotParam)
     }
-    courseInfo?: {
-      id: number
-      title: string
-      subject: string
-      teacher: string
-      price: number
-      old_price?: number
+  }
+  
+  // Parse course info if present
+  let courseInfo = null
+  const courseParam = searchParams.get('course')
+  if (courseParam) {
+    try {
+      courseInfo = JSON.parse(courseParam)
+      console.log('✅ Parsed course info:', courseInfo)
+    } catch (error) {
+      console.error('🔴 Error parsing course info:', error, 'Raw course param:', courseParam)
     }
-    paymentIntentId: string
-  } | null>(null)
+  }
 
-  useEffect(() => {
-    // Get payment data from sessionStorage (set by handleReserveSlot)
-    const storedPaymentData = sessionStorage.getItem('payment_data')
-    
-    if (storedPaymentData) {
-      try {
-        const data = JSON.parse(storedPaymentData)
-        if (data.client_secret && data.amount && (data.slot || data.course)) {
-          const paymentInfo: typeof paymentData = {
-            clientSecret: data.client_secret,
-            amount: String(data.amount),
-            paymentIntentId: data.payment_intent_id || '',
-          }
-          
-          if (data.slot) {
-            paymentInfo.slotInfo = {
-              id: data.slot.id,
-              subject: data.slot.subject,
-              teacher: data.slot.teacher,
-              scheduled_date: data.slot.scheduled_date,
-              start_time: data.slot.start_time,
-              end_time: data.slot.end_time,
-            }
-          }
-          
-          if (data.course) {
-            paymentInfo.courseInfo = {
-              id: data.course.id,
-              title: data.course.title,
-              subject: data.course.subject,
-              teacher: data.course.teacher,
-              price: Number(data.course.price) || 0,
-              old_price: data.course.old_price ? Number(data.course.old_price) : undefined,
-            }
-          }
-          
-          setPaymentData(paymentInfo)
-          setIsLoading(false)
-          
-          // Debug: Log if Stripe key is missing (only in development)
-          if (!stripePublishableKey && process.env.NODE_ENV === 'development') {
-            console.warn('⚠️ Stripe publishable key not found. Please add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to .env.local and restart the dev server.')
-          }
-        } else {
-          throw new Error('Invalid payment data')
-        }
-      } catch (error) {
-        addToast({
-          type: 'error',
-          title: 'Invalid Payment Data',
-          description: 'Please try again.',
-          duration: 6000,
-        })
-        router.push('/courses')
-      }
-    } else {
-      addToast({
-        type: 'error',
-        title: 'No Payment Data',
-        description: 'Please start the enrollment process again.',
-        duration: 6000,
-      })
-      router.push('/courses')
-    }
-  }, [router, addToast])
-
-  // Show loading state while fetching payment data
-  if (isLoading || !paymentData) {
+  if (!clientSecret || !amount || !paymentIntentId) {
     return (
-      <div>
-        <AppHeader />
-        <main className="bg-gray-900 min-h-screen py-14">
-          <div className="max-w-2xl mx-auto px-4">
-            <Card className="bg-gray-800/80 border border-gray-700">
-              <CardContent className="py-16 flex justify-center">
-                <Loader2 className="h-10 w-10 text-purple-500 animate-spin" />
-              </CardContent>
-            </Card>
-          </div>
-        </main>
-        <Footer />
+      <div className="text-center text-red-400 py-10">
+        <p className="text-lg mb-2">Missing payment information</p>
+        <p className="text-sm text-gray-400">Please go back and try again.</p>
+        <p className="text-xs text-gray-500 mt-2">
+          Missing: {!clientSecret && 'client_secret '}{!amount && 'amount '}{!paymentIntentId && 'payment_intent'}
+        </p>
       </div>
     )
   }
 
-  // Check for Stripe key only after we have payment data
-  if (!stripePublishableKey) {
-    console.error('❌ Stripe publishable key not found!')
-    console.error('Checked for:', [
-      'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
-      'NEXT_PUBLIC_STRIPE_PUBLIC_KEY',
-      'STRIPE_PUBLISHABLE_KEY',
-      'STRIPE_PUBLIC_KEY'
-    ])
-    console.error('💡 Solution: Add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to .env.local and restart dev server')
-    
-    return (
-      <div>
-        <AppHeader />
-        <main className="bg-gray-900 min-h-screen py-14">
-          <div className="max-w-2xl mx-auto px-4">
-            <Card className="bg-gray-800/80 border border-gray-700">
-              <CardContent className="py-16 text-center space-y-4">
-                <XCircle className="h-10 w-10 text-red-500 mx-auto mb-4" />
-                <p className="text-red-200 font-medium text-lg">Stripe Configuration Error</p>
-                
-                <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 text-left space-y-3">
-                  <p className="text-gray-300 font-medium">Steps to fix:</p>
-                  <ol className="text-gray-400 text-sm space-y-2 list-decimal list-inside">
-                    <li>Open your <code className="bg-gray-800 px-2 py-1 rounded">.env.local</code> file in the project root</li>
-                    <li>Add this line (replace with your actual Stripe key):
-                      <pre className="bg-gray-950 p-2 rounded mt-1 text-xs overflow-x-auto">
-                        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
-                      </pre>
-                    </li>
-                    <li>Save the file</li>
-                    <li><strong className="text-yellow-400">Restart your development server</strong> (stop and run <code className="bg-gray-800 px-1 rounded">npm run dev</code> again)</li>
-                  </ol>
-                </div>
-
-                <div className="bg-blue-900/20 border border-blue-700/60 rounded-lg p-3 text-left">
-                  <p className="text-blue-200 text-sm font-medium mb-1">⚠️ Important:</p>
-                  <p className="text-blue-300 text-xs">
-                    In Next.js, environment variables must start with <code className="bg-blue-950 px-1 rounded">NEXT_PUBLIC_</code> to be accessible on the client side.
-                    The variable name must be exactly: <code className="bg-blue-950 px-1 rounded">NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code>
-                  </p>
-                </div>
-
-                <div className="pt-2">
-                  <Button
-                    onClick={() => {
-                      console.log('Current env check:', {
-                        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ? 'Found' : 'Not found',
-                        NEXT_PUBLIC_STRIPE_PUBLIC_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY ? 'Found' : 'Not found',
-                      })
-                      window.location.reload()
-                    }}
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
-                  >
-                    Check & Reload
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    )
-  }
-
-  // Check if Stripe initialized properly
   if (!stripePromise) {
     return (
-      <div>
-        <AppHeader />
-        <main className="bg-gray-900 min-h-screen py-14">
-          <div className="max-w-2xl mx-auto px-4">
-            <Card className="bg-gray-800/80 border border-gray-700">
-              <CardContent className="py-16 text-center space-y-4">
-                <XCircle className="h-10 w-10 text-red-500 mx-auto mb-4" />
-                <p className="text-red-200 font-medium">Failed to initialize Stripe</p>
-                <p className="text-gray-400 text-sm">
-                  Please check your Stripe publishable key configuration and restart the development server.
-                </p>
-                <Button
-                  onClick={() => window.location.reload()}
-                  className="bg-purple-600 hover:bg-purple-700 text-white mt-4"
-                >
-                  Refresh Page
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
-        <Footer />
+      <div className="text-center text-red-400 py-10">
+        Failed to initialize Stripe. Please check your configuration.
       </div>
     )
-  }
-
-  const options = {
-    clientSecret: paymentData.clientSecret,
-    appearance: {
-      theme: 'night' as const,
-      variables: {
-        colorPrimary: '#9333ea',
-        colorBackground: '#1f2937',
-        colorText: '#ffffff',
-        colorDanger: '#ef4444',
-        fontFamily: 'system-ui, sans-serif',
-        spacingUnit: '4px',
-        borderRadius: '8px',
-      },
-    },
   }
 
   return (
-    <div>
+    <Elements stripe={stripePromise} options={{ clientSecret }}>
+      <PaymentForm
+        clientSecret={clientSecret}
+        amount={amount}
+        slotInfo={slotInfo || undefined}
+        courseInfo={courseInfo || undefined}
+        paymentIntentId={paymentIntentId}
+      />
+    </Elements>
+  )
+}
+
+export default function PaymentPage() {
+  return (
+    <>
       <AppHeader />
-      <main className="bg-gray-900 min-h-screen py-8 lg:py-14">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Button
-            variant="ghost"
-            className="text-gray-300 hover:text-white hover:bg-gray-800/70 mb-6 cursor-pointer"
-            onClick={() => router.back()}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-white mb-2">Complete Your Payment</h1>
-            <p className="text-gray-400">
-              {paymentData.slotInfo 
-                ? 'Review your booking details and enter your payment information'
-                : paymentData.courseInfo
-                ? 'Review your course enrollment and enter your payment information'
-                : 'Enter your payment information'}
-            </p>
-          </div>
-
-          <Elements stripe={stripePromise} options={options}>
-            <PaymentForm
-              clientSecret={paymentData.clientSecret}
-              amount={paymentData.amount}
-              slotInfo={paymentData.slotInfo}
-              courseInfo={paymentData.courseInfo}
-              paymentIntentId={paymentData.paymentIntentId}
-            />
-          </Elements>
-        </div>
-      </main>
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        <Suspense fallback={<div className="text-white">Loading payment...</div>}>
+          <PaymentPageContent />
+        </Suspense>
+      </div>
       <Footer />
-    </div>
+    </>
   )
 }
 

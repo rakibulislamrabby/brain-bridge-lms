@@ -216,16 +216,20 @@ export default function LiveSessionDetailPage() {
 
       // Check if payment is required
       if (result?.requires_payment && result?.client_secret) {
-        // Store payment data in sessionStorage for the payment page
-        sessionStorage.setItem('payment_data', JSON.stringify({
+        // Build URL with payment data as query parameters
+        const paymentParams = new URLSearchParams({
           client_secret: result.client_secret,
-          payment_intent_id: result.payment_intent_id,
-          amount: result.amount,
-          slot: result.slot,
-        }))
+          amount: String(result.amount),
+          payment_intent: result.payment_intent_id || '',
+        })
         
-        // Redirect to payment page
-        router.push('/payment')
+        // Add slot info if available (URLSearchParams handles encoding automatically)
+        if (result.slot) {
+          paymentParams.set('slot', JSON.stringify(result.slot))
+        }
+        
+        // Redirect to payment page with URL parameters
+        router.push(`/payment?${paymentParams.toString()}`)
       } else {
         // No payment required, show success message
         addToast({

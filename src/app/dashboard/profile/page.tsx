@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -87,12 +88,15 @@ export default function ProfilePage() {
           <CardContent className="space-y-6">
             {/* Profile Picture and Basic Info */}
             <div className="flex items-start gap-6">
-              <div className="h-24 w-24 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+              <div className="h-24 w-24 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {user.profile_picture ? (
-                  <img
+                  <Image
                     src={user.profile_picture}
-                    alt={user.name}
+                    alt={user.name || 'Profile'}
+                    width={96}
+                    height={96}
                     className="h-24 w-24 rounded-full object-cover"
+                    unoptimized
                   />
                 ) : (
                   <span className="text-white font-bold text-2xl">

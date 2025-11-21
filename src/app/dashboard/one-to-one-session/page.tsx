@@ -53,12 +53,13 @@ export default function OneToOneSessionPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const router = useRouter()
   const { data: paginatedData, isLoading: slotsLoading, error: slotsError } = useTeacherSlots(currentPage)
-  const slots = paginatedData?.data || []
   const deleteSlotMutation = useDeleteSlot()
   const { addToast } = useToast()
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [slotToDelete, setSlotToDelete] = useState<{ id: number; label: string } | null>(null)
+
+  const slots = useMemo(() => paginatedData?.data || [], [paginatedData?.data])
 
   const pagination = paginatedData ? {
     currentPage: paginatedData.current_page,
@@ -71,7 +72,7 @@ export default function OneToOneSessionPage() {
   } : null
 
   const totalSlots = paginatedData?.total || 0
-  const bookedSlots = slots.filter((slot) => slot.is_booked || slot.booked_count > 0).length
+  const bookedSlots = useMemo(() => slots.filter((slot) => slot.is_booked || slot.booked_count > 0).length, [slots])
   const upcomingSlots = useMemo(() => {
     const now = new Date()
     return slots.filter((slot) => {
