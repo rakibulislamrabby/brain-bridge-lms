@@ -35,8 +35,8 @@ export interface UpdateVideoRequest {
   id?: number
   title: string
   description: string
-  duration_hours: string
-  is_published: boolean
+  duration_hours: number
+  is_published: number | boolean
   file?: File | null
   video_url?: string | null
   type?: string | null
@@ -53,33 +53,47 @@ export interface UpdateModuleRequest {
 export interface UpdateCourseRequest {
   title: string
   description: string
-  subject_id: string
-  price: string
-  old_price?: string
-  is_published: boolean
-  teacher_id: string
+  subject_id: number
+  price: number
+  old_price?: number
+  is_published: number | boolean
   thumbnail?: File | null
+  videoFiles?: Record<string, File>
   modules: UpdateModuleRequest[]
 }
 
-const updateCourse = async (id: number, payload: UpdateCourseRequest) => {
-  const formData = new FormData()
+interface UpdateCourseResponse {
+  success: boolean
+  message: string
+  data?: unknown
+}
 
+const updateCourse = async (id: number, payload: UpdateCourseRequest): Promise<UpdateCourseResponse> => {
+  const url = joinUrl(`courses/${id}`)
+  
+  // Always use FormData for updates to match create structure
+  const formData = new FormData()
+  
+  const headers: Record<string, string> = {
+    ...getAuthHeaders(),
+  }
+  
+  // Add course fields
   formData.append('title', payload.title)
   formData.append('description', payload.description)
-  formData.append('subject_id', payload.subject_id)
-  formData.append('price', payload.price)
+  formData.append('subject_id', payload.subject_id.toString())
+  formData.append('price', payload.price.toString())
+  if (payload.old_price !== undefined) {
+    formData.append('old_price', payload.old_price.toString())
+  }
   formData.append('is_published', payload.is_published ? '1' : '0')
-  formData.append('teacher_id', payload.teacher_id)
-
-  if (payload.old_price && payload.old_price.trim().length > 0) {
-    formData.append('old_price', payload.old_price)
-  }
-
+  
+  // Add thumbnail if present
   if (payload.thumbnail) {
-    formData.append('thumbnail_url', payload.thumbnail, payload.thumbnail.name)
+    formData.append('thumbnail', payload.thumbnail)
   }
-
+  
+  // Add modules with nested structure
   payload.modules.forEach((module, moduleIndex) => {
     if (module.id !== undefined) {
       formData.append(`modules[${moduleIndex}][id]`, module.id.toString())
@@ -87,44 +101,37 @@ const updateCourse = async (id: number, payload: UpdateCourseRequest) => {
     formData.append(`modules[${moduleIndex}][title]`, module.title)
     formData.append(`modules[${moduleIndex}][description]`, module.description)
     formData.append(`modules[${moduleIndex}][order_index]`, module.order_index.toString())
-
+    
     module.videos.forEach((video, videoIndex) => {
       if (video.id !== undefined) {
         formData.append(`modules[${moduleIndex}][videos][${videoIndex}][id]`, video.id.toString())
       }
       formData.append(`modules[${moduleIndex}][videos][${videoIndex}][title]`, video.title)
       formData.append(`modules[${moduleIndex}][videos][${videoIndex}][description]`, video.description)
-      formData.append(`modules[${moduleIndex}][videos][${videoIndex}][duration_hours]`, video.duration_hours)
+      formData.append(`modules[${moduleIndex}][videos][${videoIndex}][duration_hours]`, video.duration_hours.toString())
       formData.append(`modules[${moduleIndex}][videos][${videoIndex}][is_published]`, video.is_published ? '1' : '0')
+      
       if (video.type) {
         formData.append(`modules[${moduleIndex}][videos][${videoIndex}][type]`, video.type)
       }
-
-      if (video.file) {
-        formData.append(
-          `modules[${moduleIndex}][videos][${videoIndex}][video_url]`,
-          video.file,
-          video.file.name
-        )
-      } else if (video.video_url) {
-        formData.append(
-          `modules[${moduleIndex}][videos][${videoIndex}][video_url]`,
-          video.video_url
-        )
+      
+      // Add video file if present
+      const videoFileKey = `${moduleIndex}_${videoIndex}`
+      if (payload.videoFiles && payload.videoFiles[videoFileKey]) {
+        formData.append(`modules[${moduleIndex}][videos][${videoIndex}][file]`, payload.videoFiles[videoFileKey])
+      } else if (video.video_url && !video.file) {
+        // Keep existing video URL if no new file
+        formData.append(`modules[${moduleIndex}][videos][${videoIndex}][video_url]`, video.video_url)
       }
     })
   })
 
-  const headers = {
-    ...getAuthHeaders(),
-    Accept: 'application/json',
-  }
-
-  const url = joinUrl(`courses/${id}`)
+  // Don't set Content-Type for FormData, browser will set it with boundary
 
   let response: Response
 
   try {
+    console.log('Updating course:', { url, method: 'PUT', courseId: id })
     response = await fetch(url, {
       method: 'PUT',
       headers,
@@ -132,19 +139,36 @@ const updateCourse = async (id: number, payload: UpdateCourseRequest) => {
     })
   } catch (networkError) {
     console.error('Update course network error:', networkError)
-    throw new Error('Unable to reach the Brain Bridge API. Please verify your connection and try again.')
+    console.error('Request details:', { url, method: 'PUT', courseId: id })
+    throw new Error(`Unable to reach the Brain Bridge API: ${networkError instanceof Error ? networkError.message : 'Unknown error'}`)
   }
 
-  let result: any
+  let result: UpdateCourseResponse = { success: false, message: '' }
   try {
-    const text = await response.text()
-    result = text ? JSON.parse(text) : {}
+    const responseText = await response.text()
+    console.log('Update course response:', { status: response.status, statusText: response.statusText, responseText: responseText.substring(0, 200) })
+    
+    if (responseText && responseText.trim()) {
+      try {
+        result = JSON.parse(responseText)
+      } catch (parseError) {
+        console.error('Failed to parse JSON:', parseError)
+        throw new Error(`Invalid JSON response from server (status: ${response.status})`)
+      }
+    } else if (response.status === 204 || response.status === 200) {
+      // No content response - that's OK
+      result = { success: true, message: 'Course updated successfully' }
+    }
   } catch (error) {
-    throw new Error('Invalid response from server')
+    console.error('Failed to read response:', error)
+    if (response.status !== 204 && response.status !== 200) {
+      throw error instanceof Error ? error : new Error(`Invalid response from server (status: ${response.status})`)
+    }
   }
 
   if (!response.ok) {
-    const errorMessage = result?.message || result?.error || `Failed to update course (${response.status})`
+    const errorMessage = (result as any)?.message || (result as any)?.error || `Failed to update course (${response.status})`
+    console.error('Update course failed:', { status: response.status, errorMessage, result })
     throw new Error(errorMessage)
   }
 

@@ -4,6 +4,7 @@ import React, { useState, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { UserProfile } from '@/hooks/use-me'
 import { 
   LayoutDashboard,
   BookOpen,
@@ -19,24 +20,69 @@ import {
   Video,
   FolderOpen,
   Target,
-  Users
+  Users,
+  Calendar
 } from 'lucide-react'
 
 interface SidebarProps {
   isCollapsed: boolean
   onToggle: () => void
+  user?: UserProfile | null
 }
 
-export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
+export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   const pathname = usePathname()
   const [expandedItems, setExpandedItems] = useState<string[]>([])
 
-  const navigation = useMemo(() => [
+  // Check user roles
+  const isAdmin = useMemo(() => {
+    return user?.roles?.some(role => role.name === 'admin') || false
+  }, [user])
+
+  const isStudent = useMemo(() => {
+    return user?.roles?.some(role => role.name === 'student') || false
+  }, [user])
+
+  const isTeacher = useMemo(() => {
+    return user?.roles?.some(role => role.name === 'teacher') || false
+  }, [user])
+
+  const navigation = useMemo(() => {
+    const allNavigation = [
     {
       title: 'Dashboard',
       icon: LayoutDashboard,
       href: '/dashboard',
-      items: []
+      items: [],
+      allowedRoles: ['admin', 'teacher', 'student'] // Everyone can see Dashboard
+    },
+    {
+      title: 'My Courses',
+      icon: BookOpen,
+      href: '/dashboard/enrolled-courses',
+      items: [],
+      allowedRoles: ['student'] // Students only
+    },
+    {
+      title: 'My Booked Slots',
+      icon: Calendar,
+      href: '/dashboard/student-booked-slots',
+      items: [],
+      allowedRoles: ['student'] // Students only
+    },
+    {
+      title: 'Course Enrollments',
+      icon: Users,
+      href: '/dashboard/teacher-enrolled-courses',
+      items: [],
+      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
+    },
+    {
+      title: 'Booked Slots',
+      icon: Calendar,
+      href: '/dashboard/teacher-booked-slots',
+      items: [],
+      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     {
       title: 'Course',
@@ -45,28 +91,32 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       items: [
         { title: 'All Courses', href: '/dashboard/course', icon: BookOpen },
         { title: 'Add Course', href: '/dashboard/course/add-course', icon: FileText }
-      ]
+      ],
+      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     {
-      title: 'One to One Session',
+      title: 'Live Session',
       icon: Video,
       href: '/dashboard/one-to-one-session',
       items: [
         { title: 'All Slots', href: '/dashboard/one-to-one-session', icon: Video },
         { title: 'Add Slot', href: '/dashboard/one-to-one-session/add-slot', icon: FileText },
-      ]
+      ],
+      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     {
       title: 'Subject',
       icon: FolderOpen,
       href: '/dashboard/subject',
-      items: []
+      items: [],
+      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     {
       title: 'Skills',
       icon: Target,
       href: '/dashboard/skills',
-      items: []
+      items: [],
+      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     // {
     //   title: 'Teacher',
@@ -85,15 +135,38 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       title: 'User List',
       icon: Users,
       href: '/dashboard/user-list',
-      items: []
+      items: [],
+      allowedRoles: ['admin'] // Only admin can see this
     },
     {
       title: 'Settings',
       icon: Settings,
       href: '/dashboard/settings',
-      items: []
+      items: [],
+      allowedRoles: ['admin', 'teacher', 'student'] // Everyone can see Settings
     }
-  ], [])
+    ]
+
+    // Filter navigation based on user role
+    return allNavigation.filter(item => {
+      // If user is a student, only show Dashboard and Settings
+      if (isStudent) {
+        return item.allowedRoles?.includes('student') || false
+      }
+      
+      // For admin and teacher, check if they have the required role
+      if (isAdmin) {
+        return true // Admin can see everything
+      }
+      
+      if (isTeacher) {
+        return item.allowedRoles?.includes('teacher') || false
+      }
+      
+      // Default: if no role matches, don't show the item
+      return false
+    })
+  }, [isAdmin, isStudent, isTeacher])
 
   const isActive = useCallback((href: string) => {
     if (href === '/dashboard') {

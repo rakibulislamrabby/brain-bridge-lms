@@ -2,17 +2,22 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Calendar, Clock, Users, DollarSign, Info, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, Users, DollarSign, Info, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { AppHeader } from '@/components/app-header'
 import Footer from '@/components/shared/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useLiveSessionDetail } from '@/hooks/live-session/use-live-session-detail'
+import { useBookingIntent } from '@/hooks/slots/use-bookings-intent'
+import { useToast } from '@/components/ui/toast'
 
-const toDateOnlyKey = (date: Date | string) => {
+const toDateOnlyKey = (date: Date | string | null | undefined) => {
+  if (!date) {
+    return null
+  }
   const parsed = typeof date === 'string' ? new Date(date) : date
-  if (Number.isNaN(parsed.getTime())) {
+  if (!parsed || !(parsed instanceof Date) || Number.isNaN(parsed.getTime())) {
     return null
   }
   return parsed.toISOString().split('T')[0]
@@ -94,16 +99,27 @@ export default function LiveSessionDetailPage() {
   }, [params])
 
   const { data, isLoading, error } = useLiveSessionDetail(sessionId)
+  const bookingIntentMutation = useBookingIntent()
+  const { addToast } = useToast()
 
   const availableDates = useMemo(() => {
-    if (!data) {
+    if (!data || !data.from_date || !data.to_date) {
       return [] as Date[]
     }
-    const key = toDateOnlyKey(data.available_date)
-    if (!key) {
-      return []
+    
+    const fromDate = new Date(data.from_date)
+    const toDate = new Date(data.to_date)
+    const dates: Date[] = []
+    
+    if (!Number.isNaN(fromDate.getTime()) && !Number.isNaN(toDate.getTime())) {
+      const current = new Date(fromDate)
+      while (current <= toDate) {
+        dates.push(new Date(current))
+        current.setDate(current.getDate() + 1)
+      }
     }
-    return [new Date(data.available_date)]
+    
+    return dates
   }, [data])
 
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -135,15 +151,21 @@ export default function LiveSessionDetailPage() {
 
   const calendarCells = useMemo(() => buildCalendarGrid(currentMonth), [currentMonth])
 
-  const slotsForSelectedDate = useMemo(() => {
+  const showTimeSlot = useMemo(() => {
     if (!data || !selectedDateKey) {
-      return []
+      return false
     }
-    const dateKey = toDateOnlyKey(data.available_date)
-    if (dateKey !== selectedDateKey) {
-      return []
+    
+    // Check if selected date is within the date range
+    if (data.from_date && data.to_date) {
+      const fromKey = toDateOnlyKey(data.from_date)
+      const toKey = toDateOnlyKey(data.to_date)
+      if (fromKey && toKey) {
+        return selectedDateKey >= fromKey && selectedDateKey <= toKey
+      }
     }
-    return Array.isArray(data.slots) ? data.slots : []
+    
+    return false
   }, [data, selectedDateKey])
 
   const handlePrevMonth = () => {
@@ -163,6 +185,69 @@ export default function LiveSessionDetailPage() {
       return
     }
     setSelectedDateKey(key)
+  }
+
+  const handleReserveSlot = async () => {
+    if (!data || !selectedDate) {
+      addToast({
+        type: 'error',
+        title: 'Missing Information',
+        description: 'Please select a date to reserve the slot.',
+        duration: 5000,
+      })
+      return
+    }
+
+    if (data.available_seats === 0) {
+      addToast({
+        type: 'error',
+        title: 'Slot Full',
+        description: 'This slot is already full. Please select another date.',
+        duration: 5000,
+      })
+      return
+    }
+
+    try {
+      const result = await bookingIntentMutation.mutateAsync({
+        slot_id: data.id,
+        scheduled_date: selectedDate,
+      })
+
+      // Check if payment is required
+      if (result?.requires_payment && result?.client_secret) {
+        // Build URL with payment data as query parameters
+        const paymentParams = new URLSearchParams({
+          client_secret: result.client_secret,
+          amount: String(result.amount),
+          payment_intent: result.payment_intent_id || '',
+        })
+        
+        // Add slot info if available (URLSearchParams handles encoding automatically)
+        if (result.slot) {
+          paymentParams.set('slot', JSON.stringify(result.slot))
+        }
+        
+        // Redirect to payment page with URL parameters
+        router.push(`/payment?${paymentParams.toString()}`)
+      } else {
+        // No payment required, show success message
+        addToast({
+          type: 'success',
+          title: 'Slot Reserved',
+          description: result?.message || 'Your slot reservation has been submitted successfully!',
+          duration: 5000,
+        })
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to reserve slot. Please try again.'
+      addToast({
+        type: 'error',
+        title: 'Reservation Failed',
+        description: errorMessage,
+        duration: 6000,
+      })
+    }
   }
 
   return (
@@ -217,7 +302,7 @@ export default function LiveSessionDetailPage() {
                         {data.type === 'one_to_one' ? 'One-to-One Session' : (data.type ?? 'Live Session')}
                       </Badge>
                       <CardTitle className="text-3xl text-white">
-                        {data.teacher?.name || 'Expert Mentor'}
+                        {data.title || data.teacher?.name || 'Expert Mentor'}
                       </CardTitle>
                       <p className="text-gray-300 mt-2 max-w-xl">
                         {data.description || 'Connect live with the mentor for personalized guidance and actionable feedback during this session.'}
@@ -295,30 +380,40 @@ export default function LiveSessionDetailPage() {
 
                   <div className="space-y-5">
                     <div>
-                      <h2 className="text-lg font-semibold text-white mb-3">Available time slots</h2>
-                      {selectedDate && availableDateKeys.has(toDateOnlyKey(selectedDate) || '') ? (
-                        slotsForSelectedDate.length > 0 ? (
-                          <div className="space-y-3">
-                            {slotsForSelectedDate.map((slot, index) => (
-                              <div key={`${slot.start_time}-${slot.end_time}-${index}`} className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900/50 px-4 py-3">
-                                <div className="flex items-center gap-3 text-white">
-                                  <Clock className="w-4 h-4 text-purple-400" />
-                                  <span>{formatTimeRange(slot.start_time, slot.end_time)}</span>
-                                </div>
-                                <Button className="bg-purple-600 hover:bg-purple-700 text-white cursor-pointer">
-                                  Reserve Slot
-                                </Button>
-                              </div>
-                            ))}
+                      <h2 className="text-lg font-semibold text-white mb-3">Time slot</h2>
+                      {selectedDate && showTimeSlot ? (
+                        <div className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900/50 px-4 py-3">
+                          <div className="flex items-center gap-3 text-white">
+                            <Clock className="w-4 h-4 text-purple-400" />
+                            <div className="flex flex-col">
+                              <span>{data.start_time && data.end_time ? formatTimeRange(data.start_time, data.end_time) : 'Time TBD'}</span>
+                              {data.available_seats > 0 && (
+                                <span className="text-xs text-gray-400">
+                                  {data.available_seats} {data.available_seats === 1 ? 'seat' : 'seats'} available
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        ) : (
-                          <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-6 text-center text-gray-400">
-                            No slots available for this date yet.
-                          </div>
-                        )
+                          <Button 
+                            className="bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
+                            disabled={data.available_seats === 0 || bookingIntentMutation.isPending}
+                            onClick={handleReserveSlot}
+                          >
+                            {bookingIntentMutation.isPending ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Reserving...
+                              </>
+                            ) : data.available_seats === 0 ? (
+                              'Full'
+                            ) : (
+                              'Reserve Slot'
+                            )}
+                          </Button>
+                        </div>
                       ) : (
                         <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-6 text-center text-gray-400">
-                          Pick an available date to view slots.
+                          Pick an available date to view the time slot.
                         </div>
                       )}
                     </div>
@@ -332,6 +427,15 @@ export default function LiveSessionDetailPage() {
                         <p className="font-medium text-white">{data.teacher?.name ?? 'Mashter'}</p>
                         {data.teacher?.email && <p className="text-gray-400">{data.teacher.email}</p>}
                       </div>
+                      {data.subject && (
+                        <>
+                          <div className="flex items-center gap-2 text-white pt-2">
+                            <Info className="w-4 h-4 text-blue-400" />
+                            <span>Subject</span>
+                          </div>
+                          <div className="pl-6 text-gray-200">{data.subject.name}</div>
+                        </>
+                      )}
                       <div className="flex items-center gap-2 text-white pt-2">
                         <DollarSign className="w-4 h-4 text-green-400" />
                         <span>Price</span>

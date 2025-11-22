@@ -31,30 +31,31 @@ const getAuthHeaders = (): Record<string, string> => {
   return headers
 }
 
-export interface LiveSessionTimeSlot {
-  start_time: string
-  end_time: string
-}
-
 export interface LiveSessionDetailTeacher {
   id: number
   name: string
   email?: string
 }
 
+export interface LiveSessionDetailSubject {
+  id: number
+  name: string
+}
+
 export interface LiveSessionDetailResponse {
   id: number
+  title: string
   teacher: LiveSessionDetailTeacher
-  subject_id?: number
-  subject?: {
-    id: number
-    name: string
-  }
-  available_date: string
-  slots: LiveSessionTimeSlot[]
-  type?: string
-  price?: string
-  description?: string
+  subject: LiveSessionDetailSubject
+  subject_id: number
+  from_date: string
+  to_date: string
+  start_time: string
+  end_time: string
+  type: string
+  price: string
+  description: string
+  available_seats: number
 }
 
 const fetchLiveSessionDetail = async (id: number): Promise<LiveSessionDetailResponse> => {
