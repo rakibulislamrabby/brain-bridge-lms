@@ -88,9 +88,9 @@ const updateCourse = async (id: number, payload: UpdateCourseRequest): Promise<U
   }
   formData.append('is_published', payload.is_published ? '1' : '0')
   
-  // Add thumbnail if present
+  // Add thumbnail if present - backend expects 'thumbnail_url' as the field name
   if (payload.thumbnail) {
-    formData.append('thumbnail', payload.thumbnail)
+    formData.append('thumbnail_url', payload.thumbnail)
   }
   
   // Add modules with nested structure
