@@ -63,7 +63,9 @@ const createCourse = async (payload: CreateCourseRequest & { thumbnail?: File | 
   const url = joinUrl('courses');
   
   // Check if we need to send files (FormData) or just JSON
-  const hasFiles = payload.thumbnail || (payload.videoFiles && Object.keys(payload.videoFiles).length > 0);
+  const hasThumbnail = payload.thumbnail && payload.thumbnail instanceof File;
+  const hasVideoFiles = payload.videoFiles && Object.keys(payload.videoFiles).length > 0;
+  const hasFiles = hasThumbnail || hasVideoFiles;
   
   let body: FormData | string;
   const headers: Record<string, string> = {
@@ -84,9 +86,10 @@ const createCourse = async (payload: CreateCourseRequest & { thumbnail?: File | 
     }
     formData.append('is_published', payload.is_published ? '1' : '0');
     
-    // Add thumbnail if present
-    if (payload.thumbnail) {
-      formData.append('thumbnail', payload.thumbnail);
+    // Add thumbnail if present (File object) - uploads to thumbnails/ directory
+    // Backend expects 'thumbnail_url' as the field name (matches response field)
+    if (payload.thumbnail && payload.thumbnail instanceof File) {
+      formData.append('thumbnail_url', payload.thumbnail);
     }
     
     // Add modules as JSON string (nested structure)

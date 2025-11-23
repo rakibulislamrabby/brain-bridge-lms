@@ -255,7 +255,7 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         old_price: courseInfo.old_price ? parseFloat(courseInfo.old_price) : undefined,
         is_published: courseInfo.is_published ? 1 : 0,
         modules: formattedModules,
-        thumbnail: thumbnailFile,
+        thumbnail: thumbnailFile instanceof File ? thumbnailFile : undefined,
         videoFiles: Object.keys(videoFiles).length > 0 ? videoFiles : undefined,
       }
 
