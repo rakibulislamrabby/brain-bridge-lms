@@ -109,11 +109,6 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
         <div className="hidden md:flex items-center gap-6">
           <NavigationMenu>
             <NavigationMenuList>
-              {/* <NavigationMenuItem>
-                <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
-                  <Link href="/teacher">Master</Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem> */}
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
                   <Link href="/courses">Vedio Courses</Link>
@@ -126,12 +121,23 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
+                  <Link href="/how-it-works">How It Works</Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+             
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
                   <Link href="/about">About</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
                   <Link href="/contact">Contact Us</Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
+                  <Link href="/teacher">Become a Master</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>
@@ -291,6 +297,9 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
           <div className="md:hidden absolute top-full left-0 right-0 bg-gray-800 border-b shadow-xl z-[9999]">
             <div className="px-4 py-6 space-y-4">
               <Link href="/courses" className="block py-2 text-white hover:text-purple-400 transition-colors font-medium" onClick={closeMobileMenu}>Courses</Link>
+              <Link href="/live-session" className="block py-2 text-white hover:text-purple-400 transition-colors font-medium" onClick={closeMobileMenu}>Live Session</Link>
+              <Link href="/how-it-works" className="block py-2 text-white hover:text-purple-400 transition-colors font-medium" onClick={closeMobileMenu}>How It Works</Link>
+              <Link href="/teacher" className="block py-2 text-white hover:text-purple-400 transition-colors font-medium" onClick={closeMobileMenu}>Become a Master (Teach)</Link>
               <Link href="/about" className="block py-2 text-white hover:text-purple-400 transition-colors font-medium" onClick={closeMobileMenu}>About</Link>
               <Link href="/contact" className="block py-2 text-white hover:text-purple-400 transition-colors font-medium" onClick={closeMobileMenu}>Contact Us</Link>
 
