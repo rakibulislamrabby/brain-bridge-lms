@@ -1,7 +1,7 @@
 "use client"
 
-import { useState} from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -15,11 +15,29 @@ import { GraduationCap, User } from "lucide-react"
 
 export default function SignUp() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const registerTeacherMutation = useRegisterTeacher()
   const registerStudentMutation = useRegisterStudent()
   const { addToast } = useToast()
   
-  const [activeTab, setActiveTab] = useState<'student' | 'master'>('student')
+  // Check URL parameter for role and set initial tab
+  const [activeTab, setActiveTab] = useState<'student' | 'master'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      return params.get('role') === 'master' ? 'master' : 'student'
+    }
+    return 'student'
+  })
+
+  // Update tab if URL parameter changes
+  useEffect(() => {
+    const role = searchParams?.get('role')
+    if (role === 'master') {
+      setActiveTab('master')
+    } else if (role === 'student') {
+      setActiveTab('student')
+    }
+  }, [searchParams])
   const [formData, setFormData] = useState({
     name: "",
     email: "",

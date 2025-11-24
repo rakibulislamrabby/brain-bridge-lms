@@ -61,7 +61,7 @@ export default function Hero({ variant = 'default' }: HeroProps) {
                 </Link>
               </Button>
               <Button asChild variant="outline" className="border-2 border-white/20 text-black bg-white/60 hover:text-gray-900 hover:bg-white/80 px-10 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-medium">
-                <Link href="/signin">Become a Master</Link>
+                <Link href="/signup?role=master">Become a Master</Link>
               </Button>
             </div>
           </div>

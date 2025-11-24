@@ -71,7 +71,7 @@ export default function CoursesPage() {
                     disabled={isDisabled}
                     className={`
                       group relative flex flex-col items-center gap-2 px-6 py-4 rounded-xl 
-                      transition-all duration-300 min-w-[140px] md:min-w-[160px]
+                      transition-all duration-300 min-w-[140px] md:min-w-[160px] cursor-pointer
                       ${isActive
                         ? 'bg-gray-800 text-white border-2 border-purple-500 shadow-sm'
                         : isDisabled

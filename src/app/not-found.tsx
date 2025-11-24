@@ -9,11 +9,13 @@ import { Home, ArrowLeft, Search, HelpCircle } from 'lucide-react'
 export default function NotFound() {
   return (
     <>
-      <div className="bg-gray-900 min-h-screen flex flex-col">
-        <AppHeader />
+    <AppHeader />
+      <div className="px-4 mx-auto bg-gray-900 min-h-screen flex flex-col">
         
-        <main className="flex-1 flex items-center justify-center py-20 px-4">
-          <div className="max-w-2xl mx-auto text-center">
+        
+        <main className="flex-1 flex items-center justify-center py-20">
+          <div className="max-w-7xl mx-auto w-full px-4">
+            <div className="text-center">
             {/* 404 Number */}
             <div className="mb-8">
               <h1 className="text-8xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-blue-500 to-orange-500">
@@ -90,6 +92,7 @@ export default function NotFound() {
                   </div>
                 </div>
               </Link>
+            </div>
             </div>
           </div>
         </main>
