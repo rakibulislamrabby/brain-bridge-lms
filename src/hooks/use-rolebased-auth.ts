@@ -99,15 +99,27 @@ const registerStudent = async (data: RegisterStudentRequest): Promise<AuthRespon
 export const useRegisterTeacher = () => {
   return useMutation({
     mutationFn: registerTeacher,
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       // Store token in localStorage if available (client-side only)
       if (typeof window !== 'undefined' && data.access_token) {
         localStorage.setItem('auth_token', data.access_token);
-        localStorage.setItem('user', JSON.stringify(data.user || {}));
+        
+        // Construct user object from API response or use registration data
+        const userData = data.user || {
+          id: data.user?.id || 0,
+          name: data.user?.name || variables.name,
+          email: data.user?.email || variables.email,
+        };
+        
+        localStorage.setItem('user', JSON.stringify(userData));
+        
         // Also set cookie for middleware
         const expires = new Date();
         expires.setTime(expires.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days
         document.cookie = `token=${data.access_token}; path=/; expires=${expires.toUTCString()}; SameSite=Lax`;
+        
+        // Dispatch custom event to notify header of user update
+        window.dispatchEvent(new CustomEvent('userUpdated', { detail: userData }));
       }
     },
     onError: (error) => {
@@ -120,15 +132,27 @@ export const useRegisterTeacher = () => {
 export const useRegisterStudent = () => {
   return useMutation({
     mutationFn: registerStudent,
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       // Store token in localStorage if available (client-side only)
       if (typeof window !== 'undefined' && data.access_token) {
         localStorage.setItem('auth_token', data.access_token);
-        localStorage.setItem('user', JSON.stringify(data.user || {}));
+        
+        // Construct user object from API response or use registration data
+        const userData = data.user || {
+          id: data.user?.id || 0,
+          name: data.user?.name || variables.name,
+          email: data.user?.email || variables.email,
+        };
+        
+        localStorage.setItem('user', JSON.stringify(userData));
+        
         // Also set cookie for middleware
         const expires = new Date();
         expires.setTime(expires.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days
         document.cookie = `token=${data.access_token}; path=/; expires=${expires.toUTCString()}; SameSite=Lax`;
+        
+        // Dispatch custom event to notify header of user update
+        window.dispatchEvent(new CustomEvent('userUpdated', { detail: userData }));
       }
     },
     onError: (error) => {

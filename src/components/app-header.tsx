@@ -28,6 +28,33 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
     setIsClient(true)
     const storedUser = getStoredUser()
     setUser(storedUser)
+    
+    // Listen for user updates (e.g., after registration)
+    const handleUserUpdate = (event: CustomEvent) => {
+      const updatedUser = event.detail
+      if (updatedUser && updatedUser.name) {
+        setUser(updatedUser)
+      }
+    }
+    
+    // Also check localStorage periodically in case it was updated
+    const checkUserUpdate = () => {
+      const storedUser = getStoredUser()
+      if (storedUser && storedUser.name) {
+        setUser(storedUser)
+      }
+    }
+    
+    window.addEventListener('userUpdated', handleUserUpdate as EventListener)
+    
+    // Check for user updates every 500ms for the first 3 seconds after mount
+    const intervalId = setInterval(checkUserUpdate, 500)
+    setTimeout(() => clearInterval(intervalId), 3000)
+    
+    return () => {
+      window.removeEventListener('userUpdated', handleUserUpdate as EventListener)
+      clearInterval(intervalId)
+    }
   }, [])
 
   // Close dropdown when clicking outside - using click event instead of mousedown
@@ -93,11 +120,23 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
     }, 10)
   }
 
-  const getUserInitial = (name: string) => name ? name.charAt(0).toUpperCase() : 'U'
+  const getUserInitial = (name: string) => {
+    if (!name || typeof name !== 'string') return 'U'
+    return name.trim().charAt(0).toUpperCase()
+  }
+  
   const getShortName = (name: string) => {
-    if (!name) return 'User'
-    const words = name.trim().split(' ')
+    if (!name || typeof name !== 'string') return 'User'
+    const trimmedName = name.trim()
+    if (!trimmedName) return 'User'
+    const words = trimmedName.split(' ')
     return words.length > 1 ? `${words[0]} ${words[1]}` : words[0]
+  }
+  
+  // Get display name from user object
+  const getUserDisplayName = () => {
+    if (!user) return 'User'
+    return user.name || user.email?.split('@')[0] || 'User'
   }
 
   return (
@@ -152,10 +191,10 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
                 className="flex items-center gap-3 hover:bg-gray-700 rounded-lg p-2 transition-colors cursor-pointer"
               >
                 <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center text-lg font-medium">
-                  {getUserInitial(user.name)}
+                  {getUserInitial(getUserDisplayName())}
                 </div>
                 <span className="text-sm font-medium text-white">
-                  {getShortName(user.name)}
+                  {getShortName(getUserDisplayName())}
                 </span>
                 {isUserDropdownOpen ? (
                   <ChevronUp className="w-4 h-4 text-gray-300" />
@@ -228,10 +267,10 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
                 className="flex items-center gap-2 hover:bg-gray-700 rounded-lg p-1 transition-colors"
               >
                 <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                  {getUserInitial(user.name)}
+                  {getUserInitial(getUserDisplayName())}
                 </div>
                 <span className="text-sm font-medium text-white hidden sm:block">
-                  {getShortName(user.name)}
+                  {getShortName(getUserDisplayName())}
                 </span>
                 {isUserDropdownOpen ? (
                   <ChevronUp className="w-4 h-4 text-gray-300" />
@@ -328,9 +367,9 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
                   <div className="space-y-2">
                     <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg">
                       <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center text-lg font-medium">
-                        {getUserInitial(user.name)}
+                        {getUserInitial(getUserDisplayName())}
                       </div>
-                      <span className="text-sm font-medium text-white">{getShortName(user.name)}</span>
+                      <span className="text-sm font-medium text-white">{getShortName(getUserDisplayName())}</span>
                     </div>
 
                     <button

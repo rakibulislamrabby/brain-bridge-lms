@@ -57,7 +57,7 @@ export default function Footer() {
               className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors duration-300"
             >
               <GraduationCap className="w-4 h-4" />
-              Become a Master (Teach)
+              Become a Master
             </Link>
           </div>
 
