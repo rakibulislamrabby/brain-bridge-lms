@@ -44,7 +44,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
         <div className="relative">
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer"
           >
             {/* Profile Avatar */}
             <div className="h-8 w-8 rounded-full bg-purple-600 flex items-center justify-center">
@@ -76,15 +76,15 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
           {/* Profile Dropdown */}
           {isProfileOpen && (
             <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-lg border border-gray-700 py-2 z-50">
-              <div className="px-4 py-3 border-b border-gray-700">
+              {/* <div className="px-4 py-3 border-b border-gray-700">
                 <p className="text-sm font-medium text-white">{user?.name || 'User'}</p>
                 <p className="text-xs text-gray-400">{user?.email || 'user@example.com'}</p>
-              </div>
+              </div> */}
               
               <div className="py-1">
                 <button
                   onClick={handleProfileClick}
-                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors cursor-pointer"
                 >
                   <User className="h-4 w-4" />
                   Profile
@@ -92,7 +92,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
                 
                 <button
                   onClick={() => router.push('/dashboard/settings')}
-                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors cursor-pointer"
                 >
                   <Settings className="h-4 w-4" />
                   Settings
@@ -102,7 +102,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
                 
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 transition-colors"
+                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 transition-colors cursor-pointer"
                 >
                   <LogOut className="h-4 w-4" />
                   Sign Out

@@ -126,7 +126,7 @@ export default function SignUp() {
         addToast({
           type: "success",
           title: "Master Account Created!",
-          description: "Your master account has been created. Redirecting...",
+          description: "Your master account has been created. Welcome to Brain Bridge!",
           duration: 3000
         });
       } else {
@@ -141,7 +141,7 @@ export default function SignUp() {
         addToast({
           type: "success",
           title: "Student Account Created!",
-          description: "Your student account has been created. Redirecting...",
+          description: "Your student account has been created. Welcome to Brain Bridge!",
           duration: 3000
         });
       }

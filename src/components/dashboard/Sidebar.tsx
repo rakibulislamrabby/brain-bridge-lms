@@ -210,7 +210,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
         )}
         <button
           onClick={onToggle}
-          className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
+          className="p-2 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer"
         >
           {isCollapsed ? (
             <ChevronRight className="h-4 w-4 text-gray-300" />

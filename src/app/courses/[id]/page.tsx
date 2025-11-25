@@ -288,14 +288,14 @@ export default function CourseDetailPage() {
                     className="object-cover"
                     unoptimized
                   />
-                  <div className="absolute top-4 right-4 flex gap-2">
+                  {/* <div className="absolute top-4 right-4 flex gap-2">
                     <Button size="sm" variant="secondary" className="bg-gray-800/90 text-white border-gray-600">
                       <Share2 className="w-4 h-4" />
                     </Button>
                     <Button size="sm" variant="secondary" className="bg-gray-800/90 text-white border-gray-600">
                       <Heart className="w-4 h-4" />
                     </Button>
-                  </div>
+                  </div> */}
                 </div>
                 
                 <div className="p-6">

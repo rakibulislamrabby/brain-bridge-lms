@@ -213,21 +213,27 @@ export default function LiveSessions({
                   >
                     <span className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-purple-500/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                     
-                    <div className="space-y-1">
-                      <p className="text-lg font-semibold text-white leading-tight">
-                        {session.teacher?.name || 'Unknown Instructor'}
-                      </p>
-                      <p className="text-base text-gray-300">
-                        {session.subject?.name || 'General Subject'}
-                      </p>
+                    {/* Title and Master Name Row */}
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 space-y-2">
+                        {/* Main Title */}
+                        <h3 className="text-lg font-semibold text-white leading-tight">
+                          {session.title || 'Live Session'}
+                        </h3>
+                        {/* Category after title */}
+                        <p className="text-sm text-purple-300 font-medium">
+                          {session.subject?.name || 'General Subject'}
+                        </p>
+                      </div>
+                      {/* Master Name on Right */}
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-gray-300">
+                          {session.teacher?.name || 'Unknown Master'}
+                        </p>
+                      </div>
                     </div>
                     
-                    {session.title && (
-                      <div>
-                        <p className="text-sm font-medium text-purple-300">{session.title}</p>
-                      </div>
-                    )}
-                    
+                    {/* Type Badge */}
                     <div className="flex items-center gap-2 text-sm text-gray-400">
                       {session.type && (
                         <Badge className="bg-purple-600/20 text-purple-300 border border-purple-600/40 text-xs">
