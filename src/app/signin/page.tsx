@@ -77,7 +77,7 @@ export default function SignIn() {
       addToast({
         type: "success",
         title: "Login Successful!",
-        description: "Welcome back! Redirecting to dashboard...",
+        description: "Welcome back to Brain Bridge!",
         duration: 3000
       });
       

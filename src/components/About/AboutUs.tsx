@@ -7,7 +7,7 @@ import Footer from '../shared/Footer'
 export default function AboutUs() {
   const stats = [
     { icon: <Users className="w-6 h-6" />, number: "50K+", label: "Students" },
-    { icon: <Target className="w-6 h-6" />, number: "200+", label: "Instructors" },
+    { icon: <Target className="w-6 h-6" />, number: "200+", label: "Master" },
     { icon: <Award className="w-6 h-6" />, number: "1000+", label: "Courses" },
     { icon: <Globe className="w-6 h-6" />, number: "50+", label: "Countries" }
   ]

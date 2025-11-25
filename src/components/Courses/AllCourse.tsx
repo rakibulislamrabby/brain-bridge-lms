@@ -6,7 +6,6 @@ import { usePublicCourses } from '@/hooks/course/public/use-public-courses'
 import { useLiveSessions } from '@/hooks/live-session/use-live-session'
 import CourseCard from './CourseCard'
 import {
-  Laptop,
   Palette,
   Code,
   Globe,
@@ -139,17 +138,13 @@ export default function AllCourse() {
   const displayLiveSessions = liveSessions.slice(0, 4)
 
   return (
-    <section className="py-20 bg-gray-900">
+    <section className="py-8 bg-gray-900">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Laptop className="w-5 h-5 text-blue-400" />
-            <span className="text-blue-400 font-medium">Popular Courses</span>
-          </div>
-          <h2 className="text-4xl font-bold text-white mb-4">Pick A Course To Get Started</h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Discover courses tailored to your interests. Filter by category or delivery method to find the right fit.
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Recorded Lessons</h2>
+          <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+            Discover self-paced courses tailored to your interests. Filter by category to find the right fit.
           </p>
         </div>
 

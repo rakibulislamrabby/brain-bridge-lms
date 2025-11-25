@@ -20,7 +20,11 @@ const toDateOnlyKey = (date: Date | string | null | undefined) => {
   if (!parsed || !(parsed instanceof Date) || Number.isNaN(parsed.getTime())) {
     return null
   }
-  return parsed.toISOString().split('T')[0]
+  // Use local date to avoid timezone issues
+  const year = parsed.getFullYear()
+  const month = String(parsed.getMonth() + 1).padStart(2, '0')
+  const day = String(parsed.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 const formatReadableDate = (date: Date) => {
@@ -107,14 +111,48 @@ export default function LiveSessionDetailPage() {
       return [] as Date[]
     }
     
-    const fromDate = new Date(data.from_date)
-    const toDate = new Date(data.to_date)
+    // Parse dates and normalize to local midnight to avoid timezone issues
+    const parseDate = (dateString: string): Date | null => {
+      try {
+        const date = new Date(dateString)
+        if (Number.isNaN(date.getTime())) {
+          return null
+        }
+        // Create a new date using local date components to avoid timezone shifts
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+      } catch {
+        return null
+      }
+    }
+    
+    const fromDate = parseDate(data.from_date)
+    const toDate = parseDate(data.to_date)
+    
+    if (!fromDate || !toDate) {
+      return [] as Date[]
+    }
+    
     const dates: Date[] = []
     
-    if (!Number.isNaN(fromDate.getTime()) && !Number.isNaN(toDate.getTime())) {
-      const current = new Date(fromDate)
-      while (current <= toDate) {
-        dates.push(new Date(current))
+    // Get today's date at midnight (local time)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    // Start from the later of: fromDate or today (to include today if it's in range)
+    const startDate = fromDate < today ? new Date(today) : new Date(fromDate)
+    const endDate = new Date(toDate)
+    
+    // Only proceed if start date is not after end date
+    if (startDate <= endDate) {
+      const current = new Date(startDate)
+      while (current <= endDate) {
+        // Only include dates that are today or in the future
+        const dateToCheck = new Date(current)
+        dateToCheck.setHours(0, 0, 0, 0)
+        
+        if (dateToCheck >= today) {
+          dates.push(new Date(current))
+        }
         current.setDate(current.getDate() + 1)
       }
     }
@@ -127,18 +165,34 @@ export default function LiveSessionDetailPage() {
   })
 
   const [selectedDateKey, setSelectedDateKey] = useState(() => {
-    return availableDates[0] ? toDateOnlyKey(availableDates[0]) : toDateOnlyKey(new Date())
+    // Find the first available date that is today or in the future
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    const firstFutureDate = availableDates.find(date => {
+      const dateToCheck = new Date(date)
+      dateToCheck.setHours(0, 0, 0, 0)
+      return dateToCheck >= today
+    })
+    
+    return firstFutureDate ? toDateOnlyKey(firstFutureDate) : null
   })
 
   const availableDateKeys = useMemo(() => new Set(availableDates.map((date) => toDateOnlyKey(date)).filter((key): key is string => Boolean(key))), [availableDates])
 
   useEffect(() => {
     if (availableDates.length > 0) {
-      const firstKey = toDateOnlyKey(availableDates[0])
+      // Find the first future date (availableDates is already filtered to exclude past dates)
+      const firstFutureDate = availableDates[0]
+      const firstKey = toDateOnlyKey(firstFutureDate)
       if (firstKey) {
         setSelectedDateKey(firstKey)
-        setCurrentMonth(new Date(availableDates[0].getFullYear(), availableDates[0].getMonth(), 1))
+        setCurrentMonth(new Date(firstFutureDate.getFullYear(), firstFutureDate.getMonth(), 1))
       }
+    } else {
+      // If no available dates, set current month to today
+      const today = new Date()
+      setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1))
     }
   }, [availableDates])
 
@@ -181,6 +235,18 @@ export default function LiveSessionDetailPage() {
     if (!key) {
       return
     }
+    
+    // Check if date is in the past (today is allowed)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const dateToCheck = new Date(date)
+    dateToCheck.setHours(0, 0, 0, 0)
+    
+    // Only block dates that are strictly before today (today >= today, so today is allowed)
+    if (dateToCheck < today) {
+      return // Don't allow selecting past dates (but today is allowed)
+    }
+    
     if (!availableDateKeys.has(key)) {
       return
     }
@@ -342,6 +408,15 @@ export default function LiveSessionDetailPage() {
                         const key = toDateOnlyKey(date)
                         const isAvailable = key ? availableDateKeys.has(key) : false
                         const isSelected = key === selectedDateKey
+                        
+                        // Check if date is in the past (today is allowed)
+                        const today = new Date()
+                        today.setHours(0, 0, 0, 0)
+                        const dateToCheck = new Date(date)
+                        dateToCheck.setHours(0, 0, 0, 0)
+                        // Only block dates that are strictly before today (today >= today, so today is allowed)
+                        const isPastDate = dateToCheck < today
+                        const isDisabled = !isAvailable || isPastDate
 
                         return (
                           <button
@@ -350,16 +425,17 @@ export default function LiveSessionDetailPage() {
                             className={`relative flex h-12 items-center justify-center rounded-md border text-sm transition-colors ${
                               isSelected
                                 ? 'border-purple-500 bg-purple-600/20 text-white shadow-inner'
-                                : isAvailable
+                                : isAvailable && !isPastDate
                                 ? 'border-purple-500/40 bg-purple-500/10 text-purple-200 hover:bg-purple-500/20'
                                 : isCurrentMonth
-                                ? 'border-gray-700 bg-gray-800 text-gray-400 cursor-not-allowed'
-                                : 'border-gray-800 bg-gray-900 text-gray-700 cursor-not-allowed'
+                                ? 'border-gray-700 bg-gray-800 text-gray-400 cursor-not-allowed opacity-50'
+                                : 'border-gray-800 bg-gray-900 text-gray-700 cursor-not-allowed opacity-50'
                             }`}
-                            disabled={!isAvailable}
+                            disabled={isDisabled}
+                            title={isPastDate ? 'Past dates cannot be selected' : undefined}
                           >
                             {date.getDate()}
-                            {isAvailable && !isSelected && (
+                            {isAvailable && !isSelected && !isPastDate && (
                               <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-purple-400" />
                             )}
                           </button>
