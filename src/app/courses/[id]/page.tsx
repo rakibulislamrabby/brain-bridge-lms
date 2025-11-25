@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { notFound, useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -27,6 +27,9 @@ import {
 import { usePublicCourse, usePublicCourses } from '@/hooks/course/public/use-public-courses'
 import { useCoursePaymentIntent } from '@/hooks/course/use-course-payment-intent'
 import { Loader2, XCircle } from 'lucide-react'
+import CourseReviewModal from '@/components/shared/reviews/CourseReviewModal'
+import { useEnrolledCourses } from '@/hooks/student/use-enrolled-courses'
+import { getStoredUser } from '@/hooks/useAuth'
 
 const fallbackImage = 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80'
 const MEDIA_BASE_URL = 'https://brainbridge.mitwebsolutions.com/'
@@ -117,11 +120,94 @@ export default function CourseDetailPage() {
     notFound()
   }
 
-  const { data: course, isLoading, error } = usePublicCourse(courseId)
+  const { data: course, isLoading, error, refetch: refetchCourse } = usePublicCourse(courseId)
   const { data: allCourses = [] } = usePublicCourses()
   const coursePaymentIntentMutation = useCoursePaymentIntent()
+  const { data: enrolledCourses = [] } = useEnrolledCourses()
 
   const [expandedSections, setExpandedSections] = useState<Array<number | string>>([])
+  const [reviewModalOpen, setReviewModalOpen] = useState(false)
+  const [reviewedCourses, setReviewedCourses] = useState<Set<number>>(new Set())
+  const [user, setUser] = useState<{ id: number; name: string; email: string; role?: string } | null>(null)
+
+  // Load reviewed courses from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('reviewed_courses')
+        if (stored) {
+          const parsed = JSON.parse(stored) as number[]
+          setReviewedCourses(new Set(parsed))
+        }
+      } catch (error) {
+        console.error('Failed to load reviewed courses:', error)
+      }
+      // Get user from localStorage
+      const storedUser = getStoredUser()
+      setUser(storedUser)
+    }
+  }, [])
+
+  // Listen for review submission events
+  useEffect(() => {
+    const handleReviewSubmitted = (event: Event) => {
+      const customEvent = event as CustomEvent<{ courseId: number }>
+      const courseId = customEvent.detail?.courseId
+      if (courseId && courseId === Number(params?.id)) {
+        setReviewedCourses(prev => {
+          const newSet = new Set(prev)
+          newSet.add(courseId)
+          // Save to localStorage
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('reviewed_courses', JSON.stringify(Array.from(newSet)))
+            } catch (error) {
+              console.error('Failed to save reviewed courses:', error)
+            }
+          }
+          return newSet
+        })
+        // Refetch course data to get updated reviews
+        refetchCourse()
+      }
+    }
+
+    const handleAlreadyReviewed = (event: Event) => {
+      const customEvent = event as CustomEvent<{ courseId: number }>
+      const courseId = customEvent.detail?.courseId
+      if (courseId && courseId === Number(params?.id)) {
+        setReviewedCourses(prev => {
+          const newSet = new Set(prev)
+          newSet.add(courseId)
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('reviewed_courses', JSON.stringify(Array.from(newSet)))
+            } catch (error) {
+              console.error('Failed to save reviewed courses:', error)
+            }
+          }
+          return newSet
+        })
+      }
+    }
+
+    window.addEventListener('courseReviewSubmitted', handleReviewSubmitted)
+    window.addEventListener('courseAlreadyReviewed', handleAlreadyReviewed)
+
+    return () => {
+      window.removeEventListener('courseReviewSubmitted', handleReviewSubmitted)
+      window.removeEventListener('courseAlreadyReviewed', handleAlreadyReviewed)
+    }
+  }, [params?.id])
+
+  // Check if current user has enrolled and paid for this course
+  const isEnrolledAndPaid = useMemo(() => {
+    if (!user || !course) return false
+    const enrollment = enrolledCourses.find(
+      (enrollment: any) => enrollment.course_id === course.id && enrollment.payment_status?.toLowerCase() === 'paid'
+    )
+    return !!enrollment
+  }, [enrolledCourses, course, user])
 
   const toggleSection = (sectionId: number | string) => {
     setExpandedSections(prev => 
@@ -196,30 +282,55 @@ export default function CourseDetailPage() {
       .slice(0, 3)
   }, [allCourses, course])
 
-  // Mock reviews data (placeholder until API provides reviews)
-  const reviews = [
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      rating: 5,
-      date: "2 weeks ago",
-      comment: "Excellent course! The instructor explains everything clearly and the practical exercises are very helpful."
-    },
-    {
-      id: 2,
-      name: "Mike Chen",
-      rating: 5,
-      date: "1 month ago",
-      comment: "Great content and well-structured. I learned a lot and would definitely recommend this course."
-    },
-    {
-      id: 3,
-      name: "Emily Davis",
-      rating: 4,
-      date: "3 weeks ago",
-      comment: "Very informative course with good examples. The instructor is knowledgeable and engaging."
+  // Get reviews from course data
+  const reviews = course?.reviews || []
+  
+  // Check if current user has already reviewed this course
+  const hasUserReviewed = useMemo(() => {
+    if (!user || !course || !reviews.length) return false
+    // Check if any review has the current user's ID as reviewer_id
+    return reviews.some((review) => review.reviewer_id === user.id)
+  }, [user, reviews, course])
+  
+  // Sync localStorage when we detect a review from API
+  useEffect(() => {
+    if (hasUserReviewed && course && !reviewedCourses.has(course.id) && typeof window !== 'undefined') {
+      setReviewedCourses(prev => {
+        const newSet = new Set(prev)
+        newSet.add(course.id)
+        try {
+          localStorage.setItem('reviewed_courses', JSON.stringify(Array.from(newSet)))
+        } catch (error) {
+          console.error('Failed to save reviewed courses:', error)
+        }
+        return newSet
+      })
     }
-  ]
+  }, [hasUserReviewed, course, reviewedCourses])
+  
+  // Also check localStorage as a fallback
+  const isReviewedFromStorage = course ? reviewedCourses.has(course.id) : false
+  
+  // User has reviewed if they have a review in the API or in localStorage
+  const isReviewed = hasUserReviewed || isReviewedFromStorage
+
+  const formatReviewDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString)
+      const now = new Date()
+      const diffTime = Math.abs(now.getTime() - date.getTime())
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      
+      if (diffDays === 0) return 'Today'
+      if (diffDays === 1) return 'Yesterday'
+      if (diffDays < 7) return `${diffDays} days ago`
+      if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
+      if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`
+      return `${Math.floor(diffDays / 365)} years ago`
+    } catch {
+      return dateString
+    }
+  }
 
   if (isLoading) {
     return (
@@ -497,31 +608,68 @@ export default function CourseDetailPage() {
                 </div>
               </div>
 
-              {/* Reviews */}
-              {/* <div className="bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-700">
-                <h2 className="text-2xl font-bold text-white mb-4">Student Reviews</h2>
-                <div className="space-y-4">
-                  {reviews.map((review) => (
-                    <div key={review.id} className="border-b border-gray-600 pb-4 last:border-b-0">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gray-600 rounded-full"></div>
-                          <div>
-                            <p className="font-semibold text-white">{review.name}</p>
-                            <div className="flex items-center gap-1">
-                              {[...Array(review.rating)].map((_, i) => (
-                                <Star key={i} className="w-4 h-4 text-yellow-500 fill-current" />
-                              ))}
+              {/* Reviews Section */}
+              <div className="bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-700">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-white">Student Reviews</h2>
+                  {isEnrolledAndPaid && (
+                    !isReviewed ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setReviewModalOpen(true)}
+                        className="border-purple-600 text-purple-400 hover:bg-purple-900/30"
+                      >
+                        <Star className="h-4 w-4 mr-2" />
+                        Write a Review
+                      </Button>
+                    ) : (
+                      <Badge className="bg-green-600/80 text-white flex items-center gap-1">
+                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                        Reviewed
+                      </Badge>
+                    )
+                  )}
+                </div>
+                
+                {reviews.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400">
+                    <Star className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No reviews yet. Be the first to review this course!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {reviews.map((review) => (
+                      <div key={review.id} className="border-b border-gray-600 pb-6 last:border-b-0 last:pb-0">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                              {review.reviewer?.name?.charAt(0).toUpperCase() || 'U'}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-white">{review.reviewer?.name || 'Anonymous'}</p>
+                              <div className="flex items-center gap-1 mt-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`w-4 h-4 ${
+                                      i < review.rating
+                                        ? 'text-yellow-500 fill-yellow-500'
+                                        : 'text-gray-600 fill-gray-600'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
                             </div>
                           </div>
+                          <span className="text-sm text-gray-400">{formatReviewDate(review.created_at)}</span>
                         </div>
-                        <span className="text-sm text-gray-400">{review.date}</span>
+                        <p className="text-gray-300 leading-relaxed">{review.comment}</p>
                       </div>
-                      <p className="text-gray-300">{review.comment}</p>
-                    </div>
-                  ))}
-                </div>
-              </div> */}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Sidebar */}
@@ -632,6 +780,16 @@ export default function CourseDetailPage() {
         </div>
       </div>
       <Footer />
+
+      {/* Review Modal */}
+      {course && (
+        <CourseReviewModal
+          open={reviewModalOpen}
+          onOpenChange={setReviewModalOpen}
+          courseId={course.id}
+          courseTitle={course.title}
+        />
+      )}
     </>
   )
 }

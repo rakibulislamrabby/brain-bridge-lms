@@ -6,7 +6,7 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useMe } from '@/hooks/use-me'
-import { User, Mail, Phone, MapPin, Calendar, Shield, Loader2 } from 'lucide-react'
+import { User, Mail, Phone, MapPin, Calendar, Shield, Loader2, Edit } from 'lucide-react'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -80,10 +80,22 @@ export default function ProfilePage() {
         {/* Profile Header Card */}
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-white pt-5">Profile Information</CardTitle>
-            <CardDescription className="text-gray-400">
-              Your account details and information
-            </CardDescription>
+            <div className="flex items-center justify-between pt-5">
+              <div>
+                <CardTitle className="text-white">Profile Information</CardTitle>
+                <CardDescription className="text-gray-400">
+                  Your account details and information
+                </CardDescription>
+              </div>
+              <Button
+                onClick={() => router.push('/dashboard/settings')}
+                variant="outline"
+                className="border-orange-600 text-orange-400 hover:bg-orange-900/30 cursor-pointer"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Profile
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Profile Picture and Basic Info */}
