@@ -61,6 +61,10 @@ export interface Teacher {
   base_pay: string;
   total_sessions: number;
   average_rating: number;
+  five_star_reviews?: number;
+  streak_good_sessions?: number;
+  rebook_count?: number;
+  cancelled_sessions?: number;
   created_at?: string;
   updated_at?: string;
   teacher_level?: TeacherLevel;
@@ -77,6 +81,8 @@ export interface UserProfile {
   address?: string | null;
   profile_picture?: string | null;
   is_active?: number;
+  points?: number;
+  referral_code?: string | null;
   google_access_token?: string | null;
   google_refresh_token?: string | null;
   google_token_expires_at?: string | null;

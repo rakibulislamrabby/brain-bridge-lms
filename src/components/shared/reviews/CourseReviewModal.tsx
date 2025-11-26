@@ -82,15 +82,21 @@ export default function CourseReviewModal({
     }
 
     try {
-      await reviewMutation.mutateAsync({
+      const response = await reviewMutation.mutateAsync({
         course_id: courseId,
         rating,
         comment: comment.trim(),
       })
 
+      // If we reach here, the API call was successful (HTTP 200, no error thrown)
+      // The data was saved to database successfully
+      // Always show success message - ignore server message if it says "already reviewed"
+      // because if status is 200, it means the operation was successful
+      
+      // Show success toast message with client-side success message
       addToast({
         type: 'success',
-        title: 'Review Submitted',
+        title: 'Review Submitted Successfully!',
         description: 'Thank you for your review! It has been submitted successfully.',
         duration: 3000,
       })
@@ -106,10 +112,14 @@ export default function CourseReviewModal({
         window.dispatchEvent(new CustomEvent('courseReviewSubmitted', { detail: { courseId } }))
       }
     } catch (error) {
+      // Handle errors - API returned error status or threw an error
       const errorMessage = error instanceof Error ? error.message : 'Failed to submit review. Please try again.'
+      const lowerErrorMessage = errorMessage.toLowerCase()
       
       // Handle "already reviewed" error specifically
-      if (errorMessage.toLowerCase().includes('already reviewed')) {
+      if (lowerErrorMessage.includes('already reviewed') ||
+          lowerErrorMessage.includes('already exists') ||
+          lowerErrorMessage.includes('duplicate')) {
         addToast({
           type: 'error',
           title: 'Already Reviewed',
@@ -123,6 +133,7 @@ export default function CourseReviewModal({
           window.dispatchEvent(new CustomEvent('courseAlreadyReviewed', { detail: { courseId } }))
         }
       } else {
+        // Other errors
         addToast({
           type: 'error',
           title: 'Submission Failed',
@@ -229,7 +240,7 @@ export default function CourseReviewModal({
             <Button
               type="submit"
               disabled={reviewMutation.isPending}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
             >
               {reviewMutation.isPending ? (
                 <>

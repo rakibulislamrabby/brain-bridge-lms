@@ -74,6 +74,8 @@ const submitCourseReview = async (data: CourseReviewRequest): Promise<CourseRevi
     throw new Error('Invalid response from server');
   }
 
+  // Only treat as error if response status is not OK (200-299)
+  // If status is 200-299, it's a success regardless of the message content
   if (!response.ok) {
     const errorObj = result as Record<string, unknown>;
     const errorMessage =
@@ -85,7 +87,10 @@ const submitCourseReview = async (data: CourseReviewRequest): Promise<CourseRevi
     throw new Error(typeof errorMessage === 'string' ? errorMessage : 'Failed to submit review');
   }
 
-  console.log('✅ Successfully submitted course review');
+  // Response is OK (200-299) - this is SUCCESS
+  // Even if the message says "already reviewed", if status is 200, the data was saved
+  // The client will show a success message regardless of the message content
+  console.log('✅ Successfully submitted course review (HTTP 200)');
   return result as CourseReviewResponse;
 };
 

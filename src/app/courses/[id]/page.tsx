@@ -130,21 +130,29 @@ export default function CourseDetailPage() {
   const [reviewedCourses, setReviewedCourses] = useState<Set<number>>(new Set())
   const [user, setUser] = useState<{ id: number; name: string; email: string; role?: string } | null>(null)
 
-  // Load reviewed courses from localStorage on mount
+  // Load user and user-specific reviewed courses from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('reviewed_courses')
-        if (stored) {
-          const parsed = JSON.parse(stored) as number[]
-          setReviewedCourses(new Set(parsed))
-        }
-      } catch (error) {
-        console.error('Failed to load reviewed courses:', error)
-      }
-      // Get user from localStorage
+      // Get user from localStorage first
       const storedUser = getStoredUser()
       setUser(storedUser)
+      
+      // Clear old state and load reviewed courses for the current user (user-specific)
+      // This ensures each user only sees their own review status
+      setReviewedCourses(new Set()) // Clear first
+      
+      if (storedUser?.id) {
+        try {
+          const storageKey = `reviewed_courses_${storedUser.id}`
+          const stored = localStorage.getItem(storageKey)
+          if (stored) {
+            const parsed = JSON.parse(stored) as number[]
+            setReviewedCourses(new Set(parsed))
+          }
+        } catch (error) {
+          console.error('Failed to load reviewed courses:', error)
+        }
+      }
     }
   }, [])
 
@@ -153,14 +161,15 @@ export default function CourseDetailPage() {
     const handleReviewSubmitted = (event: Event) => {
       const customEvent = event as CustomEvent<{ courseId: number }>
       const courseId = customEvent.detail?.courseId
-      if (courseId && courseId === Number(params?.id)) {
+      if (courseId && courseId === Number(params?.id) && user?.id) {
         setReviewedCourses(prev => {
           const newSet = new Set(prev)
           newSet.add(courseId)
-          // Save to localStorage
+          // Save to user-specific localStorage
           if (typeof window !== 'undefined') {
             try {
-              localStorage.setItem('reviewed_courses', JSON.stringify(Array.from(newSet)))
+              const storageKey = `reviewed_courses_${user.id}`
+              localStorage.setItem(storageKey, JSON.stringify(Array.from(newSet)))
             } catch (error) {
               console.error('Failed to save reviewed courses:', error)
             }
@@ -175,13 +184,15 @@ export default function CourseDetailPage() {
     const handleAlreadyReviewed = (event: Event) => {
       const customEvent = event as CustomEvent<{ courseId: number }>
       const courseId = customEvent.detail?.courseId
-      if (courseId && courseId === Number(params?.id)) {
+      if (courseId && courseId === Number(params?.id) && user?.id) {
         setReviewedCourses(prev => {
           const newSet = new Set(prev)
           newSet.add(courseId)
+          // Save to user-specific localStorage
           if (typeof window !== 'undefined') {
             try {
-              localStorage.setItem('reviewed_courses', JSON.stringify(Array.from(newSet)))
+              const storageKey = `reviewed_courses_${user.id}`
+              localStorage.setItem(storageKey, JSON.stringify(Array.from(newSet)))
             } catch (error) {
               console.error('Failed to save reviewed courses:', error)
             }
@@ -198,7 +209,7 @@ export default function CourseDetailPage() {
       window.removeEventListener('courseReviewSubmitted', handleReviewSubmitted)
       window.removeEventListener('courseAlreadyReviewed', handleAlreadyReviewed)
     }
-  }, [params?.id])
+  }, [params?.id, user?.id, refetchCourse])
 
   // Check if current user has enrolled and paid for this course
   const isEnrolledAndPaid = useMemo(() => {
@@ -286,32 +297,42 @@ export default function CourseDetailPage() {
   const reviews = course?.reviews || []
   
   // Check if current user has already reviewed this course
+  // This checks if the current logged-in user has submitted a review for this course
+  // Each student can only review once - we check by comparing reviewer_id with current user's id
   const hasUserReviewed = useMemo(() => {
     if (!user || !course || !reviews.length) return false
     // Check if any review has the current user's ID as reviewer_id
+    // This ensures each student can only have one review, but different students can all review
     return reviews.some((review) => review.reviewer_id === user.id)
   }, [user, reviews, course])
   
-  // Sync localStorage when we detect a review from API
+  // Sync user-specific localStorage when we detect a review from API
   useEffect(() => {
-    if (hasUserReviewed && course && !reviewedCourses.has(course.id) && typeof window !== 'undefined') {
+    if (hasUserReviewed && course && user?.id && !reviewedCourses.has(course.id) && typeof window !== 'undefined') {
       setReviewedCourses(prev => {
         const newSet = new Set(prev)
         newSet.add(course.id)
         try {
-          localStorage.setItem('reviewed_courses', JSON.stringify(Array.from(newSet)))
+          // Store per user to avoid cross-user contamination
+          const storageKey = `reviewed_courses_${user.id}`
+          localStorage.setItem(storageKey, JSON.stringify(Array.from(newSet)))
         } catch (error) {
           console.error('Failed to save reviewed courses:', error)
         }
         return newSet
       })
     }
-  }, [hasUserReviewed, course, reviewedCourses])
+  }, [hasUserReviewed, course, reviewedCourses, user?.id])
   
-  // Also check localStorage as a fallback
-  const isReviewedFromStorage = course ? reviewedCourses.has(course.id) : false
+  // Check localStorage for immediate UI update before API refetch (user-specific, temporary)
+  // The API check (hasUserReviewed) is the source of truth and will override localStorage
+  const isReviewedFromStorage = course && user?.id ? reviewedCourses.has(course.id) : false
   
-  // User has reviewed if they have a review in the API or in localStorage
+  // User has reviewed if they have a review in the API (PRIMARY SOURCE OF TRUTH)
+  // localStorage is only used for immediate optimistic update before refetch
+  // IMPORTANT: Each student's review status is completely independent
+  // - One student (zesan) reviewing does NOT prevent another student (rabby) from reviewing
+  // - The check is based on reviewer_id === current_user.id, which is user-specific
   const isReviewed = hasUserReviewed || isReviewedFromStorage
 
   const formatReviewDate = (dateString: string) => {
@@ -618,7 +639,7 @@ export default function CourseDetailPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => setReviewModalOpen(true)}
-                        className="border-purple-600 text-purple-400 hover:bg-purple-900/30"
+                        className="border-purple-600 text-purple-400 hover:bg-purple-900/30 cursor-pointer"
                       >
                         <Star className="h-4 w-4 mr-2" />
                         Write a Review

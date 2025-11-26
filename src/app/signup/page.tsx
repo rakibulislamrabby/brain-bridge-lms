@@ -43,7 +43,8 @@ export default function SignUp() {
     email: "",
     password: "",
     confirmPassword: "",
-    title: "" // For master/teacher
+    title: "", // For master/teacher
+    referral_code: "" // For student registration
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -131,10 +132,14 @@ export default function SignUp() {
         });
       } else {
         // Register as student - only send required fields with actual values
-        const studentData = {
+        const studentData: any = {
           name: formData.name.trim(),
           email: formData.email.trim(),
           password: formData.password
+        }
+        // Add referral_code if provided
+        if (formData.referral_code && formData.referral_code.trim()) {
+          studentData.referral_code = formData.referral_code.trim()
         }
         console.log('Sending student data:', studentData)
         result = await registerStudentMutation.mutateAsync(studentData)
@@ -191,7 +196,7 @@ export default function SignUp() {
                   type="button"
                   onClick={() => {
                     setActiveTab('student')
-                    setFormData({ name: "", email: "", password: "", confirmPassword: "", title: "" })
+                    setFormData({ name: "", email: "", password: "", confirmPassword: "", title: "", referral_code: "" })
                     setErrors({})
                   }}
                   className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
@@ -209,7 +214,7 @@ export default function SignUp() {
                   type="button"
                   onClick={() => {
                     setActiveTab('master')
-                    setFormData({ name: "", email: "", password: "", confirmPassword: "", title: "" })
+                    setFormData({ name: "", email: "", password: "", confirmPassword: "", title: "", referral_code: "" })
                     setErrors({})
                   }}
                   className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
@@ -312,7 +317,26 @@ export default function SignUp() {
                   )}
                 </div>
 
-                
+                {/* Referral Code field - only for student registration */}
+                {activeTab === 'student' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="referral_code" className="text-gray-300">
+                      Referral Code <span className="text-gray-500 text-xs">(Optional)</span>
+                    </Label>
+                    <Input
+                      id="referral_code"
+                      name="referral_code"
+                      type="text"
+                      placeholder="Enter referral code if you have one"
+                      value={formData.referral_code}
+                      onChange={handleInputChange}
+                      className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.referral_code ? "border-red-500" : ""}`}
+                    />
+                    {errors.referral_code && (
+                      <p className="text-sm text-red-500">{errors.referral_code}</p>
+                    )}
+                  </div>
+                )}
 
                 <Button 
                   type="submit" 

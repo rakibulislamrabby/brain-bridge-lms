@@ -367,7 +367,7 @@ export default function EnrolledCoursesPage() {
                                   View Course
                                 </Button>
                               </Link>
-                              {enrollment.payment_status?.toLowerCase() === 'paid' && (
+                              {/* {enrollment.payment_status?.toLowerCase() === 'paid' && (
                                 reviewedCourses.has(course.id) ? (
                                   <Badge className="bg-green-600/80 text-white flex items-center gap-1">
                                     <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
@@ -388,7 +388,7 @@ export default function EnrolledCoursesPage() {
                                     Review
                                   </Button>
                                 )
-                              )}
+                              )} */}
                             </div>
                           </td>
                         </tr>
