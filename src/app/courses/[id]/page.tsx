@@ -660,14 +660,14 @@ export default function CourseDetailPage() {
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {reviews.map((review) => (
+                  {reviews.map((review) => (
                       <div key={review.id} className="border-b border-gray-600 pb-6 last:border-b-0 last:pb-0">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
                               {review.reviewer?.name?.charAt(0).toUpperCase() || 'U'}
                             </div>
-                            <div>
+                          <div>
                               <p className="font-semibold text-white">{review.reviewer?.name || 'Anonymous'}</p>
                               <div className="flex items-center gap-1 mt-1">
                                 {[...Array(5)].map((_, i) => (
@@ -679,16 +679,16 @@ export default function CourseDetailPage() {
                                         : 'text-gray-600 fill-gray-600'
                                     }`}
                                   />
-                                ))}
-                              </div>
+                              ))}
                             </div>
                           </div>
-                          <span className="text-sm text-gray-400">{formatReviewDate(review.created_at)}</span>
                         </div>
-                        <p className="text-gray-300 leading-relaxed">{review.comment}</p>
+                          <span className="text-sm text-gray-400">{formatReviewDate(review.created_at)}</span>
                       </div>
-                    ))}
-                  </div>
+                        <p className="text-gray-300 leading-relaxed">{review.comment}</p>
+                    </div>
+                  ))}
+                </div>
                 )}
               </div>
             </div>

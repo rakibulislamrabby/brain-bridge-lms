@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { useMe } from '@/hooks/use-me'
 import { useToast } from '@/components/ui/toast'
-import { User, Mail, Phone, MapPin, Calendar, Shield, Loader2, Edit, Copy, Check, Gift, Award } from 'lucide-react'
+import { User, Mail, Phone, MapPin, Calendar, Shield, Loader2, Edit, Copy, Check, Gift, Award, Star } from 'lucide-react'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -413,6 +413,42 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </div>
+                
+                {/* Teacher Skills */}
+                {user.teacher.skills && user.teacher.skills.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                      <Star className="h-5 w-5 text-orange-400" />
+                      Skills & Expertise
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {user.teacher.skills.map((skill) => {
+                        const yearsOfExperience = skill.pivot?.years_of_experience || 0
+                        return (
+                          <div
+                            key={skill.id}
+                            className="bg-gradient-to-r from-orange-500/10 to-purple-500/10 border border-orange-500/20 rounded-lg p-4 hover:border-orange-500/40 transition-colors"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className="text-white font-semibold text-base">{skill.name}</h4>
+                              </div>
+                              <div className="text-right ml-4">
+                                <div className="flex items-center gap-1 text-orange-400">
+                                  <Star className="h-4 w-4 fill-current" />
+                                  <span className="text-sm font-medium">{yearsOfExperience}</span>
+                                </div>
+                                <p className="text-gray-400 text-xs mt-1">
+                                  {yearsOfExperience === 1 ? 'year' : 'years'} of experience
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

@@ -93,9 +93,22 @@ export default function SettingsPage() {
   }
 
   const handleSkillChange = (index: number, field: 'skill_id' | 'years_of_experience', value: string | number) => {
-    setUserSkills(prev => prev.map((skill, i) => 
-      i === index ? { ...skill, [field]: field === 'skill_id' ? Number(value) : Number(value) } : skill
-    ))
+    setUserSkills(prev => prev.map((skill, i) => {
+      if (i !== index) return skill
+      
+      if (field === 'skill_id') {
+        return { ...skill, [field]: Number(value) }
+      } else {
+        // For years_of_experience, allow empty string but convert to 0 for storage
+        // Handle decimal values like 0.4 (4 months), 1.5 (1.5 years), etc.
+        if (value === '' || value === null || value === undefined) {
+          return { ...skill, [field]: 0 }
+        }
+        // Use parseFloat to properly handle decimal values
+        const numValue = parseFloat(String(value))
+        return { ...skill, [field]: isNaN(numValue) ? 0 : numValue }
+      }
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -315,7 +328,7 @@ export default function SettingsPage() {
                         variant="outline"
                         size="sm"
                         onClick={handleAddSkill}
-                        className="border-purple-600 text-purple-400 hover:bg-purple-900/30"
+                        className="border-purple-600 text-purple-400 hover:bg-purple-900/30 cursor-pointer"
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Skill
@@ -347,11 +360,11 @@ export default function SettingsPage() {
                           <Label className="text-white text-sm">Years of Experience</Label>
                           <Input
                             type="number"
-                            min="0"
+                            step="0.01"
                             value={skill.years_of_experience}
                             onChange={(e) => handleSkillChange(index, 'years_of_experience', e.target.value)}
                             className="bg-gray-800 border-gray-600 text-white"
-                            placeholder="5"
+                            placeholder="0.5 or 1" 
                           />
                         </div>
                         <Button

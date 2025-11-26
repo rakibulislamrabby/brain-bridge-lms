@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Home, User, LogOut, Settings, ChevronDown } from 'lucide-react'
+import { Home, User, LogOut, Settings, ChevronDown, Award, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { UserProfile } from '@/hooks/use-me'
+import { useTeacherLevelProgress } from '@/hooks/teacher/use-teacher-level-progress'
 
 interface DashboardHeaderProps {
   user?: UserProfile | null
@@ -15,6 +16,12 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const router = useRouter()
 
+  const isTeacher = useMemo(() => {
+    return user?.roles?.some(role => role.name === 'teacher') || false
+  }, [user])
+  
+  const { data: levelProgress } = useTeacherLevelProgress(isTeacher)
+  console.log("levelProgress",levelProgress)
   const handleLogout = () => {
     // Clear user data from localStorage
     localStorage.removeItem('user')
@@ -39,6 +46,38 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
           <Home className="h-5 w-5" />
           <span className="font-medium">Home</span>
         </Link>
+
+        {/* Teacher Level Progress - Center */}
+        {isTeacher && levelProgress && (
+          <div className="flex items-center gap-4 px-4 py-2 bg-gray-700/50 rounded-lg border border-gray-600">
+            <div className="flex items-center gap-2">
+              <Award className="h-4 w-4 text-orange-400" />
+              <div className="text-left">
+                <p className="text-xs text-gray-400">Level Progress</p>
+                <p className="text-sm font-semibold text-white">
+                  {levelProgress.current_level.name} → {levelProgress.next_level?.name || 'Max Level'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-green-400" />
+              <div className="text-left">
+                <p className="text-xs text-gray-400">Progress</p>
+                <p className="text-sm font-bold text-green-400">
+                  {levelProgress.progress_percent.toFixed(0)}%
+                </p>
+              </div>
+            </div>
+            {!levelProgress.is_max_level && levelProgress.next_level && (
+              <div className="w-32 bg-gray-600 rounded-full h-2 overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-500"
+                  style={{ width: `${Math.min(100, levelProgress.progress_percent)}%` }}
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Profile Section */}
         <div className="relative">

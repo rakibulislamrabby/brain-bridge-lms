@@ -52,6 +52,21 @@ export interface TeacherLevel {
   updated_at?: string;
 }
 
+export interface TeacherSkill {
+  id: number;
+  name: string;
+  subject_id: number;
+  created_at?: string;
+  updated_at?: string;
+  pivot?: {
+    teacher_id: number;
+    skill_id: number;
+    years_of_experience: number;
+    created_at?: string;
+    updated_at?: string;
+  };
+}
+
 export interface Teacher {
   id: number;
   user_id: number;
@@ -68,6 +83,7 @@ export interface Teacher {
   created_at?: string;
   updated_at?: string;
   teacher_level?: TeacherLevel;
+  skills?: TeacherSkill[];
 }
 
 export interface UserProfile {
