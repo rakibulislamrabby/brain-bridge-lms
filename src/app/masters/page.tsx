@@ -8,9 +8,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { useTeachers } from '@/hooks/teacher/use-teachers'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { useTeachers, Teacher } from '@/hooks/teacher/use-teachers'
 import { useSkills } from '@/hooks/skills/use-skills'
-import { ArrowLeft, Star, Users, Award, Loader2, Search } from 'lucide-react'
+import { ArrowLeft, Star, Users, Award, Loader2, Search, Mail, Phone, MapPin, Info, ExternalLink, DollarSign } from 'lucide-react'
 import Image from 'next/image'
 
 function MastersPageContent() {
@@ -19,6 +20,8 @@ function MastersPageContent() {
   
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+  const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   
   // Debounce search input
   useEffect(() => {
@@ -115,6 +118,16 @@ function MastersPageContent() {
 
   const handleViewProfile = (userId: number) => {
     router.push(`/dashboard/profile?user_id=${userId}`)
+  }
+
+  const handleViewDetails = (teacher: Teacher) => {
+    setSelectedTeacher(teacher)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedTeacher(null)
   }
 
   return (
@@ -351,7 +364,15 @@ function MastersPageContent() {
                         </div>
                       )}
 
-                      
+                      <div className="pt-4 border-t border-gray-700">
+                        <Button
+                          onClick={() => handleViewDetails(teacher)}
+                          className="w-full bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
+                        >
+                          <Info className="w-4 h-4 mr-2" />
+                          View Details
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 )
@@ -361,6 +382,196 @@ function MastersPageContent() {
         </div>
       </main>
       <Footer />
+
+      {/* Master Details Modal */}
+      <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
+        <DialogContent 
+          className="!w-[80vw] !max-w-[80vw] max-h-[90vh] overflow-y-auto bg-gray-800 border-gray-700 p-8"
+          style={{ 
+            width: '80vw', 
+            maxWidth: '80vw',
+            minWidth: '80vw'
+          }}
+        >
+          {selectedTeacher && selectedTeacher.teacher && (
+            <>
+              <DialogHeader>
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="h-20 w-20 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {selectedTeacher.profile_picture ? (
+                      <Image
+                        src={selectedTeacher.profile_picture}
+                        alt={selectedTeacher.name}
+                        width={80}
+                        height={80}
+                        className="h-20 w-20 rounded-full object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <span className="text-white font-bold text-2xl">
+                        {selectedTeacher.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <DialogTitle className="text-2xl font-bold text-white mb-2">
+                      {selectedTeacher.name}
+                    </DialogTitle>
+                    <p className="text-lg text-gray-300 mb-2">
+                      {selectedTeacher.teacher.title}
+                    </p>
+                    {selectedTeacher.teacher.teacher_level && (
+                      <Badge className="bg-orange-500/20 text-orange-300 border border-orange-500/30">
+                        <Award className="w-3 h-3 mr-1" />
+                        {selectedTeacher.teacher.teacher_level.level_name}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </DialogHeader>
+
+              <div className="space-y-6">
+                {/* Bio */}
+                {selectedTeacher.bio && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
+                      <Info className="w-4 h-4" />
+                      About
+                    </h3>
+                    <p className="text-gray-300 leading-relaxed">{selectedTeacher.bio}</p>
+                  </div>
+                )}
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600/50">
+                    <div className="flex items-center gap-2 text-gray-400 mb-1">
+                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                      <span className="text-xs">Rating</span>
+                    </div>
+                    <p className="text-xl font-bold text-white">
+                      {(selectedTeacher.teacher.average_rating || 0).toFixed(1)}
+                    </p>
+                  </div>
+                  <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600/50">
+                    <div className="flex items-center gap-2 text-gray-400 mb-1">
+                      <Users className="w-4 h-4 text-blue-400" />
+                      <span className="text-xs">Sessions</span>
+                    </div>
+                    <p className="text-xl font-bold text-white">
+                      {selectedTeacher.teacher.total_sessions || 0}
+                    </p>
+                  </div>
+                  <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600/50">
+                    <div className="flex items-center gap-2 text-gray-400 mb-1">
+                      <DollarSign className="w-4 h-4 text-green-400" />
+                      <span className="text-xs">Base Pay</span>
+                    </div>
+                    <p className="text-xl font-bold text-green-400">
+                      ${parseFloat(selectedTeacher.teacher.base_pay || '0').toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600/50">
+                    <div className="flex items-center gap-2 text-gray-400 mb-1">
+                      <Award className="w-4 h-4 text-purple-400" />
+                      <span className="text-xs">Level</span>
+                    </div>
+                    <p className="text-xl font-bold text-white">
+                      {selectedTeacher.teacher.teacher_level?.level_name || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Contact Information */}
+                <div className="border-t border-gray-700 pt-4">
+                  <h3 className="text-sm font-semibold text-gray-400 mb-3">Contact Information</h3>
+                  <div className="space-y-2">
+                    {selectedTeacher.email && (
+                      <div className="flex items-center gap-3 text-gray-300">
+                        <Mail className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm">{selectedTeacher.email}</span>
+                      </div>
+                    )}
+                    {selectedTeacher.phone && (
+                      <div className="flex items-center gap-3 text-gray-300">
+                        <Phone className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm">{selectedTeacher.phone}</span>
+                      </div>
+                    )}
+                    {selectedTeacher.address && (
+                      <div className="flex items-center gap-3 text-gray-300">
+                        <MapPin className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm">{selectedTeacher.address}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Skills */}
+                {selectedTeacher.teacher.skills && selectedTeacher.teacher.skills.length > 0 && (
+                  <div className="border-t border-gray-700 pt-4">
+                    <h3 className="text-sm font-semibold text-gray-400 mb-3">Skills & Expertise</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {selectedTeacher.teacher.skills.map((skill) => {
+                        const yearsOfExperience = skill.pivot?.years_of_experience || 0
+                        return (
+                          <div
+                            key={skill.id}
+                            className="bg-gradient-to-r from-purple-500/10 to-orange-500/10 border border-purple-500/20 rounded-lg p-3 hover:border-purple-500/40 transition-colors"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className="text-white font-semibold text-sm mb-1">{skill.name}</h4>
+                              </div>
+                              <div className="text-right">
+                                <div className="flex items-center gap-1 text-purple-400">
+                                  <Star className="h-3 w-3 fill-current" />
+                                  <span className="text-xs font-medium">{yearsOfExperience}</span>
+                                </div>
+                                <p className="text-gray-400 text-xs mt-0.5">
+                                  {yearsOfExperience === 1 ? 'year' : 'years'} of experience
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Introduction Video */}
+                {selectedTeacher.teacher.introduction_video && (
+                  <div className="border-t border-gray-700 pt-4">
+                    <h3 className="text-sm font-semibold text-gray-400 mb-3">Introduction Video</h3>
+                    <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600/50">
+                      <a
+                        href={selectedTeacher.teacher.introduction_video}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        <span className="text-sm">Watch Introduction Video</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* Level Benefits */}
+                {selectedTeacher.teacher.teacher_level?.benefits && (
+                  <div className="border-t border-gray-700 pt-4">
+                    <h3 className="text-sm font-semibold text-gray-400 mb-2">Level Benefits</h3>
+                    <Badge className="bg-orange-500/20 text-orange-300 border border-orange-500/30">
+                      {selectedTeacher.teacher.teacher_level.benefits}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
