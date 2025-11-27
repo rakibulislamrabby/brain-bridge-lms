@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useMemo } from 'react'
+import { useMemo, Suspense } from 'react'
 import { AppHeader } from '@/components/app-header'
 import Footer from '@/components/shared/Footer'
 import { Card, CardContent } from '@/components/ui/card'
@@ -12,7 +12,7 @@ import { useSkills } from '@/hooks/skills/use-skills'
 import { ArrowLeft, Star, Users, Award, Loader2 } from 'lucide-react'
 import Image from 'next/image'
 
-export default function MastersPage() {
+function MastersPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   
@@ -31,25 +31,43 @@ export default function MastersPage() {
     return skills.find(skill => skill.id === skillId)
   }, [skillId, skills])
 
-  // Filter teachers by skill - match teachers who have the selected skill
+  // Filter teachers by skill - match teachers who have the selected skill by NAME
   const teachers = useMemo(() => {
-    if (!skillId || !allTeachers.length) return []
+    // If no skillId is selected or no selected skill found, return empty array (will show allTeachers instead)
+    if (!skillId || !selectedSkill || !allTeachers.length) {
+      return []
+    }
     
-    return allTeachers.filter((teacher) => {
-      // Check if teacher has teacher object with skills array
-      if (!teacher.teacher || !teacher.teacher.skills || !Array.isArray(teacher.teacher.skills) || teacher.teacher.skills.length === 0) {
+    const selectedSkillName = selectedSkill.name.trim().toLowerCase()
+    
+    const filtered = allTeachers.filter((teacher) => {
+      // Check if teacher has teacher object
+      if (!teacher?.teacher) {
         return false
       }
       
-      // Check if any skill matches the selected skill ID
-      // Match by skill.id === skillId
-      const hasMatchingSkill = teacher.teacher.skills.some(skill => {
-        return skill.id === skillId
+      const teacherData = teacher.teacher
+      
+      // Check if teacher has skills array
+      if (!teacherData.skills || !Array.isArray(teacherData.skills) || teacherData.skills.length === 0) {
+        return false
+      }
+      
+      // Check if any skill matches the selected skill by NAME (case-insensitive)
+      const hasMatchingSkill = teacherData.skills.some(skill => {
+        if (!skill || !skill.name) {
+          return false
+        }
+        
+        const teacherSkillName = skill.name.trim().toLowerCase()
+        return teacherSkillName === selectedSkillName
       })
       
       return hasMatchingSkill
     })
-  }, [allTeachers, skillId])
+    
+    return filtered
+  }, [allTeachers, skillId, selectedSkill])
 
   const handleViewProfile = (userId: number) => {
     router.push(`/dashboard/profile?user_id=${userId}`)
@@ -112,14 +130,14 @@ export default function MastersPage() {
                 </Button>
               </CardContent>
             </Card>
-          ) : (skillId ? teachers.length === 0 : allTeachers.length === 0) ? (
+          ) : (skillId && teachers.length === 0) || (!skillId && allTeachers.length === 0) ? (
             <Card className="bg-gray-800/80 border border-gray-700 text-center">
               <CardContent className="py-16 space-y-3">
                 <Users className="h-12 w-12 text-gray-400 mx-auto" />
                 <h3 className="text-xl font-semibold text-white">No masters found</h3>
                 <p className="text-gray-400">
                   {skillId 
-                    ? 'There are no masters available for this skill yet. Check back later!'
+                    ? `There are no masters available for this skill yet. Check back later!`
                     : 'There are no masters available yet.'}
                 </p>
                 <Button onClick={() => router.back()} className="bg-purple-600 hover:bg-purple-700 text-white">
@@ -236,6 +254,26 @@ export default function MastersPage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function MastersPage() {
+  return (
+    <Suspense fallback={
+      <div>
+        <AppHeader />
+        <main className="bg-gray-900 min-h-screen py-14">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="h-12 w-12 text-purple-500 animate-spin" />
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <MastersPageContent />
+    </Suspense>
   )
 }
 

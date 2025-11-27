@@ -329,7 +329,7 @@ export default function ProfilePage() {
                           {!nextLevelData && (
                             <div className="mt-4 p-3 bg-gradient-to-r from-purple-500/20 to-purple-700/20 border border-purple-500/30 rounded-lg">
                               <p className="text-purple-300 text-sm font-medium text-center">
-                                🏆 You've reached the highest level! Keep up the excellent work!
+                                🏆 You&apos;ve reached the highest level! Keep up the excellent work!
                               </p>
                             </div>
                           )}

@@ -71,7 +71,11 @@ export interface Teacher {
 interface TeachersResponse {
   success?: boolean
   teachers?: Teacher[]
-  data?: Teacher[]
+  data?: Teacher[] | {
+    current_page?: number
+    data?: Teacher[]
+    [key: string]: unknown
+  }
   [key: string]: unknown
 }
 
@@ -100,16 +104,34 @@ const fetchAllTeachers = async (): Promise<Teacher[]> => {
     const responseData = result as TeachersResponse
     
     // Handle different response formats
+    // Case 1: Paginated response: { success: true, data: { current_page: 1, data: [...] } }
+    if (responseData.success && responseData.data && typeof responseData.data === 'object' && !Array.isArray(responseData.data)) {
+      const paginatedData = responseData.data as { data?: Teacher[]; [key: string]: unknown }
+      if (paginatedData.data && Array.isArray(paginatedData.data)) {
+        console.log('✅ Parsed paginated teachers response:', paginatedData.data.length, 'teachers')
+        return paginatedData.data as Teacher[]
+      }
+    }
+    
+    // Case 2: Direct array response: { success: true, data: [...] }
     if (responseData.success && responseData.data && Array.isArray(responseData.data)) {
-      return responseData.data as Teacher[]
-    } else if (Array.isArray(result)) {
-      return result as Teacher[]
-    } else if (responseData.teachers && Array.isArray(responseData.teachers)) {
-      return responseData.teachers
-    } else if (responseData.data && Array.isArray(responseData.data)) {
+      console.log('✅ Parsed direct teachers array:', responseData.data.length, 'teachers')
       return responseData.data as Teacher[]
     }
+    
+    // Case 3: Simple array response: [...]
+    if (Array.isArray(result)) {
+      console.log('✅ Parsed simple array response:', result.length, 'teachers')
+      return result as Teacher[]
+    }
+    
+    // Case 4: Teachers property: { teachers: [...] }
+    if (responseData.teachers && Array.isArray(responseData.teachers)) {
+      console.log('✅ Parsed teachers property:', responseData.teachers.length, 'teachers')
+      return responseData.teachers
+    }
 
+    console.warn('⚠️ Could not parse teachers response:', result)
     return []
   } catch (error) {
     if (error instanceof Error) {

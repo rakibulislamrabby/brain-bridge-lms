@@ -79,7 +79,7 @@ export default function RandomSkill() {
                 onChange={handleSkillChange}
                 disabled={isLoading || normalizedSkills.length === 0}
                 className="w-full pl-12 pr-4 py-5 bg-gray-800 border-2 border-gray-700 rounded-2xl text-white text-lg font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed appearance-none"
-              >
+            >
                 <option value="">
                   {isLoading ? 'Loading skills...' : normalizedSkills.length === 0 ? 'No skills available' : 'Select a skill to discover'}
                 </option>

@@ -59,7 +59,7 @@ export default function StudentDashboardOverview() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-white">Student Dashboard</h1>
-        <p className="text-gray-400 mt-2">Welcome back! Here's your learning overview</p>
+        <p className="text-gray-400 mt-2">Welcome back! Here&apos;s your learning overview</p>
       </div>
 
       {/* Stats Grid */}

@@ -293,7 +293,7 @@ export default function SettingsPage() {
                       />
                     </div>
 
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <Label htmlFor="base_pay" className="text-white">Base Pay</Label>
                       <Input
                         id="base_pay"
@@ -304,7 +304,7 @@ export default function SettingsPage() {
                         className="bg-gray-700 border-gray-600 text-white"
                         placeholder="50.5"
                       />
-                    </div>
+                    </div> */}
                   </div>
 
                   <div className="space-y-2">
@@ -336,7 +336,7 @@ export default function SettingsPage() {
                     </div>
 
                     {userSkills.length === 0 && (
-                      <p className="text-sm text-gray-400">No skills added. Click "Add Skill" to add one.</p>
+                      <p className="text-sm text-gray-400">No skills added. Click &quot;Add Skill&quot; to add one.</p>
                     )}
 
                     {userSkills.map((skill, index) => (
