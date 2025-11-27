@@ -56,12 +56,10 @@ export interface Teacher {
   phone?: string | null
   profile_picture?: string | null
   bio?: string | null
-  address?: string | null
   teacher?: {
     id: number
     user_id: number
     title: string
-    introduction_video?: string | null
     base_pay: string
     total_sessions: number
     average_rating: number

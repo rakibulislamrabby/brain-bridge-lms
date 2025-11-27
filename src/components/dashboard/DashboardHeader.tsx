@@ -3,10 +3,13 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Home, User, LogOut, Settings, ChevronDown, Award, TrendingUp } from 'lucide-react'
+import { Home, User, LogOut, Settings, ChevronDown, Award, TrendingUp, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { UserProfile } from '@/hooks/use-me'
 import { useTeacherLevelProgress } from '@/hooks/teacher/use-teacher-level-progress'
+import { useLatestNotification } from '@/hooks/notifications/use-latest-notification'
+import { useNotifications } from '@/hooks/notifications/use-notifications'
+import NotificationDropdown from './NotificationDropdown'
 
 interface DashboardHeaderProps {
   user?: UserProfile | null
@@ -14,6 +17,7 @@ interface DashboardHeaderProps {
 
 export default function DashboardHeader({ user }: DashboardHeaderProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const router = useRouter()
 
   const isTeacher = useMemo(() => {
@@ -21,7 +25,27 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
   }, [user])
   
   const { data: levelProgress } = useTeacherLevelProgress(isTeacher)
-  console.log("levelProgress",levelProgress)
+  const { data: latestNotificationData } = useLatestNotification(isTeacher)
+  // Fetch first page to get unread count - only for teachers
+  const { data: notificationsData } = useNotifications(1, isTeacher)
+  
+  // Calculate unread count from first page of notifications
+  const unreadCount = useMemo(() => {
+    if (!notificationsData?.notifications?.data) {
+      // Fallback: check if latest notification is unread
+      if (latestNotificationData?.notification && !latestNotificationData.notification.read_at) {
+        return 1
+      }
+      return 0
+    }
+    // Get unread count from first page (up to per_page limit)
+    const unread = notificationsData.notifications.data.filter(n => !n.read_at).length
+    // If all items on first page are unread and there are more pages, show "+" indicator
+    if (unread === notificationsData.notifications.per_page && notificationsData.notifications.current_page < notificationsData.notifications.last_page) {
+      return unread
+    }
+    return unread
+  }, [notificationsData, latestNotificationData])
   const handleLogout = () => {
     // Clear user data from localStorage
     localStorage.removeItem('user')
@@ -79,10 +103,42 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
           </div>
         )}
 
-        {/* Profile Section */}
-        <div className="relative">
+        {/* Right Section: Notifications & Profile */}
+        <div className="flex items-center gap-3">
+          {/* Notification Icon - Only for teachers */}
+          {user && isTeacher && (
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setIsNotificationOpen(!isNotificationOpen)
+                  setIsProfileOpen(false)
+                }}
+                className="relative p-2 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer"
+              >
+                <Bell className="h-5 w-5 text-gray-300 hover:text-orange-400 transition-colors" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-orange-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-gray-800">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+              
+              {/* Notification Dropdown */}
+              <NotificationDropdown
+                isOpen={isNotificationOpen}
+                onClose={() => setIsNotificationOpen(false)}
+                unreadCount={unreadCount}
+              />
+            </div>
+          )}
+
+          {/* Profile Section */}
+          <div className="relative">
           <button
-            onClick={() => setIsProfileOpen(!isProfileOpen)}
+            onClick={() => {
+              setIsProfileOpen(!isProfileOpen)
+              setIsNotificationOpen(false)
+            }}
             className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer"
           >
             {/* Profile Avatar */}
@@ -149,6 +205,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
               </div>
             </div>
           )}
+          </div>
         </div>
       </div>
     </header>

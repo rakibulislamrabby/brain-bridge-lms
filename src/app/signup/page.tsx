@@ -153,14 +153,17 @@ export default function SignUp() {
       
       console.log('Registration completed successfully:', result);
       
+      // Determine redirect path based on role (we know it from activeTab)
+      const redirectPath = activeTab === 'student' ? '/courses' : '/dashboard'
+      
       // Redirect after showing toast
       setTimeout(() => {
         if (result?.access_token) {
-          window.location.href = '/'
+          router.push(redirectPath)
         } else {
           router.push('/signin')
         }
-      }, 2000);
+      }, 1000);
       
     } catch (error) {
       console.error("Sign up error:", error)

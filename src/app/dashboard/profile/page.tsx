@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { useMe } from '@/hooks/use-me'
 import { useToast } from '@/components/ui/toast'
+import { useTeacherLevelProgress } from '@/hooks/teacher/use-teacher-level-progress'
 import { User, Mail, Phone, MapPin, Calendar, Shield, Loader2, Edit, Copy, Check, Gift, Award, Star } from 'lucide-react'
 
 export default function ProfilePage() {
@@ -15,6 +16,12 @@ export default function ProfilePage() {
   const { data: user, isLoading, error } = useMe()
   const { addToast } = useToast()
   const [copied, setCopied] = useState(false)
+  
+  const isTeacher = useMemo(() => {
+    return user?.roles?.some(role => role.name === 'teacher') || false
+  }, [user])
+  
+  const { data: levelProgress, isLoading: isLoadingLevelProgress } = useTeacherLevelProgress(isTeacher)
 
   if (isLoading) {
     return (
@@ -258,40 +265,39 @@ export default function ProfilePage() {
                     <Award className="h-5 w-5 text-orange-400" />
                     Teacher Level Progress
                   </h3>
-                  {(() => {
-                    const currentLevel = user.teacher?.teacher_level
+                  {isLoadingLevelProgress ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-8 w-8 text-orange-600 animate-spin" />
+                    </div>
+                  ) : levelProgress ? (() => {
                     const currentRating = parseFloat(user.teacher?.average_rating?.toString() || '0')
-                    const levels = [
-                      { name: 'Bronze', minRating: 0, benefits: 'Base Pay', color: 'from-amber-600 to-amber-800', bgColor: 'bg-amber-500/20', borderColor: 'border-amber-500/30' },
-                      { name: 'Silver', minRating: 4.3, benefits: '+10% Pay', color: 'from-gray-400 to-gray-600', bgColor: 'bg-gray-400/20', borderColor: 'border-gray-400/30' },
-                      { name: 'Gold', minRating: 4.5, benefits: '+20% Pay', color: 'from-yellow-400 to-yellow-600', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400/30' },
-                      { name: 'Platinum', minRating: 4.6, benefits: '+35% Pay', color: 'from-cyan-400 to-cyan-600', bgColor: 'bg-cyan-400/20', borderColor: 'border-cyan-400/30' },
-                      { name: 'Master', minRating: 4.7, benefits: 'Custom Pay', color: 'from-purple-500 to-purple-700', bgColor: 'bg-purple-500/20', borderColor: 'border-purple-500/30' },
-                    ]
                     
-                    const currentLevelIndex = levels.findIndex(l => l.name === currentLevel?.level_name) >= 0 
-                      ? levels.findIndex(l => l.name === currentLevel?.level_name)
-                      : 0
-                    const currentLevelData = levels[currentLevelIndex]
-                    const nextLevelData = currentLevelIndex < levels.length - 1 ? levels[currentLevelIndex + 1] : null
+                    // Level styling mapping
+                    const levelStyles: Record<string, { color: string, bgColor: string, borderColor: string }> = {
+                      'Bronze': { color: 'from-amber-600 to-amber-800', bgColor: 'bg-amber-500/20', borderColor: 'border-amber-500/30' },
+                      'Silver': { color: 'from-gray-400 to-gray-600', bgColor: 'bg-gray-400/20', borderColor: 'border-gray-400/30' },
+                      'Gold': { color: 'from-yellow-400 to-yellow-600', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400/30' },
+                      'Platinum': { color: 'from-cyan-400 to-cyan-600', bgColor: 'bg-cyan-400/20', borderColor: 'border-cyan-400/30' },
+                      'Master': { color: 'from-purple-500 to-purple-700', bgColor: 'bg-purple-500/20', borderColor: 'border-purple-500/30' },
+                    }
                     
-                    const progressToNext = nextLevelData 
-                      ? Math.min(100, ((currentRating - currentLevelData.minRating) / (nextLevelData.minRating - currentLevelData.minRating)) * 100)
-                      : 100
-                    const ratingNeeded = nextLevelData ? (nextLevelData.minRating - currentRating).toFixed(2) : '0.00'
+                    const currentLevelName = levelProgress.current_level.name
+                    const currentLevelStyle = levelStyles[currentLevelName] || levelStyles['Bronze']
+                    const allLevels = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Master']
+                    const currentLevelIndex = allLevels.findIndex(l => l === currentLevelName)
                     
                     return (
                       <div className="space-y-4">
                         {/* Current Level Badge */}
-                        <div className={`p-4 rounded-lg border ${currentLevelData.bgColor} ${currentLevelData.borderColor}`}>
+                        <div className={`p-4 rounded-lg border ${currentLevelStyle.bgColor} ${currentLevelStyle.borderColor}`}>
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-3">
-                              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${currentLevelData.color} flex items-center justify-center text-white font-bold text-lg`}>
-                                {currentLevelData.name.charAt(0)}
+                              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${currentLevelStyle.color} flex items-center justify-center text-white font-bold text-lg`}>
+                                {currentLevelName.charAt(0)}
                               </div>
                               <div>
-                                <p className="text-white font-semibold text-lg">{currentLevelData.name} Level</p>
-                                <p className="text-gray-400 text-sm">{currentLevelData.benefits}</p>
+                                <p className="text-white font-semibold text-lg">{currentLevelName} Level</p>
+                                <p className="text-gray-400 text-sm">{levelProgress.current_level.benefits}</p>
                               </div>
                             </div>
                             <div className="text-right">
@@ -301,32 +307,31 @@ export default function ProfilePage() {
                           </div>
                           
                           {/* Progress to Next Level */}
-                          {nextLevelData && (
+                          {!levelProgress.is_max_level && levelProgress.next_level && (
                             <div className="mt-4">
                               <div className="flex items-center justify-between mb-2">
                                 <span className="text-gray-400 text-sm">
-                                  Progress to {nextLevelData.name}
+                                  Progress to {levelProgress.next_level.name}
                                 </span>
                                 <span className="text-gray-400 text-sm">
-                                  {progressToNext.toFixed(1)}%
+                                  {levelProgress.progress_percent.toFixed(1)}%
                                 </span>
                               </div>
                               <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
                                 <div 
-                                  className={`h-full bg-gradient-to-r ${currentLevelData.color} transition-all duration-500 rounded-full`}
-                                  style={{ width: `${Math.max(0, progressToNext)}%` }}
+                                  className={`h-full bg-gradient-to-r ${currentLevelStyle.color} transition-all duration-500 rounded-full`}
+                                  style={{ width: `${Math.max(0, Math.min(100, levelProgress.progress_percent))}%` }}
                                 />
                               </div>
-                              <p className="text-gray-400 text-xs mt-2">
-                                {parseFloat(ratingNeeded) > 0 
-                                  ? `Need ${ratingNeeded} more rating to reach ${nextLevelData.name} level`
-                                  : `You've reached ${currentLevelData.name} level!`
-                                }
-                              </p>
+                              {levelProgress.message && (
+                                <p className="text-gray-400 text-xs mt-2">
+                                  {levelProgress.message}
+                                </p>
+                              )}
                             </div>
                           )}
                           
-                          {!nextLevelData && (
+                          {levelProgress.is_max_level && (
                             <div className="mt-4 p-3 bg-gradient-to-r from-purple-500/20 to-purple-700/20 border border-purple-500/30 rounded-lg">
                               <p className="text-purple-300 text-sm font-medium text-center">
                                 🏆 You&apos;ve reached the highest level! Keep up the excellent work!
@@ -337,15 +342,16 @@ export default function ProfilePage() {
                         
                         {/* All Levels Preview */}
                         <div className="grid grid-cols-5 gap-2">
-                          {levels.map((level, index) => {
-                            const isCurrent = level.name === currentLevel?.level_name
+                          {allLevels.map((levelName, index) => {
+                            const isCurrent = levelName === currentLevelName
                             const isUnlocked = index <= currentLevelIndex
+                            const levelStyle = levelStyles[levelName] || levelStyles['Bronze']
                             return (
                               <div
-                                key={level.name}
+                                key={levelName}
                                 className={`p-2 rounded-lg border text-center transition-all ${
                                   isCurrent
-                                    ? `${level.bgColor} ${level.borderColor} border-2 scale-105`
+                                    ? `${levelStyle.bgColor} ${levelStyle.borderColor} border-2 scale-105`
                                     : isUnlocked
                                     ? 'bg-gray-700/30 border-gray-600'
                                     : 'bg-gray-800/50 border-gray-700 opacity-50'
@@ -353,30 +359,46 @@ export default function ProfilePage() {
                               >
                                 <div className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center text-xs font-bold ${
                                   isCurrent
-                                    ? `bg-gradient-to-br ${level.color} text-white`
+                                    ? `bg-gradient-to-br ${levelStyle.color} text-white`
                                     : isUnlocked
                                     ? 'bg-gray-600 text-gray-300'
                                     : 'bg-gray-700 text-gray-500'
                                 }`}>
-                                  {level.name.charAt(0)}
+                                  {levelName.charAt(0)}
                                 </div>
                                 <p className={`text-xs font-medium ${
                                   isCurrent ? 'text-white' : isUnlocked ? 'text-gray-300' : 'text-gray-500'
                                 }`}>
-                                  {level.name}
-                                </p>
-                                <p className={`text-xs mt-1 ${
-                                  isCurrent ? 'text-orange-400' : 'text-gray-500'
-                                }`}>
-                                  {level.minRating > 0 ? level.minRating : 'Start'}
+                                  {levelName}
                                 </p>
                               </div>
                             )
                           })}
                         </div>
+                        
+                        {/* Requirements */}
+                        {levelProgress.requirements && levelProgress.requirements.length > 0 && (
+                          <div className="mt-4 p-4 bg-gray-700/30 rounded-lg border border-gray-600">
+                            <h4 className="text-white font-semibold text-sm mb-3">Requirements</h4>
+                            <div className="space-y-2">
+                              {levelProgress.requirements.map((req, idx) => (
+                                <div key={idx} className="flex items-center justify-between text-sm">
+                                  <span className={req.is_met ? 'text-green-400' : 'text-gray-400'}>
+                                    {req.name}
+                                  </span>
+                                  <span className={req.is_met ? 'text-green-400' : 'text-gray-400'}>
+                                    {req.current} / {req.required}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )
-                  })()}
+                  })() : (
+                    <div className="text-gray-400 text-sm py-4">Unable to load level progress</div>
+                  )}
                 </div>
                 
                 {/* Teacher Statistics */}

@@ -229,7 +229,7 @@ export default function TeacherReviewModal({
             <Button
               type="submit"
               disabled={reviewMutation.isPending}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
             >
               {reviewMutation.isPending ? (
                 <>
