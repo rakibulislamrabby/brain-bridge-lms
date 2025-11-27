@@ -1,20 +1,33 @@
 'use client'
 
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useMemo, Suspense } from 'react'
+import { useMemo, Suspense, useState, useEffect } from 'react'
 import { AppHeader } from '@/components/app-header'
 import Footer from '@/components/shared/Footer'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { useTeachers } from '@/hooks/teacher/use-teachers'
 import { useSkills } from '@/hooks/skills/use-skills'
-import { ArrowLeft, Star, Users, Award, Loader2 } from 'lucide-react'
+import { ArrowLeft, Star, Users, Award, Loader2, Search } from 'lucide-react'
 import Image from 'next/image'
 
 function MastersPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  
+  const [searchInput, setSearchInput] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+  
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchInput)
+    }, 300) // 300ms debounce delay
+
+    return () => clearTimeout(timer)
+  }, [searchInput])
   
   const skillId = useMemo(() => {
     const skillParam = searchParams.get('skill_id')
@@ -32,10 +45,10 @@ function MastersPageContent() {
   }, [skillId, skills])
 
   // Filter teachers by skill - match teachers who have the selected skill by NAME
-  const teachers = useMemo(() => {
-    // If no skillId is selected or no selected skill found, return empty array (will show allTeachers instead)
+  const skillFilteredTeachers = useMemo(() => {
+    // If no skillId is selected or no selected skill found, return all teachers
     if (!skillId || !selectedSkill || !allTeachers.length) {
-      return []
+      return allTeachers
     }
     
     const selectedSkillName = selectedSkill.name.trim().toLowerCase()
@@ -69,6 +82,37 @@ function MastersPageContent() {
     return filtered
   }, [allTeachers, skillId, selectedSkill])
 
+  // Apply search filter on top of skill filter
+  const teachers = useMemo(() => {
+    if (!debouncedSearchTerm.trim()) {
+      return skillFilteredTeachers
+    }
+
+    const searchLower = debouncedSearchTerm.trim().toLowerCase()
+    
+    return skillFilteredTeachers.filter((teacher) => {
+      if (!teacher?.teacher) return false
+      
+      const teacherData = teacher.teacher
+      
+      // Search in teacher name
+      const nameMatch = teacher.name?.toLowerCase().includes(searchLower) || false
+      
+      // Search in teacher title
+      const titleMatch = teacherData.title?.toLowerCase().includes(searchLower) || false
+      
+      // Search in teacher bio
+      const bioMatch = teacher.bio?.toLowerCase().includes(searchLower) || false
+      
+      // Search in skill names
+      const skillsMatch = teacherData.skills?.some(skill => 
+        skill.name?.toLowerCase().includes(searchLower)
+      ) || false
+      
+      return nameMatch || titleMatch || bioMatch || skillsMatch
+    })
+  }, [skillFilteredTeachers, debouncedSearchTerm])
+
   const handleViewProfile = (userId: number) => {
     router.push(`/dashboard/profile?user_id=${userId}`)
   }
@@ -87,32 +131,96 @@ function MastersPageContent() {
             Back
           </Button>
 
-          {/* Header Section */}
+          {/* Professional Header Section */}
+          <div className="mb-10">
+            <div className="relative">
+              {/* Background gradient effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-orange-500/10 to-blue-500/10 rounded-2xl blur-3xl -z-10"></div>
+              
+              <div className="bg-gradient-to-br from-gray-800/90 to-gray-900/90 border border-gray-700/50 rounded-2xl p-8 shadow-xl backdrop-blur-sm">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                  <div className="flex-1">
+                    {selectedSkill ? (
+                      <>
+                        <div className="flex items-center gap-3 mb-3">
+                          <Badge className="bg-purple-600/20 text-purple-300 border border-purple-600/40 px-3 py-1">
+                            {selectedSkill.name}
+                          </Badge>
+                          {selectedSkill.subject?.name && (
+                            <Badge variant="outline" className="border-gray-600 text-gray-400">
+                              {selectedSkill.subject.name}
+                            </Badge>
+                          )}
+                        </div>
+                        <h1 className="text-4xl md:text-5xl font-black mb-3 bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+                          Expert Masters
+                        </h1>
+                        <p className="text-gray-400 text-lg">
+                          Discover skilled professionals ready to guide your learning journey
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Award className="w-6 h-6 text-purple-400" />
+                          <Badge className="bg-purple-600/20 text-purple-300 border border-purple-600/40 px-3 py-1">
+                            All Experts
+                          </Badge>
+                        </div>
+                        <h1 className="text-4xl md:text-5xl font-black mb-3 bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+                          Discover Masters
+                        </h1>
+                        <p className="text-gray-400 text-lg">
+                          Explore our community of verified experts and mentors
+                        </p>
+                      </>
+                    )}
+                    <div className="flex items-center gap-2 mt-4">
+                      <div className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                        <Users className="w-4 h-4 text-purple-400" />
+                        <span className="text-sm font-medium text-gray-300">
+                          <span className="text-purple-400 font-bold">{teachers.length}</span> {teachers.length === 1 ? 'master' : 'masters'} available
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Professional Search Bar */}
           <div className="mb-8">
-            {selectedSkill ? (
-              <>
-                <h1 className="text-4xl font-bold text-white mb-4">
-                  Masters for {selectedSkill.name}
-                </h1>
-                {selectedSkill.subject?.name && (
-                  <p className="text-gray-400 text-lg">
-                    Subject: {selectedSkill.subject.name}
-                  </p>
-                )}
-                <p className="text-gray-300 mt-2">
-                  {teachers.length} {teachers.length === 1 ? 'master' : 'masters'} available
-                </p>
-              </>
-            ) : (
-              <>
-                <h1 className="text-4xl font-bold text-white mb-4">
-                  All Masters
-                </h1>
-                <p className="text-gray-300 mt-2">
-                  {allTeachers.length} {allTeachers.length === 1 ? 'master' : 'masters'} available
-                </p>
-              </>
-            )}
+            <div className="relative group">
+              {/* Search bar glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-orange-500/20 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+              
+              <div className="relative bg-gray-800/80 border border-gray-700/50 rounded-xl p-1 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-purple-500/50 focus-within:border-purple-500 focus-within:shadow-purple-500/20 focus-within:shadow-xl">
+                <div className="relative flex items-center">
+                  <div className="absolute left-4 z-10">
+                    <Search className="h-5 w-5 text-gray-400 group-hover:text-purple-400 transition-colors duration-300" />
+                  </div>
+                  <Input
+                    type="text"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="Search masters by name, title, skills, or bio..."
+                    className="pl-12 pr-4 py-4 bg-transparent border-0 text-white placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-base"
+                  />
+                  {searchInput && (
+                    <button
+                      onClick={() => setSearchInput('')}
+                      className="absolute right-3 p-1.5 hover:bg-gray-700/50 rounded-lg transition-colors duration-200"
+                      aria-label="Clear search"
+                    >
+                      <svg className="w-4 h-4 text-gray-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {isLoading ? (
@@ -130,24 +238,37 @@ function MastersPageContent() {
                 </Button>
               </CardContent>
             </Card>
-          ) : (skillId && teachers.length === 0) || (!skillId && allTeachers.length === 0) ? (
+          ) : teachers.length === 0 ? (
             <Card className="bg-gray-800/80 border border-gray-700 text-center">
               <CardContent className="py-16 space-y-3">
                 <Users className="h-12 w-12 text-gray-400 mx-auto" />
                 <h3 className="text-xl font-semibold text-white">No masters found</h3>
                 <p className="text-gray-400">
                   {skillId 
-                    ? `There are no masters available for this skill yet. Check back later!`
-                    : 'There are no masters available yet.'}
+                    ? debouncedSearchTerm
+                      ? `No masters found for "${debouncedSearchTerm}" in this skill category.`
+                      : `There are no masters available for this skill yet. Check back later!`
+                    : debouncedSearchTerm
+                      ? `No masters found for "${debouncedSearchTerm}".`
+                      : 'There are no masters available yet.'}
                 </p>
-                <Button onClick={() => router.back()} className="bg-purple-600 hover:bg-purple-700 text-white">
+                {debouncedSearchTerm && (
+                  <Button 
+                    onClick={() => setSearchInput('')} 
+                    variant="outline"
+                    className="border-purple-400 text-purple-300 hover:bg-purple-900/30 mt-4"
+                  >
+                    Clear Search
+                  </Button>
+                )}
+                <Button onClick={() => router.back()} className="bg-purple-600 hover:bg-purple-700 text-white mt-2">
                   Go back
                 </Button>
               </CardContent>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(skillId ? teachers : allTeachers).map((teacher) => {
+              {teachers.map((teacher) => {
                 const teacherData = teacher.teacher
                 if (!teacherData) return null
                 
@@ -204,7 +325,7 @@ function MastersPageContent() {
                         </div>
                       </div>
 
-                      {/* {teacherData.skills && teacherData.skills.length > 0 && (
+                      {teacherData.skills && teacherData.skills.length > 0 && (
                         <div className="mb-4">
                           <p className="text-xs text-gray-400 mb-2">Skills:</p>
                           <div className="flex flex-wrap gap-2">
@@ -228,22 +349,9 @@ function MastersPageContent() {
                             )}
                           </div>
                         </div>
-                      )} */}
+                      )}
 
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-700">
-                        <div>
-                          <p className="text-xs text-gray-400">Base Pay</p>
-                          <p className="text-lg font-bold text-green-400">
-                            ${parseFloat(teacherData.base_pay || '0').toFixed(2)}
-                          </p>
-                        </div>
-                        {/* <Button
-                          onClick={() => handleViewProfile(teacher.id)}
-                          className="bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
-                        >
-                          View Profile
-                        </Button> */}
-                      </div>
+                      
                     </CardContent>
                   </Card>
                 )
