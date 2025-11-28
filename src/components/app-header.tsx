@@ -1,6 +1,7 @@
 'use client'
 
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu"
@@ -8,13 +9,31 @@ import { ArrowRightIcon, Menu, X, LogOut, User, LayoutDashboard, ChevronDown, Ch
 import { useState, useEffect, useRef } from "react"
 import { getStoredUser, clearAuthData } from "@/hooks/useAuth"
 
+const STORAGE_BASE_URL = process.env.NEXT_PUBLIC_MAIN_STORAGE_URL || ''
+
+const resolveProfilePictureUrl = (path?: string | null): string | null => {
+  if (!path || typeof path !== 'string') {
+    return null
+  }
+
+  // If already a full URL, return as is
+  if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+
+  // Prepend storage base URL
+  const base = STORAGE_BASE_URL.endsWith('/') ? STORAGE_BASE_URL.slice(0, -1) : STORAGE_BASE_URL
+  const cleanedPath = path.startsWith('/') ? path.slice(1) : path
+  return `${base}/${cleanedPath}`
+}
+
 interface AppHeaderProps {
   variant?: 'default' | 'landing'
 }
 
 export function AppHeader({ variant = 'default' }: AppHeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [user, setUser] = useState<{ id: number; name: string; email: string } | null>(null)
+  const [user, setUser] = useState<{ id: number; name: string; email: string; profile_picture?: string | null } | null>(null)
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
   const [isClient, setIsClient] = useState(false)
   const desktopDropdownRef = useRef<HTMLDivElement>(null)
@@ -190,8 +209,21 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
                 }}
                 className="flex items-center gap-3 hover:bg-gray-700 rounded-lg p-2 transition-colors cursor-pointer"
               >
-                <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center text-lg font-medium">
-                  {getUserInitial(getUserDisplayName())}
+                <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center text-lg font-medium overflow-hidden flex-shrink-0">
+                  {user?.profile_picture ? (
+                    <Image
+                      src={resolveProfilePictureUrl(user.profile_picture) || ''}
+                      alt={user.name || 'Profile'}
+                      width={40}
+                      height={40}
+                      className="w-10 h-10 rounded-full object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <span className="text-lg font-medium">
+                      {getUserInitial(getUserDisplayName())}
+                    </span>
+                  )}
                 </div>
                 <span className="text-sm font-medium text-white">
                   {getShortName(getUserDisplayName())}
@@ -266,8 +298,21 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
                 }}
                 className="flex items-center gap-2 hover:bg-gray-700 rounded-lg p-1 transition-colors"
               >
-                <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                  {getUserInitial(getUserDisplayName())}
+                <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-medium overflow-hidden flex-shrink-0">
+                  {user?.profile_picture ? (
+                    <Image
+                      src={resolveProfilePictureUrl(user.profile_picture) || ''}
+                      alt={user.name || 'Profile'}
+                      width={32}
+                      height={32}
+                      className="w-8 h-8 rounded-full object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <span className="text-sm font-medium">
+                      {getUserInitial(getUserDisplayName())}
+                    </span>
+                  )}
                 </div>
                 <span className="text-sm font-medium text-white hidden sm:block">
                   {getShortName(getUserDisplayName())}
@@ -366,8 +411,21 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
                 ) : user ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg">
-                      <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center text-lg font-medium">
-                        {getUserInitial(getUserDisplayName())}
+                      <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center text-lg font-medium overflow-hidden flex-shrink-0">
+                        {user?.profile_picture ? (
+                          <Image
+                            src={resolveProfilePictureUrl(user.profile_picture) || ''}
+                            alt={user.name || 'Profile'}
+                            width={40}
+                            height={40}
+                            className="w-10 h-10 rounded-full object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <span className="text-lg font-medium">
+                            {getUserInitial(getUserDisplayName())}
+                          </span>
+                        )}
                       </div>
                       <span className="text-sm font-medium text-white">{getShortName(getUserDisplayName())}</span>
                     </div>

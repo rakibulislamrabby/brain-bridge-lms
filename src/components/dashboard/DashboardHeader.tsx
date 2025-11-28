@@ -3,12 +3,31 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Home, User, LogOut, Settings, ChevronDown, Award, TrendingUp, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { UserProfile } from '@/hooks/use-me'
 import { useTeacherLevelProgress } from '@/hooks/teacher/use-teacher-level-progress'
 import { useLatestNotification } from '@/hooks/notifications/use-latest-notification'
 import { useNotifications } from '@/hooks/notifications/use-notifications'
+
+const STORAGE_BASE_URL = process.env.NEXT_PUBLIC_MAIN_STORAGE_URL || ''
+
+const resolveProfilePictureUrl = (path?: string | null): string | null => {
+  if (!path || typeof path !== 'string') {
+    return null
+  }
+
+  // If already a full URL, return as is
+  if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+
+  // Prepend storage base URL
+  const base = STORAGE_BASE_URL.endsWith('/') ? STORAGE_BASE_URL.slice(0, -1) : STORAGE_BASE_URL
+  const cleanedPath = path.startsWith('/') ? path.slice(1) : path
+  return `${base}/${cleanedPath}`
+}
 import NotificationDropdown from './NotificationDropdown'
 
 interface DashboardHeaderProps {
@@ -142,8 +161,17 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
             className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer"
           >
             {/* Profile Avatar */}
-            <div className="h-8 w-8 rounded-full bg-purple-600 flex items-center justify-center">
-              {user?.name ? (
+            <div className="h-8 w-8 rounded-full bg-purple-600 flex items-center justify-center overflow-hidden flex-shrink-0">
+              {user?.profile_picture ? (
+                <Image
+                  src={resolveProfilePictureUrl(user.profile_picture) || ''}
+                  alt={user.name || 'Profile'}
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 rounded-full object-cover"
+                  unoptimized
+                />
+              ) : user?.name ? (
                 <span className="text-white font-semibold text-sm">
                   {user.name.charAt(0).toUpperCase()}
                 </span>

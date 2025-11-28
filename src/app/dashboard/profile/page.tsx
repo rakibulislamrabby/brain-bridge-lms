@@ -11,6 +11,24 @@ import { useToast } from '@/components/ui/toast'
 import { useTeacherLevelProgress } from '@/hooks/teacher/use-teacher-level-progress'
 import { User, Mail, Phone, MapPin, Calendar, Shield, Loader2, Edit, Copy, Check, Gift, Award, Star } from 'lucide-react'
 
+const STORAGE_BASE_URL = process.env.NEXT_PUBLIC_MAIN_STORAGE_URL || ''
+
+const resolveProfilePictureUrl = (path?: string | null): string | null => {
+  if (!path || typeof path !== 'string') {
+    return null
+  }
+
+  // If already a full URL, return as is
+  if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+
+  // Prepend storage base URL
+  const base = STORAGE_BASE_URL.endsWith('/') ? STORAGE_BASE_URL.slice(0, -1) : STORAGE_BASE_URL
+  const cleanedPath = path.startsWith('/') ? path.slice(1) : path
+  return `${base}/${cleanedPath}`
+}
+
 export default function ProfilePage() {
   const router = useRouter()
   const { data: user, isLoading, error } = useMe()
@@ -139,7 +157,7 @@ export default function ProfilePage() {
               <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {user.profile_picture ? (
                   <Image
-                    src={user.profile_picture}
+                    src={resolveProfilePictureUrl(user.profile_picture) || ''}
                     alt={user.name || 'Profile'}
                     width={96}
                     height={96}

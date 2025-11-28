@@ -158,7 +158,7 @@ const updateProfile = async (data: UpdateProfileRequest): Promise<UserProfile> =
   console.log('🔵 Updating profile:', { url, hasFiles, method: hasFiles ? 'FormData' : 'JSON' });
 
   const response = await fetch(url, {
-    method: 'PUT',
+    method: 'POST',
     headers,
     body,
   });
