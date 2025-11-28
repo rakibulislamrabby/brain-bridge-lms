@@ -27,6 +27,7 @@ export function middleware(request: NextRequest) {
     // request.nextUrl.pathname === "/courses" ||
     // request.nextUrl.pathname.startsWith("/courses/") ||
     request.nextUrl.pathname === "/teacher" ||
+    request.nextUrl.pathname === "/reset-password" ||
     request.nextUrl.pathname === "/request-password-reset" ||
     request.nextUrl.pathname.startsWith("/invitation");
 

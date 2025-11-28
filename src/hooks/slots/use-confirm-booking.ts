@@ -38,6 +38,8 @@ export interface ConfirmBookingRequest {
   slot_id: number
   scheduled_date: string // YYYY-MM-DD format
   payment_intent_id: string
+  points_to_use?: number
+  new_payment_amount?: number
 }
 
 export interface ConfirmBookingResponse {

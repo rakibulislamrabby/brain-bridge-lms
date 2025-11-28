@@ -44,10 +44,10 @@ export interface UpdateProfileRequest {
   phone?: string | null;
   bio?: string | null;
   address?: string | null;
-  profile_picture?: string | null;
+  profile_picture?: string | null | File;
   // Teacher-specific fields
   title?: string | null;
-  introduction_video?: string | null;
+  introduction_video?: string | null | File;
   base_pay?: number | null;
   skills?: ProfileSkill[];
 }
@@ -58,14 +58,93 @@ interface UpdateProfileResponse {
 
 const updateProfile = async (data: UpdateProfileRequest): Promise<UserProfile> => {
   const url = joinUrl('me');
-  const headers = getAuthHeaders();
+  
+  // Check if we need to send files (FormData) or just JSON
+  const hasProfilePicture = data.profile_picture && data.profile_picture instanceof File;
+  const hasIntroductionVideo = data.introduction_video && data.introduction_video instanceof File;
+  const hasFiles = hasProfilePicture || hasIntroductionVideo;
+  
+  let body: FormData | string;
+  const headers: Record<string, string> = {
+    'Accept': 'application/json',
+  };
 
-  console.log('🔵 Updating profile:', { url, data });
+  // Add Authorization header
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  if (hasFiles) {
+    // Use FormData for file uploads
+    const formData = new FormData();
+    
+    // Add basic fields - include all fields when using FormData
+    if (data.name !== undefined) formData.append('name', data.name || '');
+    if (data.email !== undefined) formData.append('email', data.email || '');
+    if (data.phone !== undefined) formData.append('phone', data.phone || '');
+    if (data.bio !== undefined) formData.append('bio', data.bio || '');
+    if (data.address !== undefined) formData.append('address', data.address || '');
+    
+    // Add profile picture file if present
+    if (hasProfilePicture && data.profile_picture instanceof File) {
+      console.log('📎 Appending profile picture file:', data.profile_picture.name, data.profile_picture.size, 'bytes', 'Type:', data.profile_picture.type);
+      formData.append('profile_picture', data.profile_picture);
+    } else if (data.profile_picture !== undefined && data.profile_picture !== null && typeof data.profile_picture === 'string' && data.profile_picture.trim() !== '') {
+      // If it's a string (URL), append it
+      console.log('🔗 Appending profile picture URL:', data.profile_picture);
+      formData.append('profile_picture', data.profile_picture);
+    }
+    
+    // Add teacher-specific fields
+    if (data.title !== undefined) formData.append('title', data.title || '');
+    if (data.base_pay !== undefined && data.base_pay !== null) {
+      formData.append('base_pay', data.base_pay.toString());
+    }
+    
+    // Add introduction video file if present
+    if (hasIntroductionVideo && data.introduction_video instanceof File) {
+      console.log('📎 Appending introduction video file:', data.introduction_video.name, data.introduction_video.size, 'bytes');
+      formData.append('introduction_video', data.introduction_video);
+    } else if (data.introduction_video !== undefined && data.introduction_video !== null && typeof data.introduction_video === 'string' && data.introduction_video.trim() !== '') {
+      // If it's a string (URL), append it
+      console.log('🔗 Appending introduction video URL:', data.introduction_video);
+      formData.append('introduction_video', data.introduction_video);
+    }
+    
+    // Add skills if present
+    if (data.skills && Array.isArray(data.skills) && data.skills.length > 0) {
+      data.skills.forEach((skill, index) => {
+        formData.append(`skills[${index}][skill_id]`, skill.skill_id.toString());
+        formData.append(`skills[${index}][years_of_experience]`, skill.years_of_experience.toString());
+      });
+    }
+    
+    // Log FormData contents for debugging
+    console.log('📦 FormData entries:');
+    for (const [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log(`  ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+      } else {
+        console.log(`  ${key}:`, value);
+      }
+    }
+    
+    body = formData;
+    // Don't set Content-Type for FormData, browser will set it with boundary
+    delete headers['Content-Type'];
+  } else {
+    // Use JSON if no files
+    headers['Content-Type'] = 'application/json';
+    body = JSON.stringify(data);
+  }
+
+  console.log('🔵 Updating profile:', { url, hasFiles, method: hasFiles ? 'FormData' : 'JSON' });
 
   const response = await fetch(url, {
     method: 'PUT',
     headers,
-    body: JSON.stringify(data),
+    body,
   });
 
   const text = await response.text();
@@ -86,8 +165,14 @@ const updateProfile = async (data: UpdateProfileRequest): Promise<UserProfile> =
       errorObj?.message ||
       errorObj?.error ||
       (typeof errorObj?.data === 'string' ? errorObj.data : null) ||
+      (typeof errorObj?.data === 'object' && errorObj.data !== null ? JSON.stringify(errorObj.data) : null) ||
       `Failed to update profile (${response.status})`;
-    console.error('🔴 Profile Update Error:', errorMessage);
+    console.error('🔴 Profile Update Error:', {
+      status: response.status,
+      statusText: response.statusText,
+      errorMessage,
+      fullError: errorObj
+    });
     throw new Error(typeof errorMessage === 'string' ? errorMessage : 'Failed to update profile');
   }
 

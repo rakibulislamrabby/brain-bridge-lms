@@ -12,7 +12,7 @@ import { useMe } from '@/hooks/use-me'
 import { useUpdateProfile, ProfileSkill } from '@/hooks/use-update-profile'
 import { useSkills } from '@/hooks/skills/use-skills'
 import { useToast } from '@/components/ui/toast'
-import { Loader2, Plus, X, Save } from 'lucide-react'
+import { Loader2, Plus, X, Save, Image as ImageIcon, Video, Upload, XCircle } from 'lucide-react'
 import { getStoredUser } from '@/hooks/useAuth'
 
 export default function SettingsPage() {
@@ -41,6 +41,12 @@ export default function SettingsPage() {
     base_pay: '',
   })
 
+  // File state for uploads
+  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null)
+  const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null)
+  const [introductionVideoFile, setIntroductionVideoFile] = useState<File | null>(null)
+  const [introductionVideoPreview, setIntroductionVideoPreview] = useState<string | null>(null)
+
   const [userSkills, setUserSkills] = useState<Array<{ skill_id: number; years_of_experience: number }>>([])
 
   // Initialize form data from user profile
@@ -57,6 +63,14 @@ export default function SettingsPage() {
         introduction_video: user.teacher?.introduction_video || '',
         base_pay: user.teacher?.base_pay || '',
       })
+      
+      // Set previews from existing URLs (only if no file is currently selected)
+      if (!profilePictureFile && user.profile_picture) {
+        setProfilePicturePreview(user.profile_picture)
+      }
+      if (!introductionVideoFile && user.teacher?.introduction_video) {
+        setIntroductionVideoPreview(user.teacher.introduction_video)
+      }
 
       // Load existing skills if teacher has them (check both user.skills and teacher.skills)
       if (isTeacher) {
@@ -82,6 +96,90 @@ export default function SettingsPage() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        addToast({
+          type: 'error',
+          title: 'Invalid File Type',
+          description: 'Please select an image file.',
+          duration: 3000,
+        })
+        return
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        addToast({
+          type: 'error',
+          title: 'File Too Large',
+          description: 'Profile picture must be less than 5MB.',
+          duration: 3000,
+        })
+        return
+      }
+      
+      setProfilePictureFile(file)
+      
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProfilePicturePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleIntroductionVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('video/')) {
+        addToast({
+          type: 'error',
+          title: 'Invalid File Type',
+          description: 'Please select a video file.',
+          duration: 3000,
+        })
+        return
+      }
+      
+      // Validate file size (max 100MB)
+      if (file.size > 100 * 1024 * 1024) {
+        addToast({
+          type: 'error',
+          title: 'File Too Large',
+          description: 'Introduction video must be less than 100MB.',
+          duration: 3000,
+        })
+        return
+      }
+      
+      setIntroductionVideoFile(file)
+      
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setIntroductionVideoPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveProfilePicture = () => {
+    setProfilePictureFile(null)
+    setProfilePicturePreview(null)
+    setFormData(prev => ({ ...prev, profile_picture: '' }))
+  }
+
+  const handleRemoveIntroductionVideo = () => {
+    setIntroductionVideoFile(null)
+    setIntroductionVideoPreview(null)
+    setFormData(prev => ({ ...prev, introduction_video: '' }))
   }
 
   const handleAddSkill = () => {
@@ -132,13 +230,27 @@ export default function SettingsPage() {
         phone: formData.phone || null,
         bio: formData.bio || null,
         address: formData.address || null,
-        profile_picture: formData.profile_picture || null,
+      }
+
+      // Only include profile_picture if there's a file to upload or a URL to set
+      if (profilePictureFile && profilePictureFile instanceof File) {
+        console.log('✅ Profile picture file selected:', profilePictureFile.name, profilePictureFile.size, 'bytes')
+        updateData.profile_picture = profilePictureFile
+      } else if (formData.profile_picture && formData.profile_picture.trim() !== '' && formData.profile_picture !== user?.profile_picture) {
+        // Only include URL if it's different from existing or explicitly provided
+        console.log('✅ Profile picture URL provided:', formData.profile_picture)
+        updateData.profile_picture = formData.profile_picture
       }
 
       // Add teacher-specific fields if user is a teacher
       if (isTeacher) {
         updateData.title = formData.title || null
-        updateData.introduction_video = formData.introduction_video || null
+        // Only include introduction_video if there's a file to upload
+        if (introductionVideoFile) {
+          updateData.introduction_video = introductionVideoFile
+        } else if (formData.introduction_video && formData.introduction_video.trim() !== '') {
+          updateData.introduction_video = formData.introduction_video
+        }
         updateData.base_pay = formData.base_pay ? Number(formData.base_pay) : null
         
         // Only include skills if there are any
@@ -147,7 +259,28 @@ export default function SettingsPage() {
         }
       }
 
+      console.log('📤 Sending update data:', {
+        hasProfilePictureFile: !!updateData.profile_picture && updateData.profile_picture instanceof File,
+        hasIntroductionVideoFile: !!updateData.introduction_video && updateData.introduction_video instanceof File,
+        profilePictureType: updateData.profile_picture ? (updateData.profile_picture instanceof File ? 'File' : 'URL/String') : 'none',
+        profilePictureFileState: profilePictureFile ? `${profilePictureFile.name} (${profilePictureFile.size} bytes)` : 'null',
+        updateDataKeys: Object.keys(updateData)
+      })
+      
+      if (updateData.profile_picture instanceof File) {
+        console.log('✅ Profile picture file details:', {
+          name: updateData.profile_picture.name,
+          size: updateData.profile_picture.size,
+          type: updateData.profile_picture.type,
+          lastModified: new Date(updateData.profile_picture.lastModified)
+        })
+      }
+
       await updateProfileMutation.mutateAsync(updateData)
+
+      // Clear file states after successful upload (they'll be available from the updated user profile)
+      setProfilePictureFile(null)
+      setIntroductionVideoFile(null)
 
       addToast({
         type: 'success',
@@ -263,15 +396,60 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="profile_picture" className="text-white">Profile Picture URL</Label>
-                  <Input
-                    id="profile_picture"
-                    type="url"
-                    value={formData.profile_picture}
-                    onChange={(e) => handleInputChange('profile_picture', e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white"
-                    placeholder="https://example.com/profile.jpg"
-                  />
+                  <Label htmlFor="profile_picture" className="text-white">Profile Picture</Label>
+                  <div className="space-y-3">
+                    {/* Preview */}
+                    {profilePicturePreview && (
+                      <div className="relative inline-block">
+                        <img
+                          src={profilePicturePreview}
+                          alt="Profile preview"
+                          className="w-32 h-32 object-cover rounded-full border-2 border-gray-600"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleRemoveProfilePicture}
+                          className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1"
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                    
+                    {/* File input */}
+                    <label className="inline-flex items-center gap-2 bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 cursor-pointer transition-colors">
+                      <ImageIcon className="h-4 w-4 text-orange-400" />
+                      <span>{profilePictureFile ? 'Change Image' : 'Upload Image'}</span>
+                      <input
+                        id="profile_picture"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfilePictureChange}
+                        className="hidden"
+                      />
+                    </label>
+                    
+                    {profilePictureFile && (
+                      <p className="text-sm text-gray-400">
+                        Selected: {profilePictureFile.name} ({(profilePictureFile.size / 1024 / 1024).toFixed(2)} MB)
+                      </p>
+                    )}
+                    
+                    {/* Fallback: URL input if no file selected and no existing image */}
+                    {!profilePictureFile && !profilePicturePreview && (
+                      <div className="mt-2">
+                        <Label htmlFor="profile_picture_url" className="text-sm text-gray-400">Or enter URL:</Label>
+                        <Input
+                          id="profile_picture_url"
+                          type="url"
+                          value={formData.profile_picture}
+                          onChange={(e) => handleInputChange('profile_picture', e.target.value)}
+                          className="bg-gray-700 border-gray-600 text-white mt-1"
+                          placeholder="https://example.com/profile.jpg"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -308,15 +486,60 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="introduction_video" className="text-white">Introduction Video URL</Label>
-                    <Input
-                      id="introduction_video"
-                      type="url"
-                      value={formData.introduction_video}
-                      onChange={(e) => handleInputChange('introduction_video', e.target.value)}
-                      className="bg-gray-700 border-gray-600 text-white"
-                      placeholder="https://example.com/videos/intro.mp4"
-                    />
+                    <Label htmlFor="introduction_video" className="text-white">Introduction Video</Label>
+                    <div className="space-y-3">
+                      {/* Preview */}
+                      {introductionVideoPreview && (
+                        <div className="relative">
+                          <video
+                            src={introductionVideoPreview}
+                            controls
+                            className="w-full max-w-md rounded-lg border border-gray-600"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleRemoveIntroductionVideo}
+                            className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1"
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+                      
+                      {/* File input */}
+                      <label className="inline-flex items-center gap-2 bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 cursor-pointer transition-colors">
+                        <Video className="h-4 w-4 text-orange-400" />
+                        <span>{introductionVideoFile ? 'Change Video' : 'Upload Video'}</span>
+                        <input
+                          id="introduction_video"
+                          type="file"
+                          accept="video/*"
+                          onChange={handleIntroductionVideoChange}
+                          className="hidden"
+                        />
+                      </label>
+                      
+                      {introductionVideoFile && (
+                        <p className="text-sm text-gray-400">
+                          Selected: {introductionVideoFile.name} ({(introductionVideoFile.size / 1024 / 1024).toFixed(2)} MB)
+                        </p>
+                      )}
+                      
+                      {/* Fallback: URL input if no file selected and no existing video */}
+                      {!introductionVideoFile && !introductionVideoPreview && (
+                        <div className="mt-2">
+                          <Label htmlFor="introduction_video_url" className="text-sm text-gray-400">Or enter URL:</Label>
+                          <Input
+                            id="introduction_video_url"
+                            type="url"
+                            value={formData.introduction_video}
+                            onChange={(e) => handleInputChange('introduction_video', e.target.value)}
+                            className="bg-gray-700 border-gray-600 text-white mt-1"
+                            placeholder="https://example.com/videos/intro.mp4"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Skills Section */}
