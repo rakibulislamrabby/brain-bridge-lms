@@ -36,7 +36,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   // Mock admin data
   const platformStats = {
     totalUsers: 15420,
-    totalTeachers: 1240,
+    totalMasters: 1240,
     totalStudents: 14180,
     totalSessions: 45680,
     monthlyRevenue: 125000,
@@ -45,7 +45,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     systemHealth: 99.8
   }
 
-  const teacherLevels = [
+  const masterLevels = [
     { level: 'Bronze', count: 450, percentage: 36.3 },
     { level: 'Silver', count: 320, percentage: 25.8 },
     { level: 'Gold', count: 280, percentage: 22.6 },
@@ -54,7 +54,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   ]
 
   const recentActivity = [
-    { id: 1, type: 'teacher_approval', message: 'New teacher Sarah Johnson approved', time: '2 hours ago', status: 'success' },
+    { id: 1, type: 'master_approval', message: 'New master Sarah Johnson approved', time: '2 hours ago', status: 'success' },
     { id: 2, type: 'payment_issue', message: 'Payment processing error for session #12345', time: '4 hours ago', status: 'warning' },
     { id: 3, type: 'user_report', message: 'User reported inappropriate content', time: '6 hours ago', status: 'pending' },
     { id: 4, type: 'system_update', message: 'Platform maintenance completed', time: '1 day ago', status: 'success' }
@@ -76,7 +76,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
     { id: 'users', label: 'User Management', icon: Users },
-    { id: 'teachers', label: 'Teacher Management', icon: Award },
+    { id: 'masters', label: 'Master Management', icon: Award },
     { id: 'content', label: 'Content Moderation', icon: Shield },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp },
     { id: 'system', label: 'System', icon: Settings }
@@ -187,9 +187,9 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Recent Activity */}
           <div className="lg:col-span-2">
-            <Card>
+            <Card> 
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 pt-5">
                   <Activity className="h-5 w-5" />
                   Recent Activity
                 </CardTitle>
@@ -290,8 +290,8 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Teachers</p>
-                    <p className="text-2xl font-bold text-gray-900">{platformStats.totalTeachers.toLocaleString()}</p>
+                    <p className="text-sm font-medium text-gray-600">Total Masters</p>
+                    <p className="text-2xl font-bold text-gray-900">{platformStats.totalMasters.toLocaleString()}</p>
                   </div>
                   <Award className="h-8 w-8 text-yellow-500" />
                 </div>
@@ -313,10 +313,10 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
         </div>
       )}
 
-      {activeTab === 'teachers' && (
+      {activeTab === 'masters' && (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-gray-900">Teacher Management</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Master Management</h2>
             <Button className="bg-orange-600 hover:bg-orange-700">
               <Award className="h-4 w-4 mr-2" />
               Manage Levels
@@ -326,12 +326,12 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Teacher Level Distribution</CardTitle>
-                <CardDescription>Distribution of teachers across levels</CardDescription>
+                <CardTitle>Master Level Distribution</CardTitle>
+                <CardDescription>Distribution of masters across levels</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {teacherLevels.map((level) => (
+                  {masterLevels.map((level) => (
                     <div key={level.level} className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-600">{level.level}</span>
@@ -347,15 +347,15 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             <Card>
               <CardHeader>
                 <CardTitle>Pending Approvals</CardTitle>
-                <CardDescription>New teacher applications awaiting review</CardDescription>
+                <CardDescription>New master applications awaiting review</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {pendingApprovals.map((teacher) => (
-                    <div key={teacher.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                  {pendingApprovals.map((master) => (
+                    <div key={master.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
                       <div>
-                        <h3 className="font-medium text-gray-900">{teacher.name}</h3>
-                        <p className="text-sm text-gray-500">{teacher.subject} • {teacher.experience} experience</p>
+                        <h3 className="font-medium text-gray-900">{master.name}</h3>
+                        <p className="text-sm text-gray-500">{master.subject} • {master.experience} experience</p>
                       </div>
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline">

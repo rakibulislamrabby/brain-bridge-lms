@@ -9,21 +9,21 @@ export default function PointSystem() {
       title: "BOOK SESSIONS",
       description: "As a student, you earn points by booking learning sessions with masters on our platform.",
       points: "+5 POINTS PER BOOKING",
-      color: "bg-orange-500"
+      color: "bg-purple-500"
     },
     {
       icon: <Clock className="w-8 h-8" />,
       title: "HOURLY REWARDS",
       description: "Points are calculated based on the hours spent learning with your master during sessions.",
       points: "+25 POINTS PER HOUR",
-      color: "bg-orange-500"
+      color: "bg-purple-500"
     },
     {
       icon: <Star className="w-8 h-8" />,
       title: "COMPLETE COURSES",
       description: "Finish entire courses and earn bonus points for your dedication and commitment.",
       points: "+100 POINTS PER COURSE",
-      color: "bg-orange-500"
+      color: "bg-purple-500"
     }
   ]
 
@@ -52,33 +52,33 @@ export default function PointSystem() {
   ]
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-gray-900">
       <div className="">
         {/* Header */}
         <div className="text-center mb-16 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
             BRAINBRIDGE POINTS SYSTEM
           </h2>
           
           {/* Purple Info Box */}
-          <div className="bg-purple-100 border border-purple-200 rounded-2xl p-8 mb-12 max-w-4xl mx-auto">
-            <p className="text-lg text-gray-700 leading-relaxed">
+          <div className="bg-purple-900 border border-purple-700 rounded-2xl p-8 mb-12 max-w-4xl mx-auto">
+            <p className="text-lg text-gray-200 leading-relaxed">
               Earn points with every learning session and unlock amazing rewards. The more you learn, the more you earn!
             </p>
           </div>
 
-          <h3 className="text-3xl font-bold text-gray-900 mb-4">
+          <h3 className="text-3xl font-bold text-white mb-4">
             HOW TO EARN POINTS
           </h3>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg text-gray-300 max-w-3xl mx-auto">
             Our points system is designed to reward active learning and engagement. Here&apos;s how you can accumulate points:
           </p>
         </div>
 
         {/* Earning Methods */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 mb-16 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {earningMethods.map((method, index) => (
-            <Card key={index} className="bg-white border border-gray-200 hover:shadow-lg hover:border-orange-500 hover:-translate-y-2 transition-all duration-300 cursor-pointer group">
+            <Card key={index} className="bg-gray-800 border border-gray-700 hover:shadow-lg hover:border-orange-500 hover:-translate-y-2 transition-all duration-300 cursor-pointer group">
               <CardContent className="p-8 text-center">
                 {/* Icon */}
                 <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mb-6 mx-auto group-hover:bg-orange-500 group-hover:scale-110 transition-all duration-300">
@@ -88,12 +88,12 @@ export default function PointSystem() {
                 </div>
 
                 {/* Title */}
-                <h4 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-orange-600 transition-colors duration-300">
+                <h4 className="text-xl font-bold text-white mb-4 group-hover:text-orange-400 transition-colors duration-300">
                   {method.title}
                 </h4>
 
                 {/* Description */}
-                <p className="text-gray-600 mb-6 leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
+                <p className="text-gray-300 mb-6 leading-relaxed group-hover:text-gray-200 transition-colors duration-300">
                   {method.description}
                 </p>
 
@@ -107,8 +107,8 @@ export default function PointSystem() {
         </div>
 
         {/* Rewards Section with Slate Background */}
-        <div className="bg-slate-900 p-12 mb-12 ">
-          <div className="text-center mb-12 max-w-6xl mx-auto">
+        <div className="bg-slate-900 p-12 mb-12">
+          <div className="text-center mb-12 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <h3 className="text-3xl font-bold text-white mb-4">
               REDEEM YOUR POINTS
             </h3>
@@ -118,10 +118,10 @@ export default function PointSystem() {
           </div>
 
           {/* Rewards Grid */}
-          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             {rewards.map((reward, index) => (
-              <Card key={index} className={`relative bg-white border border-gray-200 hover:shadow-lg hover:border-purple-500 hover:-translate-y-2 transition-all duration-300 cursor-pointer group ${
-                reward.popular ? 'ring-2 ring-purple-200' : ''
+              <Card key={index} className={`relative bg-gray-800 border border-gray-700 hover:shadow-lg hover:border-purple-500 hover:-translate-y-2 transition-all duration-300 cursor-pointer group ${
+                reward.popular ? 'ring-2 ring-purple-500' : ''
               }`}>
                 {reward.popular && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-purple-500 text-white px-4 py-1 rounded-full text-xs font-bold">
@@ -138,12 +138,12 @@ export default function PointSystem() {
                   </div>
 
                   {/* Title */}
-                  <h4 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors duration-300">
+                  <h4 className="text-lg font-bold text-white mb-3 group-hover:text-purple-400 transition-colors duration-300">
                     {reward.title}
                   </h4>
 
                   {/* Description */}
-                  <p className="text-gray-600 text-sm mb-4 leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
+                  <p className="text-gray-300 text-sm mb-4 leading-relaxed group-hover:text-gray-200 transition-colors duration-300">
                     {reward.description}
                   </p>
 
@@ -158,7 +158,7 @@ export default function PointSystem() {
         </div>
 
         {/* CTA Section */}
-        <div className="text-center max-w-6xl mx-auto">
+        <div className="text-center max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-gradient-to-r from-orange-500 to-purple-600 rounded-2xl p-8 text-white">
             <h3 className="text-2xl font-bold mb-4">Ready to Start Earning?</h3>
             <p className="text-lg mb-6 opacity-90">

@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss"
 
 const config: Config = {
-  darkMode: "class", // (we'll only use light mode but leave compatibility)
+  darkMode: "class",
   content: [
     "./src/app/**/*.{ts,tsx}",
     "./src/components/**/*.{ts,tsx}",
@@ -15,17 +15,17 @@ const config: Config = {
     },
     extend: {
       colors: {
-        border: "#E5E5E5",
-        input: "#E5E5E5",
-        ring: "#000000",
-        background: "#FFFFFF",
-        foreground: "#000000",
+        border: "#2a2a2a",
+        input: "#2a2a2a",
+        ring: "#ffffff",
+        background: "#0a0a0a",
+        foreground: "#ffffff",
 
-        primary: { DEFAULT: "#000000", foreground: "#FFFFFF" },
-        secondary: { DEFAULT: "#FF7A00", foreground: "#FFFFFF" },
-        accent: { DEFAULT: "#8B5CF6", foreground: "#FFFFFF" },
-        muted: { DEFAULT: "#F8F8F8", foreground: "#666666" },
-        card: { DEFAULT: "#FFFFFF", foreground: "#000000" },
+        primary: { DEFAULT: "#ffffff", foreground: "#0a0a0a" },
+        secondary: { DEFAULT: "#FF7A00", foreground: "#ffffff" },
+        accent: { DEFAULT: "#8B5CF6", foreground: "#ffffff" },
+        muted: { DEFAULT: "#1a1a1a", foreground: "#a0a0a0" },
+        card: { DEFAULT: "#1a1a1a", foreground: "#ffffff" },
         destructive: { DEFAULT: "#EF4444", foreground: "#FFFFFF" },
       },
       borderRadius: {

@@ -1,15 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { getStoredUser } from '@/hooks/useAuth'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import DashboardOverview from '@/components/dashboard/DashboardOverview'
+import StudentDashboardOverview from '@/components/dashboard/StudentDashboardOverview'
+import { useMe } from '@/hooks/use-me'
 
 export default function DashboardPage() {
   const [user, setUser] = useState<{ id: number; name: string; email: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+  const { data: userProfile, isLoading: profileLoading } = useMe()
 
   useEffect(() => {
     const storedUser = getStoredUser()
@@ -21,7 +24,20 @@ export default function DashboardPage() {
     setLoading(false)
   }, [router])
 
-  if (loading) {
+  // Determine user role
+  const isStudent = useMemo(() => {
+    return userProfile?.roles?.some(role => role.name === 'student') || false
+  }, [userProfile])
+
+  const isTeacher = useMemo(() => {
+    return userProfile?.roles?.some(role => role.name === 'teacher') || false
+  }, [userProfile])
+
+  const isAdmin = useMemo(() => {
+    return userProfile?.roles?.some(role => role.name === 'admin') || false
+  }, [userProfile])
+
+  if (loading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-600"></div>
@@ -35,7 +51,11 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <DashboardOverview />
+      {isStudent ? (
+        <StudentDashboardOverview />
+      ) : (
+        <DashboardOverview />
+      )}
     </DashboardLayout>
   )
 }

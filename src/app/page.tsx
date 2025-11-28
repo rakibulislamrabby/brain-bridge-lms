@@ -1,9 +1,9 @@
-import { AppHeader } from "@/components/app-header"
 import Footer from "@/components/shared/Footer"
-import Hero from "@/components/Home/Hero"
+import LandingHero from "@/components/Home/LandingHero"
 import ChooseUs from "@/components/Home/ChooseUs"
 import OurFeature from "@/components/Home/OurFeature"
-import FeaturedCourses from "@/components/Home/FeaturedCourses"
+import AllCourse from "@/components/Courses/AllCourse"
+import LiveSessions from "@/components/Home/LiveSessions"
 import LearningReimagined from "@/components/Reviews/LearningReimagined"
 import PointSystem from "@/components/Point/PointSystem"
 import Contact from "@/components/shared/Contact"
@@ -13,45 +13,21 @@ export default function Home() {
   return (
     <>
     <div className=" mx-auto">
-      <AppHeader />
-      {/* Hero Section */}
-      <Hero/>
+      {/* Combined Header + Hero Section for Landing Page */}
+      <LandingHero />
       {/* Platform Features */}
       <OurFeature/>
 
       <RandomSkill/>
       {/* <Partner/> */}
-      <FeaturedCourses/>
+      <AllCourse/>
+      <LiveSessions limit={6} showShowMore={true} />
+
       {/* Why Choose Us Section */}
       <ChooseUs/>
-
-    
-
-      <LearningReimagined/>
-
       <PointSystem/>
-
-      {/* Statistics Section */}
-      {/* <Statistics/> */}
-
-      {/* CTA Section */}
-      {/* <section className="py-20 bg-primary ">
-        <div className="container text-center space-y-8">
-          <h2 className="text-4xl font-bold">Get off the couch and learn something new!</h2>
-          <p className="text-xl opacity-90 max-w-2xl mx-auto">
-            Learning new things is one of life&apos;s most rewarding experiences. Brain Bridge makes getting started easy.
-          </p>
-          <div className="flex justify-center gap-4">
-            <Button asChild className="bg-orange-600 text-white">
-              <Link href="/explore">Find Your Teacher</Link>
-            </Button>
-            <Button asChild variant="outline" className="border-white bg-black text-white hover:text-primary">
-              <Link href="/teachers">Start Teaching</Link>
-            </Button>
-          </div>
-        </div>
-      </section> */}
       <Contact/>
+      <LearningReimagined/>
      
     </div>
      {/* Footer */}

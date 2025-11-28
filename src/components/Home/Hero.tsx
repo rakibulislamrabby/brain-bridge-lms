@@ -4,37 +4,104 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Star, ArrowRight } from 'lucide-react'
 
-export default function Hero() {
+interface HeroProps {
+  variant?: 'default' | 'landing'
+}
+
+export default function Hero({ variant = 'default' }: HeroProps) {
+  const isLanding = variant === 'landing'
+  
+  if (isLanding) {
+    return (
+      <section className="relative w-full bg-gray-900">
+        {/* Hero Background Image - Full width fit without cropping */}
+        <div className="relative w-full">
+          <Image
+            src="/images/hero/hero-2.png"
+            alt="Learning collage"
+            width={1920}
+            height={1080}
+            className="w-full h-auto brightness-[1.15] contrast-[1.15] saturate-[1.2]"
+            sizes="100vw"
+            priority
+            quality={95}
+            style={{
+              display: 'block',
+              width: '100%',
+              height: 'auto'
+            }}
+          />
+          
+          {/* Subtle overlay for better text readability without dulling colors */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/15 z-10 pointer-events-none"></div>
+          
+          {/* Vibrant color enhancement overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-600/8 via-transparent to-blue-600/8 z-20 mix-blend-soft-light pointer-events-none"></div>
+        </div>
+
+        {/* Hero Content - Absolute positioned over image */}
+        <div className="absolute inset-0 z-30 flex items-center justify-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div className="text-center space-y-8 sm:space-y-12">
+            {/* Main Headline */}
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
+              Learn Anything.
+              <br />
+              From Anyone.
+              <br />
+              Anywhere.
+            </h1>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+              <Button asChild className="bg-purple-800 hover:bg-purple-900 text-white px-10 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-medium">
+                <Link href="/courses" className="flex items-center gap-2">
+                  Start Learning
+                  <ArrowRight className="w-6 h-6" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="border-2 border-white/20 text-black bg-white/60 hover:text-gray-900 hover:bg-white/80 px-10 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-medium">
+                <Link href="/signup?role=master">Become a Master</Link>
+              </Button>
+            </div>
+          </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  // Default Hero (original design)
   return (
-    <section className="mx-auto max-w-7xl py-8 sm:py-12 lg:py-10 px-4 sm:px-6 lg:px-8">
+    <section className="mx-auto max-w-7xl py-8 sm:py-12 lg:py-10 px-4 sm:px-6 lg:px-8 bg-gray-900">
       <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center">
         {/* Left Side - Content */}
         <div className="space-y-4 sm:space-y-8 order-2 lg:order-1">
           {/* Rating Section */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-2 text-left">
             <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-orange-500 text-orange-500" />
-              <span className="text-gray-700 font-medium text-sm sm:text-base">5 Stars</span>
+              <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-purple-500 text-purple-500" />
+              <span className="text-white font-medium text-sm sm:text-base">5 Stars</span>
             </div>
-            <Link href="/success-stories" className="text-gray-500 hover:text-gray-700 text-xs sm:text-sm">
+            <Link href="/success-stories" className="text-gray-300 hover:text-white text-xs sm:text-sm">
               Read Our Success Stories
             </Link>
           </div>
 
           {/* Main Heading */}
           <div className="space-y-3 sm:space-y-6 text-left">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight uppercase tracking-wide">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight uppercase tracking-wide">
               Connect Minds, Share Skills,
               <br />
               Transform Learning
               <br />
-              <span className="text-orange-500">Experiences</span>
+              <span className="text-purple-500 ">Experiences</span>
             </h1>
             <div className="space-y-2">
-              <p className="text-base sm:text-lg text-gray-700 font-semibold uppercase tracking-wide">
+              <p className="text-base sm:text-lg text-white/70 font-semibold uppercase tracking-wide">
                 Flexible Learning
               </p>
-              <p className="text-sm sm:text-base text-gray-600 uppercase tracking-wide">
+              <p className="text-sm sm:text-base text-white/70 uppercase tracking-wide">
                 In-Person • Video • Recorded
               </p>
             </div>
@@ -42,13 +109,13 @@ export default function Hero() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 text-left">
-            <Button asChild className="bg-orange-600 text-white px-5 sm:px-6 py-3 sm:py-4 text-sm sm:text-base">
+            <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white px-8 sm:px-10 py-4 sm:py-5 text-base sm:text-lg">
               <Link href="/signup" className="flex items-center gap-2">
                 Get Started
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-5 h-5" />
               </Link>
             </Button>
-            <Button asChild variant="outline" className="border-gray-300 text-gray-700 px-5 sm:px-6 py-3 sm:py-4 text-sm sm:text-base">
+            <Button asChild variant="outline" className="border-gray-300 text-white px-8 sm:px-10 py-4 sm:py-5 text-base sm:text-lg">
               <Link href="/about">Learn More</Link>
             </Button>
           </div>

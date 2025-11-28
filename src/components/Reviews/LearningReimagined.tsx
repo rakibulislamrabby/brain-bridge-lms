@@ -7,12 +7,12 @@ export default function LearningReimagined() {
     {
       icon: <Users className="w-6 h-6" />,
       title: "IN-PERSON LESSONS",
-      description: "Connect with local teachers for hands-on learning experiences in your community."
+      description: "Connect with local master for hands-on learning experiences in your community."
     },
     {
       icon: <Video className="w-6 h-6" />,
       title: "LIVE VIDEO SESSIONS",
-      description: "Join one-on-one video lessons with expert teachers from anywhere in the world."
+      description: "Join one-on-one video lessons with expert master from anywhere in the world."
     },
     {
       icon: <BookOpen className="w-6 h-6" />,
@@ -37,22 +37,22 @@ export default function LearningReimagined() {
         {/* Simple Cards Grid */}
         <div className="grid md:grid-cols-3 gap-6">
           {learningModes.map((mode, index) => (
-            <Card key={index} className="bg-white border border-gray-200 hover:shadow-lg hover:border-orange-500 hover:-translate-y-2 hover:scale-105 transition-all duration-500 cursor-pointer group">
+            <Card key={index} className="bg-gray-800 border border-gray-700 hover:shadow-lg hover:border-purple-500 hover:-translate-y-2 hover:scale-105 transition-all duration-500 cursor-pointer group">
               <CardContent className="p-6">
                 {/* Icon */}
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-500 group-hover:scale-110 transition-all duration-300">
-                  <div className="text-orange-500 group-hover:text-white transition-colors duration-300">
+                <div className="w-12 h-12 bg-purple-900/30 rounded-lg flex items-center justify-center mb-4 group-hover:bg-purple-500 group-hover:scale-110 transition-all duration-300">
+                  <div className="text-purple-400 group-hover:text-white transition-colors duration-300">
                     {mode.icon}
                   </div>
                 </div>
 
                 {/* Title */}
-                <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-orange-600 transition-colors duration-300">
+                <h3 className="text-lg font-bold text-white mb-3 group-hover:text-purple-400 transition-colors duration-300">
                   {mode.title}
                 </h3>
 
                 {/* Description */}
-                <p className="text-gray-600 text-sm leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
+                <p className="text-gray-300 text-sm leading-relaxed group-hover:text-gray-200 transition-colors duration-300">
                   {mode.description}
                 </p>
               </CardContent>
