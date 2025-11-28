@@ -42,6 +42,17 @@ export interface LiveSessionDetailSubject {
   name: string
 }
 
+export interface DailyAvailableSeats {
+  booked: number
+  available: number
+}
+
+export interface BookedSlot {
+  scheduled_date: string
+  scheduled_start_time: string
+  scheduled_end_time: string
+}
+
 export interface LiveSessionDetailResponse {
   id: number
   title: string
@@ -55,7 +66,8 @@ export interface LiveSessionDetailResponse {
   type: string
   price: string
   description: string
-  available_seats: number
+  daily_available_seats: Record<string, DailyAvailableSeats> // Key is date string (YYYY-MM-DD)
+  booked_slots: BookedSlot[]
 }
 
 const fetchLiveSessionDetail = async (id: number): Promise<LiveSessionDetailResponse> => {

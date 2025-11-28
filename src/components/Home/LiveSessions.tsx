@@ -1,10 +1,11 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Users, Calendar, Clock, DollarSign, Loader2, XCircle, ArrowRight, GraduationCap } from 'lucide-react'
+import { Users, Calendar, Clock, DollarSign, Loader2, XCircle, ArrowRight, GraduationCap, Search } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { useLiveSessions } from '@/hooks/live-session/use-live-session'
 import {
   Pagination,
@@ -95,7 +96,25 @@ export default function LiveSessions({
   showShowMore = false 
 }: LiveSessionsProps = {}) {
   const [currentPage, setCurrentPage] = useState(1)
+  const [searchInput, setSearchInput] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const { data: paginatedData, isLoading, error } = useLiveSessions(currentPage)
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchInput)
+    }, 300) // 300ms debounce delay
+
+    return () => clearTimeout(timer)
+  }, [searchInput])
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    if (debouncedSearchTerm) {
+      setCurrentPage(1)
+    }
+  }, [debouncedSearchTerm])
 
   const slots = useMemo(() => paginatedData?.data || [], [paginatedData?.data])
 
@@ -120,7 +139,32 @@ export default function LiveSessions({
     })
   }, [slots])
 
-  const displaySlots = limit ? sortedSlots.slice(0, limit) : sortedSlots
+  // Filter slots based on search term
+  const filteredSlots = useMemo(() => {
+    if (!debouncedSearchTerm.trim()) {
+      return sortedSlots
+    }
+
+    const searchLower = debouncedSearchTerm.trim().toLowerCase()
+    
+    return sortedSlots.filter((slot) => {
+      // Search in title
+      const titleMatch = slot.title?.toLowerCase().includes(searchLower) || false
+      
+      // Search in teacher name
+      const teacherMatch = slot.teacher?.name?.toLowerCase().includes(searchLower) || false
+      
+      // Search in subject name
+      const subjectMatch = slot.subject?.name?.toLowerCase().includes(searchLower) || false
+      
+      // Search in description
+      const descriptionMatch = slot.description?.toLowerCase().includes(searchLower) || false
+      
+      return titleMatch || teacherMatch || subjectMatch || descriptionMatch
+    })
+  }, [sortedSlots, debouncedSearchTerm])
+
+  const displaySlots = limit ? filteredSlots.slice(0, limit) : filteredSlots
   const hasMoreSlots = limit ? sortedSlots.length > limit : false
 
   // Remove debug logging in production
@@ -140,7 +184,7 @@ export default function LiveSessions({
   }
 
   return (
-    <section className={showPagination ? "py-16 bg-gray-900 min-h-screen" : "py-20 bg-gray-900"}>
+    <section className={showPagination ? " bg-gray-900 min-h-screen" : "py-20 bg-gray-900"}>
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         {showHeader && (
@@ -149,9 +193,22 @@ export default function LiveSessions({
               <>
                 <Badge className="bg-purple-600/20 text-purple-300 border border-purple-600/40 mb-4">Live Sessions</Badge>
                 <h1 className="text-4xl font-bold text-white mb-3">Book a Live Session with Expert Masters</h1>
-                <p className="text-gray-300 max-w-2xl mx-auto">
+                <p className="text-gray-300 max-w-2xl mx-auto mb-8">
                   Explore upcoming live sessions hosted by our verified instructors. Reserve your seat to get personal guidance in real time.
                 </p>
+                {/* Search Field */}
+                <div className="max-w-md mx-auto">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Input
+                      type="text"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      placeholder="Search sessions by title, teacher, or subject..."
+                      className="pl-10 pr-4 py-6 bg-gray-800/80 border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500 focus:ring-purple-500/20 text-base"
+                    />
+                  </div>
+                </div>
               </>
             ) : (
               <>
@@ -165,6 +222,24 @@ export default function LiveSessions({
                 </p>
               </>
             )}
+          </div>
+        )}
+
+        {/* Search Field for Video Call section (when header is hidden but pagination is shown) */}
+        {!showHeader && showPagination && (
+          <div className="text-center mb-12">
+            <div className="max-w-md mx-auto">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Search sessions by title, teacher, or subject..."
+                  className="pl-10 pr-4 py-6 bg-gray-800/80 border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500 focus:ring-purple-500/20 text-base"
+                />
+              </div>
+            </div>
           </div>
         )}
 
@@ -255,7 +330,7 @@ export default function LiveSessions({
                       )}
                     </div>
                     
-                    <div className="flex items-center justify-between pt-2 border-t border-gray-700/50">
+                    {/* <div className="flex items-center justify-between pt-2 border-t border-gray-700/50">
                       {session.available_seats !== undefined && (
                         <div className="flex items-center gap-2 text-sm text-gray-400">
                           <Users className="w-4 h-4 text-purple-400" />
@@ -268,7 +343,7 @@ export default function LiveSessions({
                           <span>${Number(session.price).toFixed(2)}</span>
                         </div>
                       )}
-                    </div>
+                    </div> */}
                   </Link>
                 )
               })}
@@ -290,7 +365,9 @@ export default function LiveSessions({
               <div className="mt-12 border-t border-gray-700 pt-8">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
                   <div className="text-sm text-gray-400">
-                    {pagination.from && pagination.to ? (
+                    {debouncedSearchTerm.trim() ? (
+                      <>Found <span className="text-white font-medium">{filteredSlots.length}</span> result{filteredSlots.length === 1 ? '' : 's'} for "<span className="text-white font-medium">{debouncedSearchTerm}</span>"</>
+                    ) : pagination.from && pagination.to ? (
                       <>Showing <span className="text-white font-medium">{pagination.from}</span> to <span className="text-white font-medium">{pagination.to}</span> of <span className="text-white font-medium">{pagination.total}</span> results</>
                     ) : (
                       <>Total: <span className="text-white font-medium">{pagination.total}</span> results</>
@@ -298,7 +375,8 @@ export default function LiveSessions({
                   </div>
                 </div>
                 
-                {pagination.lastPage > 1 && (
+                {/* Only show pagination when not searching */}
+                {!debouncedSearchTerm.trim() && pagination.lastPage > 1 && (
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>

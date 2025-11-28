@@ -118,8 +118,8 @@ export default function ProfilePage() {
               <div>
                 <CardTitle className="text-white text-lg sm:text-xl">Profile Information</CardTitle>
                 <CardDescription className="text-gray-400 text-sm">
-                  Your account details and information
-                </CardDescription>
+              Your account details and information
+            </CardDescription>
               </div>
               <Button
                 onClick={() => router.push('/dashboard/settings')}
@@ -171,8 +171,8 @@ export default function ProfilePage() {
                     <p className="text-xl sm:text-2xl font-bold text-yellow-400 text-center sm:text-right">
                       {user.points ?? 0}
                     </p>
-                  </div>
                 </div>
+              </div>
               )}
             </div>
 
@@ -224,7 +224,7 @@ export default function ProfilePage() {
 
             {/* Referral Code Section - Only for non-teacher users */}
             {!user.roles?.some(role => role.name === 'teacher') && user.referral_code && (
-              <div className="pt-4 border-t border-gray-700">
+            <div className="pt-4 border-t border-gray-700">
                 <div className="flex items-center gap-2 text-gray-400 text-sm mb-3">
                   <Gift className="h-4 w-4 text-orange-400 flex-shrink-0" />
                   <span>Referral Code</span>
@@ -337,8 +337,8 @@ export default function ProfilePage() {
                             <div className="mt-4 p-3 bg-gradient-to-r from-purple-500/20 to-purple-700/20 border border-purple-500/30 rounded-lg">
                               <p className="text-purple-300 text-sm font-medium text-center">
                                 🏆 You&apos;ve reached the highest level! Keep up the excellent work!
-                              </p>
-                            </div>
+                  </p>
+                </div>
                           )}
                         </div>
                         
@@ -372,8 +372,8 @@ export default function ProfilePage() {
                                   isCurrent ? 'text-white' : isUnlocked ? 'text-gray-300' : 'text-gray-500'
                                 }`}>
                                   {levelName}
-                                </p>
-                              </div>
+                  </p>
+                </div>
                             )
                           })}
                         </div>
@@ -393,7 +393,7 @@ export default function ProfilePage() {
                                   </span>
                                 </div>
                               ))}
-                            </div>
+              </div>
                           </div>
                         )}
                       </div>
@@ -401,21 +401,21 @@ export default function ProfilePage() {
                   })() : (
                     <div className="text-gray-400 text-sm py-4">Unable to load level progress</div>
                   )}
-                </div>
-                
+            </div>
+
                 {/* Teacher Statistics */}
                 <div>
                   <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Teacher Statistics</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <div>
-                      <p className="text-gray-400 text-sm mb-1">Title</p>
-                      <p className="text-white">{user.teacher.title || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-sm mb-1">Total Sessions</p>
-                      <p className="text-white">{user.teacher.total_sessions || 0}</p>
-                    </div>
-                    <div>
+                  <div>
+                    <p className="text-gray-400 text-sm mb-1">Title</p>
+                    <p className="text-white">{user.teacher.title || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm mb-1">Total Sessions</p>
+                    <p className="text-white">{user.teacher.total_sessions || 0}</p>
+                  </div>
+                  <div>
                       <p className="text-gray-400 text-sm mb-1">Five Star Reviews</p>
                       <p className="text-white">{user.teacher.five_star_reviews || 0}</p>
                     </div>
@@ -430,9 +430,9 @@ export default function ProfilePage() {
                     <div>
                       <p className="text-gray-400 text-sm mb-1">Cancelled Sessions</p>
                       <p className="text-white">{user.teacher.cancelled_sessions || 0}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-sm mb-1">Base Pay</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm mb-1">Base Pay</p>
                       <p className="text-white">${parseFloat(user.teacher.base_pay || '0').toFixed(2)}</p>
                     </div>
                   </div>
@@ -465,8 +465,8 @@ export default function ProfilePage() {
                                 <p className="text-gray-400 text-xs mt-1">
                                   {yearsOfExperience === 1 ? 'year' : 'years'} of experience
                                 </p>
-                              </div>
-                            </div>
+                  </div>
+                </div>
                           </div>
                         )
                       })}
