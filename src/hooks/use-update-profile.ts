@@ -60,9 +60,18 @@ const updateProfile = async (data: UpdateProfileRequest): Promise<UserProfile> =
   const url = joinUrl('me');
   
   // Check if we need to send files (FormData) or just JSON
-  const hasProfilePicture = data.profile_picture && data.profile_picture instanceof File;
-  const hasIntroductionVideo = data.introduction_video && data.introduction_video instanceof File;
+  // Match course thumbnail pattern - check if File instance
+  const hasProfilePicture = data.profile_picture instanceof File;
+  const hasIntroductionVideo = data.introduction_video instanceof File;
   const hasFiles = hasProfilePicture || hasIntroductionVideo;
+  
+  console.log('🔍 File detection:', {
+    hasProfilePicture,
+    hasIntroductionVideo,
+    hasFiles,
+    profilePictureType: data.profile_picture ? (data.profile_picture instanceof File ? 'File' : typeof data.profile_picture) : 'undefined',
+    profilePictureValue: data.profile_picture instanceof File ? `${data.profile_picture.name} (${data.profile_picture.size} bytes)` : data.profile_picture
+  });
   
   let body: FormData | string;
   const headers: Record<string, string> = {
@@ -86,15 +95,12 @@ const updateProfile = async (data: UpdateProfileRequest): Promise<UserProfile> =
     if (data.bio !== undefined) formData.append('bio', data.bio || '');
     if (data.address !== undefined) formData.append('address', data.address || '');
     
-    // Add profile picture file if present
+    // Add profile picture file if present - match course thumbnail pattern
     if (hasProfilePicture && data.profile_picture instanceof File) {
       console.log('📎 Appending profile picture file:', data.profile_picture.name, data.profile_picture.size, 'bytes', 'Type:', data.profile_picture.type);
       formData.append('profile_picture', data.profile_picture);
-    } else if (data.profile_picture !== undefined && data.profile_picture !== null && typeof data.profile_picture === 'string' && data.profile_picture.trim() !== '') {
-      // If it's a string (URL), append it
-      console.log('🔗 Appending profile picture URL:', data.profile_picture);
-      formData.append('profile_picture', data.profile_picture);
     }
+    // Don't send profile_picture at all if no file - prevents null from being sent
     
     // Add teacher-specific fields
     if (data.title !== undefined) formData.append('title', data.title || '');
@@ -135,8 +141,18 @@ const updateProfile = async (data: UpdateProfileRequest): Promise<UserProfile> =
     delete headers['Content-Type'];
   } else {
     // Use JSON if no files
+    // Remove file fields from data if they're undefined/null (to prevent sending null/undefined)
+    const jsonData: any = { ...data };
+    // Remove profile_picture if it's undefined (only include if it's a string URL)
+    if (jsonData.profile_picture === undefined || jsonData.profile_picture === null || jsonData.profile_picture instanceof File) {
+      delete jsonData.profile_picture;
+    }
+    // Remove introduction_video if it's undefined (only include if it's a string URL)
+    if (jsonData.introduction_video === undefined || jsonData.introduction_video === null || jsonData.introduction_video instanceof File) {
+      delete jsonData.introduction_video;
+    }
     headers['Content-Type'] = 'application/json';
-    body = JSON.stringify(data);
+    body = JSON.stringify(jsonData);
   }
 
   console.log('🔵 Updating profile:', { url, hasFiles, method: hasFiles ? 'FormData' : 'JSON' });

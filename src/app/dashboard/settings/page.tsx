@@ -99,7 +99,8 @@ export default function SettingsPage() {
   }
 
   const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0] ?? null
+    
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
@@ -131,6 +132,9 @@ export default function SettingsPage() {
         setProfilePicturePreview(reader.result as string)
       }
       reader.readAsDataURL(file)
+    } else {
+      // Clear file if no file selected
+      setProfilePictureFile(null)
     }
   }
 
@@ -232,15 +236,9 @@ export default function SettingsPage() {
         address: formData.address || null,
       }
 
-      // Only include profile_picture if there's a file to upload or a URL to set
-      if (profilePictureFile && profilePictureFile instanceof File) {
-        console.log('✅ Profile picture file selected:', profilePictureFile.name, profilePictureFile.size, 'bytes')
-        updateData.profile_picture = profilePictureFile
-      } else if (formData.profile_picture && formData.profile_picture.trim() !== '' && formData.profile_picture !== user?.profile_picture) {
-        // Only include URL if it's different from existing or explicitly provided
-        console.log('✅ Profile picture URL provided:', formData.profile_picture)
-        updateData.profile_picture = formData.profile_picture
-      }
+      // Include profile_picture file if selected - match course thumbnail pattern exactly
+      // Same pattern as course: thumbnailFile instanceof File ? thumbnailFile : undefined
+      updateData.profile_picture = profilePictureFile instanceof File ? profilePictureFile : undefined
 
       // Add teacher-specific fields if user is a teacher
       if (isTeacher) {
@@ -302,9 +300,9 @@ export default function SettingsPage() {
   if (loadingUser) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
           <Loader2 className="h-12 w-12 text-orange-600 animate-spin" />
-        </div>
+      </div>
       </DashboardLayout>
     )
   }
@@ -331,7 +329,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Basic Information */}
-              <div className="space-y-4">
+      <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-white">Basic Information</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -416,39 +414,27 @@ export default function SettingsPage() {
                       </div>
                     )}
                     
-                    {/* File input */}
-                    <label className="inline-flex items-center gap-2 bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 cursor-pointer transition-colors">
-                      <ImageIcon className="h-4 w-4 text-orange-400" />
-                      <span>{profilePictureFile ? 'Change Image' : 'Upload Image'}</span>
-                      <input
-                        id="profile_picture"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleProfilePictureChange}
-                        className="hidden"
-                      />
-                    </label>
-                    
-                    {profilePictureFile && (
-                      <p className="text-sm text-gray-400">
-                        Selected: {profilePictureFile.name} ({(profilePictureFile.size / 1024 / 1024).toFixed(2)} MB)
-                      </p>
-                    )}
-                    
-                    {/* Fallback: URL input if no file selected and no existing image */}
-                    {!profilePictureFile && !profilePicturePreview && (
-                      <div className="mt-2">
-                        <Label htmlFor="profile_picture_url" className="text-sm text-gray-400">Or enter URL:</Label>
-                        <Input
-                          id="profile_picture_url"
-                          type="url"
-                          value={formData.profile_picture}
-                          onChange={(e) => handleInputChange('profile_picture', e.target.value)}
-                          className="bg-gray-700 border-gray-600 text-white mt-1"
-                          placeholder="https://example.com/profile.jpg"
+                    {/* File input - matching course thumbnail upload pattern */}
+                    <div className="flex items-center gap-3">
+                      <label className="inline-flex items-center gap-2 bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm text-gray-300 hover:bg-gray-600 cursor-pointer">
+                        <ImageIcon className="h-4 w-4 text-orange-400" />
+                        <span>Select file</span>
+                        <input
+                          id="profile_picture"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProfilePictureChange}
+                          className="hidden"
                         />
-                      </div>
-                    )}
+                      </label>
+                      {profilePictureFile ? (
+                        <span className="text-sm text-gray-400 truncate">
+                          {profilePictureFile.name}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-500">No file selected</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
