@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,7 +13,7 @@ import { useRegisterTeacher, useRegisterStudent } from "@/hooks/use-rolebased-au
 import { useToast } from "@/components/ui/toast"
 import { GraduationCap, User } from "lucide-react"
 
-export default function SignUp() {
+function SignUpContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const registerTeacherMutation = useRegisterTeacher()
@@ -371,5 +371,13 @@ export default function SignUp() {
       </div>
       <Footer />
     </>
+  )
+}
+
+export default function SignUp() {
+  return (
+    <Suspense fallback={null}>
+      <SignUpContent />
+    </Suspense>
   )
 }

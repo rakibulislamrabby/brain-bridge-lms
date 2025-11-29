@@ -366,7 +366,7 @@ export default function LiveSessions({
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
                   <div className="text-sm text-gray-400">
                     {debouncedSearchTerm.trim() ? (
-                      <>Found <span className="text-white font-medium">{filteredSlots.length}</span> result{filteredSlots.length === 1 ? '' : 's'} for "<span className="text-white font-medium">{debouncedSearchTerm}</span>"</>
+                      <>Found <span className="text-white font-medium">{filteredSlots.length}</span> result{filteredSlots.length === 1 ? '' : 's'} for &quot;<span className="text-white font-medium">{debouncedSearchTerm}</span>&quot;</>
                     ) : pagination.from && pagination.to ? (
                       <>Showing <span className="text-white font-medium">{pagination.from}</span> to <span className="text-white font-medium">{pagination.to}</span> of <span className="text-white font-medium">{pagination.total}</span> results</>
                     ) : (

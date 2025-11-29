@@ -11,8 +11,42 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { useTeachers, Teacher } from '@/hooks/teacher/use-teachers'
 import { useSkills } from '@/hooks/skills/use-skills'
-import { ArrowLeft, Star, Users, Award, Loader2, Search, Mail, Phone, MapPin, Info, ExternalLink, DollarSign } from 'lucide-react'
+import { ArrowLeft, Star, Users, Award, Loader2, Search, Mail, Phone, MapPin, Info, ExternalLink, DollarSign, Play, X } from 'lucide-react'
 import Image from 'next/image'
+
+const STORAGE_BASE_URL = process.env.NEXT_PUBLIC_MAIN_STORAGE_URL || ''
+
+const resolveProfilePictureUrl = (path?: string | null): string | null => {
+  if (!path || typeof path !== 'string') {
+    return null
+  }
+
+  // If already a full URL, return as is
+  if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+
+  // Prepend storage base URL
+  const base = STORAGE_BASE_URL.endsWith('/') ? STORAGE_BASE_URL.slice(0, -1) : STORAGE_BASE_URL
+  const cleanedPath = path.startsWith('/') ? path.slice(1) : path
+  return `${base}/${cleanedPath}`
+}
+
+const resolveVideoUrl = (path?: string | null): string | null => {
+  if (!path || typeof path !== 'string') {
+    return null
+  }
+
+  // If already a full URL, return as is
+  if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+
+  // Prepend storage base URL
+  const base = STORAGE_BASE_URL.endsWith('/') ? STORAGE_BASE_URL.slice(0, -1) : STORAGE_BASE_URL
+  const cleanedPath = path.startsWith('/') ? path.slice(1) : path
+  return `${base}/${cleanedPath}`
+}
 
 function MastersPageContent() {
   const searchParams = useSearchParams()
@@ -22,6 +56,8 @@ function MastersPageContent() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false)
+  const [videoUrl, setVideoUrl] = useState<string | null>(null)
   
   // Debounce search input
   useEffect(() => {
@@ -128,6 +164,19 @@ function MastersPageContent() {
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setSelectedTeacher(null)
+  }
+
+  const handleOpenVideo = (videoPath: string) => {
+    const url = resolveVideoUrl(videoPath)
+    if (url) {
+      setVideoUrl(url)
+      setIsVideoModalOpen(true)
+    }
+  }
+
+  const handleCloseVideoModal = () => {
+    setIsVideoModalOpen(false)
+    setVideoUrl(null)
   }
 
   return (
@@ -292,7 +341,7 @@ function MastersPageContent() {
                         <div className="h-16 w-16 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 overflow-hidden">
                           {teacher.profile_picture ? (
                             <Image
-                              src={teacher.profile_picture}
+                              src={resolveProfilePictureUrl(teacher.profile_picture) || ''}
                               alt={teacher.name}
                               width={64}
                               height={64}
@@ -400,7 +449,7 @@ function MastersPageContent() {
                   <div className="h-20 w-20 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {selectedTeacher.profile_picture ? (
                       <Image
-                        src={selectedTeacher.profile_picture}
+                        src={resolveProfilePictureUrl(selectedTeacher.profile_picture) || ''}
                         alt={selectedTeacher.name}
                         width={80}
                         height={80}
@@ -541,19 +590,17 @@ function MastersPageContent() {
                 )}
 
                 {/* Introduction Video */}
-                {selectedTeacher.teacher.introduction_video && (
+                {selectedTeacher.teacher?.introduction_video && (
                   <div className="border-t border-gray-700 pt-4">
                     <h3 className="text-sm font-semibold text-gray-400 mb-3">Introduction Video</h3>
                     <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600/50">
-                      <a
-                        href={selectedTeacher.teacher.introduction_video}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors"
+                      <Button
+                        onClick={() => handleOpenVideo(selectedTeacher.teacher!.introduction_video!)}
+                        className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
                       >
-                        <ExternalLink className="w-4 h-4" />
-                        <span className="text-sm">Watch Introduction Video</span>
-                      </a>
+                        <Play className="w-4 h-4" />
+                        <span className="text-sm">Watch Intro Video</span>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -570,6 +617,44 @@ function MastersPageContent() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Video Modal */}
+      <Dialog open={isVideoModalOpen} onOpenChange={handleCloseVideoModal}>
+        <DialogContent 
+          className="!w-[50vw] !max-w-[90vw] bg-gray-800 border-gray-700 p-0"
+          style={{ 
+            width: '50vw', 
+            maxWidth: '50vw',
+            minWidth: '50vw'
+          }}
+        >
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <DialogTitle className="text-xl font-bold text-white">Introduction Video</DialogTitle>
+              {/* <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCloseVideoModal}
+                className="text-gray-400 hover:text-white hover:bg-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </Button> */}
+            </div>
+            {videoUrl && (
+              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                <video
+                  src={videoUrl}
+                  controls
+                  className="absolute top-0 left-0 w-full h-full rounded-lg"
+                  style={{ backgroundColor: '#000' }}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
