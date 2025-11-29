@@ -71,6 +71,20 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       allowedRoles: ['student'] // Students only
     },
     {
+      title: 'My Course Requests',
+      icon: BookOpen,
+      href: '/dashboard/my-course-requests',
+      items: [],
+      allowedRoles: ['student'] // Students only
+    },
+    {
+      title: 'Course Requests',
+      icon: BookOpen,
+      href: '/dashboard/course-requests',
+      items: [],
+      allowedRoles: ['admin'] // Only admin can see this
+    },
+    {
       title: 'Course Enrollments',
       icon: Users,
       href: '/dashboard/teacher-enrolled-courses',
@@ -138,6 +152,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       items: [],
       allowedRoles: ['admin'] // Only admin can see this
     },
+    
     {
       title: 'Settings',
       icon: Settings,
@@ -149,18 +164,20 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
 
     // Filter navigation based on user role
     return allNavigation.filter(item => {
-      // If user is a student, only show Dashboard and Settings
-      if (isStudent) {
-        return item.allowedRoles?.includes('student') || false
-      }
-      
-      // For admin and teacher, check if they have the required role
+      // Check if user has any of the allowed roles for this item
       if (isAdmin) {
-        return true // Admin can see everything
+        // Admin can see items with 'admin' role, but not student-only items
+        return item.allowedRoles?.includes('admin') || false
       }
       
       if (isTeacher) {
-        return item.allowedRoles?.includes('teacher') || false
+        // Teachers can see items with 'teacher' or 'admin' role
+        return item.allowedRoles?.includes('teacher') || item.allowedRoles?.includes('admin') || false
+      }
+      
+      if (isStudent) {
+        // Students can only see items with 'student' role
+        return item.allowedRoles?.includes('student') || false
       }
       
       // Default: if no role matches, don't show the item
@@ -168,24 +185,45 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
     })
   }, [isAdmin, isStudent, isTeacher])
 
-  const isActive = useCallback((href: string) => {
+  const isActive = useCallback((href: string, hasSubItems: boolean = false) => {
     if (href === '/dashboard') {
       return pathname === '/dashboard'
     }
-    return pathname.startsWith(href)
+    // Exact match
+    if (pathname === href) {
+      return true
+    }
+    // For items with sub-items, only match exact or sub-paths (with trailing slash)
+    // This prevents /dashboard/course-requests from matching /dashboard/course
+    if (hasSubItems) {
+      return pathname.startsWith(href + '/')
+    }
+    // For items without sub-items, use startsWith but be careful
+    // Only match if it's a sub-path (has trailing slash) to avoid false matches
+    return pathname.startsWith(href + '/')
   }, [pathname])
 
   // Auto-expand parent when sub-item is active
   React.useEffect(() => {
     navigation.forEach(item => {
       if (item.items.length > 0) {
-        const hasActiveSubItem = item.items.some(subItem => isActive(subItem.href))
+        // Only check sub-items, not the parent href itself
+        const hasActiveSubItem = item.items.some(subItem => {
+          if (subItem.href === '/dashboard') {
+            return pathname === '/dashboard'
+          }
+          // Use exact match or sub-path matching
+          if (pathname === subItem.href) {
+            return true
+          }
+          return pathname.startsWith(subItem.href + '/')
+        })
         if (hasActiveSubItem && !expandedItems.includes(item.title)) {
           setExpandedItems(prev => [...prev, item.title])
         }
       }
     })
-  }, [pathname, expandedItems, isActive, navigation])
+  }, [pathname, expandedItems, navigation])
 
   const toggleExpanded = (title: string) => {
     setExpandedItems(prev => 
@@ -224,8 +262,8 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       <nav className="flex-1 p-4 space-y-2">
         {navigation.map((item) => {
           const Icon = item.icon
-          const isItemActive = isActive(item.href)
           const hasSubItems = item.items.length > 0
+          const isItemActive = isActive(item.href, hasSubItems)
           const isExpanded = expandedItems.includes(item.title)
 
           return (
