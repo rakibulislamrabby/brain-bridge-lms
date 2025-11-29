@@ -18,17 +18,90 @@ import {
   TrendingUp,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  Star
 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
+import CourseReviewModal from '@/components/shared/reviews/CourseReviewModal'
 
 export default function EnrolledCoursesPage() {
   const [user, setUser] = useState<{ id: number; name: string; email: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const { addToast } = useToast()
+  const [reviewModalOpen, setReviewModalOpen] = useState(false)
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null)
+  const [selectedCourseTitle, setSelectedCourseTitle] = useState<string>('')
+  const [reviewedCourses, setReviewedCourses] = useState<Set<number>>(new Set())
   
   const { data: enrolledCourses, isLoading, error, refetch } = useEnrolledCourses()
+
+  // Load reviewed courses from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('reviewed_courses')
+        if (stored) {
+          const parsed = JSON.parse(stored) as number[]
+          setReviewedCourses(new Set(parsed))
+        }
+      } catch (error) {
+        console.error('Failed to load reviewed courses:', error)
+      }
+    }
+  }, [])
+
+  // Listen for review submission events
+  useEffect(() => {
+    const handleReviewSubmitted = (event: Event) => {
+      const customEvent = event as CustomEvent<{ courseId: number }>
+      const courseId = customEvent.detail?.courseId
+      if (courseId) {
+        setReviewedCourses(prev => {
+          const newSet = new Set(prev)
+          newSet.add(courseId)
+          // Save to localStorage
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('reviewed_courses', JSON.stringify(Array.from(newSet)))
+            } catch (error) {
+              console.error('Failed to save reviewed courses:', error)
+            }
+          }
+          return newSet
+        })
+        refetch()
+      }
+    }
+
+    const handleAlreadyReviewed = (event: Event) => {
+      const customEvent = event as CustomEvent<{ courseId: number }>
+      const courseId = customEvent.detail?.courseId
+      if (courseId) {
+        setReviewedCourses(prev => {
+          const newSet = new Set(prev)
+          newSet.add(courseId)
+          // Save to localStorage
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('reviewed_courses', JSON.stringify(Array.from(newSet)))
+            } catch (error) {
+              console.error('Failed to save reviewed courses:', error)
+            }
+          }
+          return newSet
+        })
+      }
+    }
+
+    window.addEventListener('courseReviewSubmitted', handleReviewSubmitted)
+    window.addEventListener('courseAlreadyReviewed', handleAlreadyReviewed)
+
+    return () => {
+      window.removeEventListener('courseReviewSubmitted', handleReviewSubmitted)
+      window.removeEventListener('courseAlreadyReviewed', handleAlreadyReviewed)
+    }
+  }, [refetch])
 
   useEffect(() => {
     const storedUser = getStoredUser()
@@ -283,16 +356,40 @@ export default function EnrolledCoursesPage() {
                             </div>
                           </td>
                           <td className="py-4 px-4">
-                            <Link href={`/courses/${course.id}`}>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="border-blue-600 text-blue-400 hover:bg-blue-900/30 cursor-pointer"
-                              >
-                                <ExternalLink className="h-4 w-4 mr-2" />
-                                View Course
-                              </Button>
-                            </Link>
+                            <div className="flex items-center gap-2">
+                              <Link href={`/courses/${course.id}`}>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-blue-600 text-blue-400 hover:bg-blue-900/30 cursor-pointer"
+                                >
+                                  <ExternalLink className="h-4 w-4 mr-2" />
+                                  View Course
+                                </Button>
+                              </Link>
+                              {/* {enrollment.payment_status?.toLowerCase() === 'paid' && (
+                                reviewedCourses.has(course.id) ? (
+                                  <Badge className="bg-green-600/80 text-white flex items-center gap-1">
+                                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                    Reviewed
+                                  </Badge>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedCourseId(course.id)
+                                      setSelectedCourseTitle(course.title || 'this course')
+                                      setReviewModalOpen(true)
+                                    }}
+                                    className="border-purple-600 text-purple-400 hover:bg-purple-900/30 cursor-pointer"
+                                  >
+                                    <Star className="h-4 w-4 mr-2" />
+                                    Review
+                                  </Button>
+                                )
+                              )} */}
+                            </div>
                           </td>
                         </tr>
                       )
@@ -304,6 +401,16 @@ export default function EnrolledCoursesPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Review Modal */}
+      {selectedCourseId && (
+        <CourseReviewModal
+          open={reviewModalOpen}
+          onOpenChange={setReviewModalOpen}
+          courseId={selectedCourseId}
+          courseTitle={selectedCourseTitle}
+        />
+      )}
     </DashboardLayout>
   )
 }

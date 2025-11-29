@@ -15,8 +15,10 @@ import {
   Clock,
   Video,
   User,
+  Star,
 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
+import TeacherReviewModal from '@/components/shared/reviews/TeacherReviewModal'
 import {
   Pagination,
   PaginationContent,
@@ -33,9 +35,80 @@ export default function StudentBookedSlotsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const router = useRouter()
   const { addToast } = useToast()
+  const [reviewModalOpen, setReviewModalOpen] = useState(false)
+  const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null)
+  const [selectedTeacherName, setSelectedTeacherName] = useState<string>('')
+  const [reviewedSlots, setReviewedSlots] = useState<Set<number>>(new Set())
   
   const { data: paginatedData, isLoading, error, refetch } = useStudentBookedSlots(currentPage)
   const bookedSlots = paginatedData?.data || []
+
+  // Load reviewed slots from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('reviewed_slots')
+        if (stored) {
+          const parsed = JSON.parse(stored) as number[]
+          setReviewedSlots(new Set(parsed))
+        }
+      } catch (error) {
+        console.error('Failed to load reviewed slots:', error)
+      }
+    }
+  }, [])
+
+  // Listen for review submission events
+  useEffect(() => {
+    const handleReviewSubmitted = (event: Event) => {
+      const customEvent = event as CustomEvent<{ slotId: number }>
+      const slotId = customEvent.detail?.slotId
+      if (slotId) {
+        setReviewedSlots(prev => {
+          const newSet = new Set(prev)
+          newSet.add(slotId)
+          // Save to localStorage
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('reviewed_slots', JSON.stringify(Array.from(newSet)))
+            } catch (error) {
+              console.error('Failed to save reviewed slots:', error)
+            }
+          }
+          return newSet
+        })
+        refetch()
+      }
+    }
+
+    const handleAlreadyReviewed = (event: Event) => {
+      const customEvent = event as CustomEvent<{ slotId: number }>
+      const slotId = customEvent.detail?.slotId
+      if (slotId) {
+        setReviewedSlots(prev => {
+          const newSet = new Set(prev)
+          newSet.add(slotId)
+          // Save to localStorage
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('reviewed_slots', JSON.stringify(Array.from(newSet)))
+            } catch (error) {
+              console.error('Failed to save reviewed slots:', error)
+            }
+          }
+          return newSet
+        })
+      }
+    }
+
+    window.addEventListener('slotReviewSubmitted', handleReviewSubmitted)
+    window.addEventListener('slotAlreadyReviewed', handleAlreadyReviewed)
+
+    return () => {
+      window.removeEventListener('slotReviewSubmitted', handleReviewSubmitted)
+      window.removeEventListener('slotAlreadyReviewed', handleAlreadyReviewed)
+    }
+  }, [refetch])
 
   useEffect(() => {
     const storedUser = getStoredUser()
@@ -145,6 +218,17 @@ export default function StudentBookedSlotsPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  // Check if slot time has passed (based on scheduled_end_time)
+  const isSlotTimePassed = (scheduledEndTime: string): boolean => {
+    try {
+      const endTime = new Date(scheduledEndTime)
+      const now = new Date()
+      return endTime < now
+    } catch {
+      return false
+    }
+  }
+
   const pagination = paginatedData ? {
     currentPage: paginatedData.current_page,
     lastPage: paginatedData.last_page,
@@ -244,6 +328,9 @@ export default function StudentBookedSlotsPage() {
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                           Meeting Link
                         </th>
+                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -265,6 +352,10 @@ export default function StudentBookedSlotsPage() {
                         
                         const startDateTime = parseDateTime(booking.scheduled_start_time)
                         const endDateTime = parseDateTime(booking.scheduled_end_time)
+                        const slotTimePassed = isSlotTimePassed(booking.scheduled_end_time)
+                        const isPaid = booking.payment_status?.toLowerCase() === 'paid'
+                        const isReviewed = reviewedSlots.has(booking.slot_id)
+                        const canReview = slotTimePassed && isPaid && !isReviewed
                         
                         return (
                           <tr
@@ -316,6 +407,42 @@ export default function StudentBookedSlotsPage() {
                                 </a>
                               ) : (
                                 <span className="text-gray-500 text-sm">—</span>
+                              )}
+                            </td>
+                            <td className="py-4 px-4">
+                              {isReviewed ? (
+                                <Badge className="bg-green-600/80 text-white flex items-center gap-1 w-fit">
+                                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                  Reviewed
+                                </Badge>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedSlotId(booking.slot_id)
+                                    setSelectedTeacherName(slot.teacher?.name || 'this teacher')
+                                    setReviewModalOpen(true)
+                                  }}
+                                  disabled={!canReview}
+                                  className={`${
+                                    canReview
+                                      ? 'border-purple-600 text-purple-400 hover:bg-purple-900/30 cursor-pointer'
+                                      : 'border-gray-600 text-gray-500 cursor-not-allowed opacity-50'
+                                  }`}
+                                  title={
+                                    !canReview
+                                      ? !isPaid
+                                        ? 'Payment required to review'
+                                        : !slotTimePassed
+                                        ? 'Slot time must pass before reviewing'
+                                        : 'Unable to review'
+                                      : 'Review this teacher'
+                                  }
+                                >
+                                  <Star className="h-4 w-4 mr-2" />
+                                  Review
+                                </Button>
                               )}
                             </td>
                           </tr>
@@ -398,6 +525,16 @@ export default function StudentBookedSlotsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Review Modal */}
+      {selectedSlotId && (
+        <TeacherReviewModal
+          open={reviewModalOpen}
+          onOpenChange={setReviewModalOpen}
+          slotId={selectedSlotId}
+          teacherName={selectedTeacherName}
+        />
+      )}
     </DashboardLayout>
   )
 }

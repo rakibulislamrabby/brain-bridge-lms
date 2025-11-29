@@ -118,7 +118,7 @@ export default function CoursesPage() {
                   In-Person Learning Coming Soon
                 </h2>
                 <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-8">
-                  We're working on bringing you face-to-face learning experiences with expert masters. 
+                  We&apos;re working on bringing you face-to-face learning experiences with expert masters. 
                   Stay tuned for this exciting new way to learn!
                 </p>
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-500/30 rounded-full text-orange-300 text-sm">

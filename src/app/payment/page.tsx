@@ -4,7 +4,7 @@ import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, Calendar, Clock, User, BookOpen, DollarSign } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, Calendar, Clock, User, BookOpen, DollarSign, Sparkles, Minus } from 'lucide-react'
 import { AppHeader } from '@/components/app-header'
 import Footer from '@/components/shared/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,6 +12,9 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { useConfirmBooking } from '@/hooks/slots/use-confirm-booking'
 import { useConfirmPurchase } from '@/hooks/course/use-confirm-purchase'
+import { useMe } from '@/hooks/use-me'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 // Try multiple possible environment variable names for Stripe publishable key
 // Note: In Next.js, only variables prefixed with NEXT_PUBLIC_ are available on the client side
@@ -73,9 +76,29 @@ function PaymentForm({ clientSecret, amount, slotInfo, courseInfo, paymentIntent
   const { addToast } = useToast()
   const confirmBookingMutation = useConfirmBooking()
   const confirmPurchaseMutation = useConfirmPurchase()
+  const { data: user } = useMe()
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'succeeded' | 'failed'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  
+  // Points system state
+  const [pointsToUse, setPointsToUse] = useState<number>(0)
+  const availablePoints = user?.points || 0
+  const originalAmount = parseFloat(amount) || 0
+  const pointsDiscount = Math.min(pointsToUse, originalAmount, availablePoints) // 1 point = $1
+  const newPaymentAmount = Math.max(0, originalAmount - pointsDiscount)
+  
+  const handlePointsChange = (value: string) => {
+    const numValue = parseInt(value) || 0
+    // Limit to available points and original amount
+    const maxPoints = Math.min(availablePoints, Math.floor(originalAmount))
+    setPointsToUse(Math.max(0, Math.min(numValue, maxPoints)))
+  }
+  
+  const handleMaxPoints = () => {
+    const maxPoints = Math.min(availablePoints, Math.floor(originalAmount))
+    setPointsToUse(maxPoints)
+  }
   
 console.log("paymentIntentId",paymentIntentId)
   const handleSubmit = async (e: React.FormEvent) => {
@@ -121,6 +144,8 @@ console.log("paymentIntentId",paymentIntentId)
               slot_id: slotInfo.id,
               scheduled_date: slotInfo.scheduled_date,
               payment_intent_id: paymentIntentId,
+              points_to_use: pointsToUse,
+              new_payment_amount: newPaymentAmount,
             })
             
             setPaymentStatus('succeeded')
@@ -178,6 +203,8 @@ console.log("paymentIntentId",paymentIntentId)
             await confirmPurchaseMutation.mutateAsync({
               course_id: courseInfo.id,
               payment_intent_id: paymentIntentId,
+              points_to_use: pointsToUse,
+              new_payment_amount: newPaymentAmount,
             })
             
             setPaymentStatus('succeeded')
@@ -371,13 +398,82 @@ console.log("paymentIntentId",paymentIntentId)
               ) : null}
             </div>
 
-            <div className="pt-4 border-t border-gray-700/70">
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-600/20 to-purple-500/10 rounded-lg border border-purple-500/30">
-                <div className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-purple-400" />
-                  <span className="text-gray-300 font-medium">Total Amount</span>
+            {/* Points Usage Section */}
+            {availablePoints > 0 && originalAmount > 0 && (
+              <div className="pt-4 border-t border-gray-700/70">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-white flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-yellow-400" />
+                      Use Points (1 point = $1 discount)
+                    </Label>
+                    <span className="text-sm text-gray-400">
+                      Available: <span className="text-yellow-400 font-semibold">{availablePoints}</span> points
+                    </span>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      max={Math.min(availablePoints, Math.floor(originalAmount))}
+                      value={pointsToUse || ''}
+                      onChange={(e) => handlePointsChange(e.target.value)}
+                      placeholder="0"
+                      className="bg-gray-700 border-gray-600 text-white flex-1"
+                      disabled={isProcessing || paymentStatus === 'succeeded'}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleMaxPoints}
+                      className="border-yellow-600 text-yellow-400 hover:bg-yellow-900/30 whitespace-nowrap"
+                      disabled={isProcessing || paymentStatus === 'succeeded' || availablePoints === 0}
+                    >
+                      Use Max
+                    </Button>
+                  </div>
+                  
+                  {pointsToUse > 0 && (
+                    <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-300">Points Discount:</span>
+                        <span className="text-yellow-400 font-semibold">-${pointsDiscount.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <span className="text-white font-bold text-2xl">${amount}</span>
+              </div>
+            )}
+
+            <div className="pt-4 border-t border-gray-700/70">
+              <div className="space-y-2">
+                {pointsToUse > 0 && (
+                  <>
+                    <div className="flex items-center justify-between text-gray-400 text-sm">
+                      <span>Original Amount:</span>
+                      <span>${originalAmount.toFixed(2)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-yellow-400 text-sm">
+                      <span className="flex items-center gap-1">
+                        <Minus className="w-4 h-4" />
+                        Points Discount ({pointsToUse} pts):
+                      </span>
+                      <span>-${pointsDiscount.toFixed(2)}</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-600/20 to-purple-500/10 rounded-lg border border-purple-500/30">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="w-5 h-5 text-purple-400" />
+                    <span className="text-gray-300 font-medium">
+                      {pointsToUse > 0 ? 'Amount to Pay' : 'Total Amount'}
+                    </span>
+                  </div>
+                  <span className="text-white font-bold text-2xl">
+                    ${pointsToUse > 0 ? newPaymentAmount.toFixed(2) : originalAmount.toFixed(2)}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -467,7 +563,7 @@ console.log("paymentIntentId",paymentIntentId)
                   ) : (
                     <>
                       <DollarSign className="w-4 h-4 mr-2" />
-                      Pay ${amount}
+                      Pay ${pointsToUse > 0 ? newPaymentAmount.toFixed(2) : originalAmount.toFixed(2)}
                     </>
                   )}
                 </Button>

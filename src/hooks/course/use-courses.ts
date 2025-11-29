@@ -58,6 +58,22 @@ export interface CourseTeacherSummary {
   bio?: string;
 }
 
+export interface CourseReview {
+  id: number;
+  reviewer_id: number;
+  slot_id: number | null;
+  course_id: number;
+  teacher_id: number;
+  rating: number;
+  comment: string;
+  created_at: string;
+  updated_at: string;
+  reviewer?: {
+    id: number;
+    name: string;
+  } | null;
+}
+
 export interface CourseResponse {
   id: number;
   title: string;
@@ -88,6 +104,8 @@ export interface CourseResponse {
   total_students?: number;
   average_rating?: number;
   rating?: number;
+  reviews?: CourseReview[];
+  enrollment_count?: number;
 }
 
 const normalizeCourseArray = (result: any): CourseResponse[] => {

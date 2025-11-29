@@ -13,6 +13,7 @@ export interface RegisterStudentRequest {
   name: string;
   email: string;
   password: string;
+  referral_code?: string;
 }
 
 export interface AuthResponse {
@@ -62,11 +63,16 @@ const registerTeacher = async (data: RegisterTeacherRequest): Promise<AuthRespon
 // API function to register a student
 const registerStudent = async (data: RegisterStudentRequest): Promise<AuthResponse> => {
   // Clean data - remove any empty strings or undefined values
-  const cleanData = {
+  const cleanData: any = {
     name: data.name.trim(),
     email: data.email.trim(),
     password: data.password
   };
+  
+  // Add referral_code if provided (optional field)
+  if (data.referral_code && data.referral_code.trim()) {
+    cleanData.referral_code = data.referral_code.trim();
+  }
   
   // Validate required fields
   if (!cleanData.name || !cleanData.email || !cleanData.password) {
