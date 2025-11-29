@@ -47,7 +47,7 @@ const approveCourseRequest = async (
   requestId: number,
   data?: CourseRequestActionData
 ): Promise<CourseRequestActionResponse> => {
-  const url = joinUrl(`course-requests/${requestId}/approve`)
+  const url = joinUrl(`course-request/${requestId}/approve`)
   const headers = getAuthHeaders()
 
   console.log('🔵 Approving course request:', { url, requestId, data })
@@ -86,7 +86,7 @@ const rejectCourseRequest = async (
   requestId: number,
   data?: CourseRequestActionData
 ): Promise<CourseRequestActionResponse> => {
-  const url = joinUrl(`course-requests/${requestId}/reject`)
+  const url = joinUrl(`course-request/${requestId}/reject`)
   const headers = getAuthHeaders()
 
   console.log('🔵 Rejecting course request:', { url, requestId, data })

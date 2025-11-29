@@ -6,8 +6,19 @@ import { getStoredUser } from '@/hooks/useAuth'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { useMyCourseRequests } from '@/hooks/course/use-my-course-requests'
-import { Loader2, BookOpen, Calendar, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { useDeleteCourseRequest } from '@/hooks/course/use-delete-course-request'
+import { useToast } from '@/components/ui/toast'
+import { Loader2, BookOpen, Calendar, Clock, CheckCircle, XCircle, AlertCircle, Trash2 } from 'lucide-react'
 import {
   Pagination,
   PaginationContent,
@@ -63,9 +74,13 @@ export default function MyCourseRequestsPage() {
   const [user, setUser] = useState<{ id: number; name: string; email: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [requestToDelete, setRequestToDelete] = useState<{ id: number; course_name: string } | null>(null)
   const router = useRouter()
+  const { addToast } = useToast()
 
   const { data: paginatedData, isLoading, error } = useMyCourseRequests(currentPage)
+  const deleteMutation = useDeleteCourseRequest()
   const courseRequests = paginatedData?.data || []
 
   const pagination = paginatedData ? {
@@ -100,6 +115,39 @@ export default function MyCourseRequestsPage() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleOpenDeleteDialog = (requestId: number, courseName: string) => {
+    setRequestToDelete({ id: requestId, course_name: courseName })
+    setDeleteDialogOpen(true)
+  }
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialogOpen(false)
+    setRequestToDelete(null)
+  }
+
+  const handleDeleteRequest = async () => {
+    if (!requestToDelete) return
+
+    try {
+      await deleteMutation.mutateAsync(requestToDelete.id)
+      addToast({
+        type: 'success',
+        title: 'Request Deleted',
+        description: 'Your course request has been deleted successfully.',
+        duration: 5000,
+      })
+      handleCloseDeleteDialog()
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete course request. Please try again.'
+      addToast({
+        type: 'error',
+        title: 'Delete Failed',
+        description: errorMessage,
+        duration: 5000,
+      })
+    }
   }
 
   if (loading) {
@@ -209,23 +257,27 @@ export default function MyCourseRequestsPage() {
                   <table className="w-full border-collapse">
                     <thead className="bg-gray-900/60">
                       <tr>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                          Requested At
+                        </th>
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                           Course Name
                         </th>
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                           Subject
                         </th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                        {/* <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                           Description
-                        </th>
+                        </th> */}
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                           Status
                         </th>
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                           Admin Note
                         </th>
+                       
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                          Requested At
+                          Actions
                         </th>
                       </tr>
                     </thead>
@@ -236,6 +288,12 @@ export default function MyCourseRequestsPage() {
                           className="border-b border-gray-700 hover:bg-gray-700/30 transition-colors"
                         >
                           <td className="py-4 px-4">
+                            <div className="flex items-center gap-2 text-gray-400 text-sm">
+                              <Clock className="w-4 h-4" />
+                              {formatDate(request.created_at)}
+                            </div>
+                          </td>
+                          <td className="py-4 px-4">
                             <div className="text-white font-medium">{request.course_name}</div>
                           </td>
                           <td className="py-4 px-4">
@@ -243,22 +301,29 @@ export default function MyCourseRequestsPage() {
                               {request.subject}
                             </Badge>
                           </td>
-                          <td className="py-4 px-4">
+                          {/* <td className="py-4 px-4">
                             <div className="text-gray-300 text-sm max-w-md truncate">
                               {request.course_description}
                             </div>
-                          </td>
+                          </td> */}
                           <td className="py-4 px-4">{getStatusBadge(request.status)}</td>
                           <td className="py-4 px-4">
                             <div className="text-gray-400 text-sm max-w-md">
                               {request.admin_note || '-'}
                             </div>
                           </td>
+                          
                           <td className="py-4 px-4">
-                            <div className="flex items-center gap-2 text-gray-400 text-sm">
-                              <Clock className="w-4 h-4" />
-                              {formatDate(request.created_at)}
-                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleOpenDeleteDialog(request.id, request.course_name)}
+                              className="border-red-600 text-red-400 hover:bg-red-600/20 cursor-pointer"
+                              disabled={deleteMutation.isPending}
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Delete
+                            </Button>
                           </td>
                         </tr>
                       ))}
@@ -347,6 +412,53 @@ export default function MyCourseRequestsPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={handleCloseDeleteDialog}>
+          <DialogContent className="bg-gray-800 border-gray-700 max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-white">Delete Course Request</DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Are you sure you want to delete this course request? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            {requestToDelete && (
+              <div className="mt-4">
+                <p className="text-gray-300">
+                  <span className="font-medium">Course:</span> {requestToDelete.course_name}
+                </p>
+              </div>
+            )}
+            <DialogFooter className="mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCloseDeleteDialog}
+                className="border-gray-600 text-gray-300 hover:bg-gray-700 cursor-pointer"
+                disabled={deleteMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDeleteRequest}
+                className="bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   )

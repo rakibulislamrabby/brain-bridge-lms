@@ -32,6 +32,7 @@ import {
   User,
   Mail,
   Phone,
+  Info,
 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 import {
@@ -90,7 +91,9 @@ export default function CourseRequestsPage() {
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   const [actionDialogOpen, setActionDialogOpen] = useState(false)
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
   const [selectedRequest, setSelectedRequest] = useState<{ id: number; action: 'approve' | 'reject' } | null>(null)
+  const [selectedRequestForDetails, setSelectedRequestForDetails] = useState<any>(null)
   const [adminNote, setAdminNote] = useState('')
   const router = useRouter()
   const { addToast } = useToast()
@@ -147,6 +150,16 @@ export default function CourseRequestsPage() {
     setActionDialogOpen(false)
     setSelectedRequest(null)
     setAdminNote('')
+  }
+
+  const handleOpenDetailsDialog = (request: any) => {
+    setSelectedRequestForDetails(request)
+    setDetailsDialogOpen(true)
+  }
+
+  const handleCloseDetailsDialog = () => {
+    setDetailsDialogOpen(false)
+    setSelectedRequestForDetails(null)
   }
 
   const handleSubmitAction = async () => {
@@ -268,8 +281,8 @@ export default function CourseRequestsPage() {
         {/* Course Requests Table */}
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-white">Course Requests</CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardTitle className="text-white pt-5">Course Requests</CardTitle>
+            <CardDescription className="text-gray-400 ">
               A list of all course requests from students
             </CardDescription>
           </CardHeader>
@@ -296,6 +309,9 @@ export default function CourseRequestsPage() {
                   <table className="w-full border-collapse">
                     <thead className="bg-gray-900/60">
                       <tr>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                          Requested At
+                        </th>
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                           Student
                         </th>
@@ -306,13 +322,11 @@ export default function CourseRequestsPage() {
                           Subject
                         </th>
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                          Description
-                        </th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                           Status
                         </th>
+                       
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                          Requested At
+                          Details
                         </th>
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                           Actions
@@ -326,21 +340,27 @@ export default function CourseRequestsPage() {
                           className="border-b border-gray-700 hover:bg-gray-700/30 transition-colors"
                         >
                           <td className="py-4 px-4">
+                            <div className="flex items-center gap-2 text-gray-400 text-sm">
+                              <Clock className="w-4 h-4" />
+                              {formatDate(request.created_at)}
+                            </div>
+                          </td>
+                          <td className="py-4 px-4">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
                                 <User className="w-4 h-4 text-gray-400" />
                                 <span className="text-white font-medium">{request.student.name}</span>
                               </div>
-                              <div className="flex items-center gap-2 text-gray-400 text-sm">
+                              {/* <div className="flex items-center gap-2 text-gray-400 text-sm">
                                 <Mail className="w-3 h-3" />
                                 <span>{request.student.email}</span>
-                              </div>
-                              {request.student.phone && (
+                              </div> */}
+                              {/* {request.student.phone && (
                                 <div className="flex items-center gap-2 text-gray-400 text-sm">
                                   <Phone className="w-3 h-3" />
                                   <span>{request.student.phone}</span>
                                 </div>
-                              )}
+                              )} */}
                             </div>
                           </td>
                           <td className="py-4 px-4">
@@ -356,17 +376,18 @@ export default function CourseRequestsPage() {
                               {request.subject}
                             </Badge>
                           </td>
-                          <td className="py-4 px-4">
-                            <div className="text-gray-300 text-sm max-w-md truncate">
-                              {request.course_description}
-                            </div>
-                          </td>
                           <td className="py-4 px-4">{getStatusBadge(request.status)}</td>
+                          
                           <td className="py-4 px-4">
-                            <div className="flex items-center gap-2 text-gray-400 text-sm">
-                              <Clock className="w-4 h-4" />
-                              {formatDate(request.created_at)}
-                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleOpenDetailsDialog(request)}
+                              className="border-blue-600 text-blue-400 hover:bg-blue-600/20 cursor-pointer"
+                            >
+                              <Info className="w-4 h-4 mr-1" />
+                              View Details
+                            </Button>
                           </td>
                           <td className="py-4 px-4">
                             {request.status === 'pending' ? (
@@ -563,6 +584,151 @@ export default function CourseRequestsPage() {
                 </Button>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Details Dialog */}
+        <Dialog open={detailsDialogOpen} onOpenChange={handleCloseDetailsDialog}>
+          <DialogContent className="bg-gray-800 border-gray-700 max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-white">Course Request Details</DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Complete information about this course request
+              </DialogDescription>
+            </DialogHeader>
+            {selectedRequestForDetails && (
+              <div className="space-y-6 mt-4">
+                {/* Student Information */}
+                <div className="border-b border-gray-700 pb-4">
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <User className="w-5 h-5 text-blue-400" />
+                    Student Information
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3 text-gray-300">
+                      <User className="w-4 h-4 text-gray-400" />
+                      <span className="font-medium">Name:</span>
+                      <span>{selectedRequestForDetails.student.name}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-gray-300">
+                      <Mail className="w-4 h-4 text-gray-400" />
+                      <span className="font-medium">Email:</span>
+                      <span>{selectedRequestForDetails.student.email}</span>
+                    </div>
+                    {selectedRequestForDetails.student.phone && (
+                      <div className="flex items-center gap-3 text-gray-300">
+                        <Phone className="w-4 h-4 text-gray-400" />
+                        <span className="font-medium">Phone:</span>
+                        <span>{selectedRequestForDetails.student.phone}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Course Request Information */}
+                <div className="border-b border-gray-700 pb-4">
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-orange-400" />
+                    Course Request Information
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-sm font-medium text-gray-400">Course Name:</span>
+                      <p className="text-white mt-1">{selectedRequestForDetails.course_name}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-400">Subject:</span>
+                      <div className="mt-1">
+                        <Badge variant="outline" className="border-gray-600 text-gray-300">
+                          {selectedRequestForDetails.subject}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-400">Description:</span>
+                      <p className="text-gray-300 mt-1 whitespace-pre-wrap">{selectedRequestForDetails.course_description}</p>
+                    </div>
+                    {selectedRequestForDetails.additional_note && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-400">Additional Note:</span>
+                        <p className="text-gray-300 mt-1 whitespace-pre-wrap">{selectedRequestForDetails.additional_note}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Status and Admin Information */}
+                <div className="border-b border-gray-700 pb-4">
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5 text-yellow-400" />
+                    Status & Admin Notes
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-sm font-medium text-gray-400">Status:</span>
+                      <div className="mt-1">{getStatusBadge(selectedRequestForDetails.status)}</div>
+                    </div>
+                    {selectedRequestForDetails.admin_note && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-400">Admin Note:</span>
+                        <p className="text-gray-300 mt-1 whitespace-pre-wrap">{selectedRequestForDetails.admin_note}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Dates */}
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-gray-400" />
+                    Timestamps
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3 text-gray-300">
+                      <Clock className="w-4 h-4 text-gray-400" />
+                      <span className="font-medium">Created At:</span>
+                      <span>{formatDate(selectedRequestForDetails.created_at)}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-gray-300">
+                      <Clock className="w-4 h-4 text-gray-400" />
+                      <span className="font-medium">Updated At:</span>
+                      <span>{formatDate(selectedRequestForDetails.updated_at)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                {selectedRequestForDetails.status === 'pending' && (
+                  <div className="flex justify-end gap-3 pt-4 border-t border-gray-700">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        handleCloseDetailsDialog()
+                        handleOpenActionDialog(selectedRequestForDetails.id, 'reject')
+                      }}
+                      className="border-red-600 text-red-400 hover:bg-red-600/20 cursor-pointer"
+                      disabled={isProcessing}
+                    >
+                      <XCircle className="w-4 h-4 mr-1" />
+                      Reject
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        handleCloseDetailsDialog()
+                        handleOpenActionDialog(selectedRequestForDetails.id, 'approve')
+                      }}
+                      className="bg-green-600 hover:bg-green-700 text-white cursor-pointer"
+                      disabled={isProcessing}
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Approve
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
