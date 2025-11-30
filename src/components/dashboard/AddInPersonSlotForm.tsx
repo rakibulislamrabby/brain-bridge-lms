@@ -9,8 +9,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/toast'
 import { useSubjects } from '@/hooks/subject/use-subject'
-import { useCreateInPersonSlot } from '@/hooks/slots/use-create-in-person-slot'
-import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Clock, DollarSign, ClipboardList } from 'lucide-react'
+import { useCreateInPersonSlot, type InPersonSlotData } from '@/hooks/slots/use-create-in-person-slot'
+import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Clock, DollarSign, ClipboardList, MapPin, CheckCircle2 } from 'lucide-react'
 
 interface SlotTimeForm {
   start_time: string
@@ -37,6 +37,10 @@ export default function AddInPersonSlotForm() {
     to_date: '',
     price: '',
     description: '',
+    country: '',
+    state: '',
+    city: '',
+    area: '',
   })
 
   const [slotTimes, setSlotTimes] = useState<SlotTimeForm[]>([
@@ -78,6 +82,10 @@ export default function AddInPersonSlotForm() {
       to_date: '',
       price: '',
       description: '',
+      country: '',
+      state: '',
+      city: '',
+      area: '',
     })
     setSlotTimes([{ start_time: '', end_time: '' }])
   }
@@ -157,15 +165,22 @@ export default function AddInPersonSlotForm() {
       })),
       price: Number(formData.price),
       description: formData.description,
+      ...(formData.country && { country: formData.country }),
+      ...(formData.state && { state: formData.state }),
+      ...(formData.city && { city: formData.city }),
+      ...(formData.area && { area: formData.area }),
     }
 
     try {
       const result = await createSlotMutation.mutateAsync(payload)
+      const slotsCount = result?.data?.length || 0
+      const slotsText = slotsCount === 1 ? 'slot' : 'slots'
+      
       addToast({
         type: 'success',
-        title: 'In-Person Slot Created',
-        description: result?.message || 'In-person slot created successfully!',
-        duration: 5000,
+        title: 'In-Person Slots Created',
+        description: `${result?.message || 'Success!'} ${slotsCount} ${slotsText} created.`,
+        duration: 6000,
       })
       resetForm()
     } catch (error) {
@@ -311,6 +326,81 @@ export default function AddInPersonSlotForm() {
                 placeholder="Describe what this in-person session covers"
                 className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500 min-h-[100px]"
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Location Information */}
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2 pt-5">
+              <MapPin className="h-5 w-5 text-orange-500" />
+              Location Information
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              Optional: Specify the location where the in-person session will take place.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="country" className="text-sm font-medium text-gray-300">
+                  Country
+                </Label>
+                <Input
+                  id="country"
+                  name="country"
+                  type="text"
+                  value={formData.country}
+                  onChange={handleInputChange}
+                  placeholder="e.g., USA"
+                  className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
+                />
+              </div>
+              <div>
+                <Label htmlFor="state" className="text-sm font-medium text-gray-300">
+                  State/Province
+                </Label>
+                <Input
+                  id="state"
+                  name="state"
+                  type="text"
+                  value={formData.state}
+                  onChange={handleInputChange}
+                  placeholder="e.g., New York"
+                  className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="city" className="text-sm font-medium text-gray-300">
+                  City
+                </Label>
+                <Input
+                  id="city"
+                  name="city"
+                  type="text"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  placeholder="e.g., New York City"
+                  className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
+                />
+              </div>
+              <div>
+                <Label htmlFor="area" className="text-sm font-medium text-gray-300">
+                  Area/Neighborhood
+                </Label>
+                <Input
+                  id="area"
+                  name="area"
+                  type="text"
+                  value={formData.area}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Manhattan, Downtown"
+                  className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>

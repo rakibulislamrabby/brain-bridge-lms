@@ -45,11 +45,35 @@ export interface CreateInPersonSlotRequest {
   slots: InPersonSlotTimeRange[]
   price: number
   description: string
+  country?: string
+  state?: string
+  city?: string
+  area?: string
+}
+
+export interface InPersonSlotData {
+  id: number
+  country: string
+  state: string
+  city: string
+  area: string
+  title: string
+  teacher_id: number
+  subject_id: number
+  from_date: string
+  to_date: string
+  start_time: string
+  end_time: string
+  price: number
+  description: string
+  created_at: string
+  updated_at: string
 }
 
 export interface CreateInPersonSlotResponse {
-  message?: string
-  [key: string]: unknown
+  success: boolean
+  message: string
+  data: InPersonSlotData[]
 }
 
 const createInPersonSlot = async (payload: CreateInPersonSlotRequest): Promise<CreateInPersonSlotResponse> => {
@@ -64,14 +88,41 @@ const createInPersonSlot = async (payload: CreateInPersonSlotRequest): Promise<C
     })
 
     const text = await response.text()
-    const result = text ? JSON.parse(text) : {}
+    let result: CreateInPersonSlotResponse | any = {}
+    
+    try {
+      result = text ? JSON.parse(text) : {}
+    } catch (parseError) {
+      console.error('Failed to parse response:', parseError)
+      throw new Error('Invalid response format from server')
+    }
 
     if (!response.ok) {
+      // Handle validation errors
+      if (result?.errors && typeof result.errors === 'object') {
+        const errorMessages = Object.entries(result.errors)
+          .map(([field, messages]) => {
+            const msgArray = Array.isArray(messages) ? messages : [messages]
+            return `${field}: ${msgArray.join(', ')}`
+          })
+          .join('; ')
+        throw new Error(errorMessages || 'Validation failed')
+      }
+      
       const errorMessage = result?.message || result?.error || `Failed to create in-person slot (${response.status})`
       throw new Error(errorMessage)
     }
 
-    return result
+    // Validate response structure
+    if (!result.success) {
+      throw new Error(result?.message || 'Slot creation failed')
+    }
+
+    if (!Array.isArray(result.data)) {
+      throw new Error('Invalid response: expected array of slots')
+    }
+
+    return result as CreateInPersonSlotResponse
   } catch (error) {
     console.error('Create in-person slot error:', error)
     if (error instanceof Error) {
