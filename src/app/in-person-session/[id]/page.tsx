@@ -11,6 +11,10 @@ import { Button } from '@/components/ui/button'
 import { useInPersonSlotDetail } from '@/hooks/live-session/use-in-person-slot-detail'
 import { useInPersonBookingIntent } from '@/hooks/slots/use-in-person-booking-intent'
 import { useToast } from '@/components/ui/toast'
+import { useMe } from '@/hooks/use-me'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Sparkles, Minus } from 'lucide-react'
 
 const toDateOnlyKey = (date: Date | string | null | undefined) => {
   if (!date) {
@@ -105,6 +109,8 @@ export default function InPersonSessionDetailPage() {
   const { data, isLoading, error } = useInPersonSlotDetail(sessionId)
   const bookingIntentMutation = useInPersonBookingIntent()
   const { addToast } = useToast()
+  const { data: userData } = useMe()
+  const [pointsToUse, setPointsToUse] = useState<number>(0)
 
   // Calculate available dates based on daily_available_seats
   const availableDates = useMemo(() => {
@@ -257,6 +263,23 @@ export default function InPersonSessionDetailPage() {
     return false
   }, [data, selectedDateKey, availableDateKeys])
 
+  // Points system calculations
+  const availablePoints = userData?.points || 0
+  const slotPrice = Number(data?.price) || 0
+  const pointsDiscount = Math.min(pointsToUse, slotPrice, availablePoints) // 1 point = $1
+  const finalAmount = Math.max(0, slotPrice - pointsDiscount)
+
+  const handlePointsChange = (value: string) => {
+    const numValue = parseInt(value) || 0
+    const maxPoints = Math.min(availablePoints, Math.floor(slotPrice))
+    setPointsToUse(Math.max(0, Math.min(numValue, maxPoints)))
+  }
+
+  const handleMaxPoints = () => {
+    const maxPoints = Math.min(availablePoints, Math.floor(slotPrice))
+    setPointsToUse(maxPoints)
+  }
+
   const handlePrevMonth = () => {
     setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
   }
@@ -327,6 +350,11 @@ export default function InPersonSessionDetailPage() {
         // Add slot info if available (URLSearchParams handles encoding automatically)
         if (result.slot) {
           paymentParams.set('slot', JSON.stringify(result.slot))
+        }
+        
+        // Add points to use if any
+        if (pointsToUse > 0) {
+          paymentParams.set('points_to_use', String(pointsToUse))
         }
         
         // Redirect to payment page with URL parameters
@@ -493,20 +521,82 @@ export default function InPersonSessionDetailPage() {
                     <div>
                       <h2 className="text-lg font-semibold text-white mb-3">Time slot</h2>
                       {selectedDate && showTimeSlot ? (
-                        <div className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900/50 px-4 py-3">
-                          <div className="flex items-center gap-3 text-white">
-                            <Clock className="w-4 h-4 text-orange-400" />
-                            <div className="flex flex-col">
-                              <span>{data.start_time && data.end_time ? formatTimeRange(data.start_time, data.end_time) : 'Time TBD'}</span>
-                              {!isDateFull && (
-                                <span className="text-xs text-gray-400">
-                                  Available
-                                </span>
-                              )}
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900/50 px-4 py-3">
+                            <div className="flex items-center gap-3 text-white">
+                              <Clock className="w-4 h-4 text-orange-400" />
+                              <div className="flex flex-col">
+                                <span>{data.start_time && data.end_time ? formatTimeRange(data.start_time, data.end_time) : 'Time TBD'}</span>
+                                {!isDateFull && (
+                                  <span className="text-xs text-gray-400">
+                                    Available
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
+
+                          {/* Points Usage Section */}
+                          {!isDateFull && availablePoints > 0 && slotPrice > 0 && (
+                            <div className="rounded-lg border border-gray-700 bg-gray-900/50 p-4 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-white flex items-center gap-2 text-sm">
+                                  <Sparkles className="w-4 h-4 text-yellow-400" />
+                                  Use Points (1 point = $1 discount)
+                                </Label>
+                                <span className="text-xs text-gray-400">
+                                  Available: <span className="text-yellow-400 font-semibold">{availablePoints}</span> points
+                                </span>
+                              </div>
+                              
+                              <div className="flex gap-2">
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max={Math.min(availablePoints, Math.floor(slotPrice))}
+                                  value={pointsToUse || ''}
+                                  onChange={(e) => handlePointsChange(e.target.value)}
+                                  placeholder="0"
+                                  className="bg-gray-800 border-gray-600 text-white flex-1"
+                                  disabled={bookingIntentMutation.isPending}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={handleMaxPoints}
+                                  className="border-yellow-600 text-yellow-400 hover:bg-yellow-900/30 whitespace-nowrap text-xs px-3"
+                                  disabled={bookingIntentMutation.isPending || availablePoints === 0}
+                                >
+                                  Use Max
+                                </Button>
+                              </div>
+                              
+                              {pointsToUse > 0 && (
+                                <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                                  <div className="space-y-1 text-sm">
+                                    <div className="flex items-center justify-between text-gray-300">
+                                      <span>Original Price:</span>
+                                      <span>${slotPrice.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-yellow-400">
+                                      <span className="flex items-center gap-1">
+                                        <Minus className="w-3 h-3" />
+                                        Points Discount ({pointsToUse} pts):
+                                      </span>
+                                      <span>-${pointsDiscount.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-yellow-500/20">
+                                      <span>Final Amount:</span>
+                                      <span>${finalAmount.toFixed(2)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                           <Button 
-                            className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
+                            className="w-full bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
                             disabled={isDateFull || bookingIntentMutation.isPending}
                             onClick={handleReserveSlot}
                           >
@@ -518,7 +608,7 @@ export default function InPersonSessionDetailPage() {
                             ) : isDateFull ? (
                               'Full'
                             ) : (
-                              'Reserve Slot'
+                              `Reserve Slot${pointsToUse > 0 ? ` - Pay $${finalAmount.toFixed(2)}` : ''}`
                             )}
                           </Button>
                         </div>

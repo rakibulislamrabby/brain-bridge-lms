@@ -67,9 +67,10 @@ interface PaymentFormProps {
     old_price?: number
   }
   paymentIntentId: string
+  pointsToUse?: number
 }
 
-function PaymentForm({ clientSecret, amount, slotInfo, courseInfo, paymentIntentId }: PaymentFormProps) {
+function PaymentForm({ clientSecret, amount, slotInfo, courseInfo, paymentIntentId, pointsToUse: initialPointsToUse }: PaymentFormProps) {
   const stripe = useStripe()
   const elements = useElements()
   const router = useRouter()
@@ -81,24 +82,12 @@ function PaymentForm({ clientSecret, amount, slotInfo, courseInfo, paymentIntent
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'succeeded' | 'failed'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   
-  // Points system state
-  const [pointsToUse, setPointsToUse] = useState<number>(0)
+  // Points system - read from query params (set on details page)
+  const pointsToUse = initialPointsToUse || 0
   const availablePoints = user?.points || 0
   const originalAmount = parseFloat(amount) || 0
   const pointsDiscount = Math.min(pointsToUse, originalAmount, availablePoints) // 1 point = $1
   const newPaymentAmount = Math.max(0, originalAmount - pointsDiscount)
-  
-  const handlePointsChange = (value: string) => {
-    const numValue = parseInt(value) || 0
-    // Limit to available points and original amount
-    const maxPoints = Math.min(availablePoints, Math.floor(originalAmount))
-    setPointsToUse(Math.max(0, Math.min(numValue, maxPoints)))
-  }
-  
-  const handleMaxPoints = () => {
-    const maxPoints = Math.min(availablePoints, Math.floor(originalAmount))
-    setPointsToUse(maxPoints)
-  }
   
 console.log("paymentIntentId",paymentIntentId)
   const handleSubmit = async (e: React.FormEvent) => {
@@ -398,50 +387,17 @@ console.log("paymentIntentId",paymentIntentId)
               ) : null}
             </div>
 
-            {/* Points Usage Section */}
-            {availablePoints > 0 && originalAmount > 0 && (
+            {/* Points Discount Display (if points were used) */}
+            {pointsToUse > 0 && (
               <div className="pt-4 border-t border-gray-700/70">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-white flex items-center gap-2">
+                <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-300 flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-yellow-400" />
-                      Use Points (1 point = $1 discount)
-                    </Label>
-                    <span className="text-sm text-gray-400">
-                      Available: <span className="text-yellow-400 font-semibold">{availablePoints}</span> points
+                      Points Applied ({pointsToUse} pts):
                     </span>
+                    <span className="text-yellow-400 font-semibold">-${pointsDiscount.toFixed(2)}</span>
                   </div>
-                  
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      min="0"
-                      max={Math.min(availablePoints, Math.floor(originalAmount))}
-                      value={pointsToUse || ''}
-                      onChange={(e) => handlePointsChange(e.target.value)}
-                      placeholder="0"
-                      className="bg-gray-700 border-gray-600 text-white flex-1"
-                      disabled={isProcessing || paymentStatus === 'succeeded'}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleMaxPoints}
-                      className="border-yellow-600 text-yellow-400 hover:bg-yellow-900/30 whitespace-nowrap"
-                      disabled={isProcessing || paymentStatus === 'succeeded' || availablePoints === 0}
-                    >
-                      Use Max
-                    </Button>
-                  </div>
-                  
-                  {pointsToUse > 0 && (
-                    <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-300">Points Discount:</span>
-                        <span className="text-yellow-400 font-semibold">-${pointsDiscount.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -582,6 +538,8 @@ function PaymentPageContent() {
   const clientSecret = searchParams.get('client_secret')
   const amount = searchParams.get('amount')
   const paymentIntentId = searchParams.get('payment_intent')
+  const pointsToUseParam = searchParams.get('points_to_use')
+  const pointsToUse = pointsToUseParam ? parseInt(pointsToUseParam) || 0 : 0
   
   // Parse slot info if present
   let slotInfo = null
@@ -685,6 +643,7 @@ function PaymentPageContent() {
         slotInfo={slotInfo || undefined}
         courseInfo={courseInfo || undefined}
         paymentIntentId={paymentIntentId}
+        pointsToUse={pointsToUse}
       />
     </Elements>
   )

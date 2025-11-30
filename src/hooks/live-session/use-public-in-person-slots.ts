@@ -38,6 +38,10 @@ export interface PublicInPersonSlot {
   time: string
   available_seats: number
   price: string
+  country?: string
+  state?: string
+  city?: string
+  area?: string
 }
 
 export interface PaginationLink {

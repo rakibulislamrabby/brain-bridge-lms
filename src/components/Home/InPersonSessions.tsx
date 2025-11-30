@@ -125,7 +125,19 @@ export default function InPersonSessions({
       // Search in subject name
       const subjectMatch = slot.subject?.name?.toLowerCase().includes(searchLower) || false
       
-      return titleMatch || teacherMatch || subjectMatch
+      // Search in city
+      const cityMatch = slot.city?.toLowerCase().includes(searchLower) || false
+      
+      // Search in state
+      const stateMatch = slot.state?.toLowerCase().includes(searchLower) || false
+      
+      // Search in area
+      const areaMatch = slot.area?.toLowerCase().includes(searchLower) || false
+      
+      // Search in country
+      const countryMatch = slot.country?.toLowerCase().includes(searchLower) || false
+      
+      return titleMatch || teacherMatch || subjectMatch || cityMatch || stateMatch || areaMatch || countryMatch
     })
   }, [sortedSlots, debouncedSearchTerm])
 
@@ -158,7 +170,7 @@ export default function InPersonSessions({
                       type="text"
                       value={searchInput}
                       onChange={(e) => setSearchInput(e.target.value)}
-                      placeholder="Search sessions by title, teacher, or subject..."
+                      placeholder="Search by title, teacher, subject, or city..."
                       className="pl-10 pr-4 py-6 bg-gray-800/80 border-gray-700 text-white placeholder:text-gray-500 focus:border-orange-500 focus:ring-orange-500/20 text-base"
                     />
                   </div>
@@ -189,7 +201,7 @@ export default function InPersonSessions({
                   type="text"
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Search sessions by title, teacher, or subject..."
+                  placeholder="Search by title, teacher, subject, or city..."
                   className="pl-10 pr-4 py-6 bg-gray-800/80 border-gray-700 text-white placeholder:text-gray-500 focus:border-orange-500 focus:ring-orange-500/20 text-base"
                 />
               </div>
@@ -278,6 +290,21 @@ export default function InPersonSessions({
                         </div>
                       )}
                     </div>
+                    
+                    {/* Address Information */}
+                    {(session.city || session.state || session.area || session.country) && (
+                      <div className="flex items-start gap-2 text-sm text-gray-400">
+                        <MapPin className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          {[
+                            session.area,
+                            session.city,
+                            session.state,
+                            session.country
+                          ].filter(Boolean).join(', ')}
+                        </div>
+                      </div>
+                    )}
                     
                     <div className="flex items-center justify-between pt-2 border-t border-gray-700/50">
                       {session.available_seats !== undefined && (
