@@ -600,7 +600,7 @@ export default function InPersonSessionDetailPage() {
                                 </>
                               ) : (
                                 <p className="text-xs text-gray-500 text-center py-2">
-                                  You don't have any points available. Earn points by completing courses and sessions!
+                                  You don&apos;t have any points available. Earn points by completing courses and sessions!
                                 </p>
                               )}
                             </div>
