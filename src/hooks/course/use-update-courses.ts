@@ -62,10 +62,70 @@ export interface UpdateCourseRequest {
   modules: UpdateModuleRequest[]
 }
 
-interface UpdateCourseResponse {
+export interface UpdateCourseVideo {
+  id: number
+  module_id: number
+  title: string
+  description: string
+  duration_hours: number
+  video_url: string | null
+  video_path: string | null
+  file_size: string | null
+  mime_type: string | null
+  filename: string | null
+  is_published: boolean | number
+  created_at: string
+  updated_at: string
+}
+
+export interface UpdateCourseModule {
+  id: number
+  course_id: number
+  title: string
+  description: string
+  order_index: number
+  created_at: string
+  updated_at: string
+  video_lessons?: UpdateCourseVideo[]
+}
+
+export interface UpdateCourseSubject {
+  id: number
+  name: string
+  icon: string | null
+  parent_id: number | null
+  created_at: string
+  updated_at: string
+}
+
+export interface UpdateCourseData {
+  id: number
+  teacher_id: number
+  subject_id: number
+  title: string
+  description: string
+  thumbnail_url: string | null
+  old_price: number | null
+  price: number
+  is_published: boolean
+  enrollment_count: number
+  processing_status: string
+  created_at: string
+  updated_at: string
+  subject: UpdateCourseSubject
+  modules: UpdateCourseModule[]
+}
+
+export interface UpdateCourseResponseData {
+  course: UpdateCourseData
+  modules: UpdateCourseModule[]
+  videos: UpdateCourseVideo[]
+}
+
+export interface UpdateCourseResponse {
   success: boolean
   message: string
-  data?: unknown
+  data: UpdateCourseResponseData
 }
 
 const updateCourse = async (id: number, payload: UpdateCourseRequest): Promise<UpdateCourseResponse> => {
@@ -143,21 +203,53 @@ const updateCourse = async (id: number, payload: UpdateCourseRequest): Promise<U
     throw new Error(`Unable to reach the Brain Bridge API: ${networkError instanceof Error ? networkError.message : 'Unknown error'}`)
   }
 
-  let result: UpdateCourseResponse = { success: false, message: '' }
+  let result: UpdateCourseResponse | null = null
   try {
     const responseText = await response.text()
-    console.log('Update course response:', { status: response.status, statusText: response.statusText, responseText: responseText.substring(0, 200) })
+    console.log('Update course response:', { status: response.status, statusText: response.statusText, responseText: responseText.substring(0, 500) })
     
     if (responseText && responseText.trim()) {
       try {
-        result = JSON.parse(responseText)
+        const parsed = JSON.parse(responseText)
+        result = parsed as UpdateCourseResponse
+        
+        // Validate response structure
+        if (!result.success) {
+          const errorMessage = result.message || `Failed to update course (${response.status})`
+          throw new Error(errorMessage)
+        }
+        
+        // Validate data structure
+        if (!result.data || !result.data.course) {
+          console.warn('Update course response missing expected data structure:', result)
+          // Still return success if the update was successful
+          if (response.ok) {
+            return {
+              success: true,
+              message: result.message || 'Course updated successfully',
+              data: result.data || {
+                course: {} as UpdateCourseData,
+                modules: [],
+                videos: []
+              }
+            }
+          }
+        }
       } catch (parseError) {
         console.error('Failed to parse JSON:', parseError)
         throw new Error(`Invalid JSON response from server (status: ${response.status})`)
       }
     } else if (response.status === 204 || response.status === 200) {
       // No content response - that's OK
-      result = { success: true, message: 'Course updated successfully' }
+      result = {
+        success: true,
+        message: 'Course updated successfully',
+        data: {
+          course: {} as UpdateCourseData,
+          modules: [],
+          videos: []
+        }
+      }
     }
   } catch (error) {
     console.error('Failed to read response:', error)
@@ -167,9 +259,13 @@ const updateCourse = async (id: number, payload: UpdateCourseRequest): Promise<U
   }
 
   if (!response.ok) {
-    const errorMessage = (result as any)?.message || (result as any)?.error || `Failed to update course (${response.status})`
+    const errorMessage = result?.message || (result as any)?.error || `Failed to update course (${response.status})`
     console.error('Update course failed:', { status: response.status, errorMessage, result })
     throw new Error(errorMessage)
+  }
+
+  if (!result) {
+    throw new Error('No response data received from server')
   }
 
   return result
