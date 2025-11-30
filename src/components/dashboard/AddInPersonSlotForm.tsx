@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/toast'
 import { useSubjects } from '@/hooks/subject/use-subject'
 import { useCreateInPersonSlot, type InPersonSlotData } from '@/hooks/slots/use-create-in-person-slot'
+import { useUpdateInPersonSlot } from '@/hooks/slots/use-update-in-person-slot'
+import type { InPersonSlot } from '@/hooks/slots/use-in-person-slots'
 import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Clock, DollarSign, ClipboardList, MapPin, CheckCircle2 } from 'lucide-react'
 
 interface SlotTimeForm {
@@ -17,11 +19,18 @@ interface SlotTimeForm {
   end_time: string
 }
 
-export default function AddInPersonSlotForm() {
+interface AddInPersonSlotFormProps {
+  slotId?: number
+  initialData?: InPersonSlot
+}
+
+export default function AddInPersonSlotForm({ slotId, initialData }: AddInPersonSlotFormProps = {}) {
   const { data: subjects = [] } = useSubjects()
   const { addToast } = useToast()
   const router = useRouter()
   const createSlotMutation = useCreateInPersonSlot()
+  const updateSlotMutation = useUpdateInPersonSlot()
+  const isEditMode = !!slotId && !!initialData
 
   const subjectOptions = useMemo(() => (
     subjects.map((subject) => ({
@@ -46,6 +55,49 @@ export default function AddInPersonSlotForm() {
   const [slotTimes, setSlotTimes] = useState<SlotTimeForm[]>([
     { start_time: '', end_time: '' },
   ])
+
+  // Initialize form with slot data if in edit mode
+  useEffect(() => {
+    if (isEditMode && initialData) {
+      // Format date from ISO string to YYYY-MM-DD
+      const formatDateForInput = (dateString?: string): string => {
+        if (!dateString) return ''
+        const date = new Date(dateString)
+        if (Number.isNaN(date.getTime())) return ''
+        return date.toISOString().split('T')[0]
+      }
+
+      // Format time from HH:MM:SS to HH:MM
+      const formatTimeForInput = (timeString?: string): string => {
+        if (!timeString) return ''
+        if (timeString.split(':').length === 3) {
+          const [hours, minutes] = timeString.split(':')
+          return `${hours}:${minutes}`
+        }
+        return timeString
+      }
+
+      setFormData({
+        subject_id: initialData.subject_id.toString(),
+        title: initialData.title || '',
+        from_date: formatDateForInput(initialData.from_date),
+        to_date: formatDateForInput(initialData.to_date),
+        price: initialData.price || '',
+        description: initialData.description || '',
+        country: initialData.country || '',
+        state: initialData.state || '',
+        city: initialData.city || '',
+        area: initialData.area || '',
+      })
+
+      setSlotTimes([
+        {
+          start_time: formatTimeForInput(initialData.start_time),
+          end_time: formatTimeForInput(initialData.end_time),
+        },
+      ])
+    }
+  }, [isEditMode, initialData])
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target
@@ -172,19 +224,35 @@ export default function AddInPersonSlotForm() {
     }
 
     try {
-      const result = await createSlotMutation.mutateAsync(payload)
-      const slotsCount = result?.data?.length || 0
-      const slotsText = slotsCount === 1 ? 'slot' : 'slots'
-      
-      addToast({
-        type: 'success',
-        title: 'In-Person Slots Created',
-        description: `${result?.message || 'Success!'} ${slotsCount} ${slotsText} created.`,
-        duration: 6000,
-      })
-      resetForm()
+      if (isEditMode && slotId) {
+        const result = await updateSlotMutation.mutateAsync({ id: slotId, payload })
+        const slotsCount = result?.data?.length || 0
+        const slotsText = slotsCount === 1 ? 'slot' : 'slots'
+        
+        addToast({
+          type: 'success',
+          title: 'In-Person Slot Updated',
+          description: `${result?.message || 'Success!'} ${slotsCount} ${slotsText} updated.`,
+          duration: 6000,
+        })
+        router.push('/dashboard/in-person-session')
+      } else {
+        const result = await createSlotMutation.mutateAsync(payload)
+        const slotsCount = result?.data?.length || 0
+        const slotsText = slotsCount === 1 ? 'slot' : 'slots'
+        
+        addToast({
+          type: 'success',
+          title: 'In-Person Slots Created',
+          description: `${result?.message || 'Success!'} ${slotsCount} ${slotsText} created.`,
+          duration: 6000,
+        })
+        resetForm()
+      }
     } catch (error) {
-      let errorMessage = 'Failed to create in-person slot. Please try again.'
+      let errorMessage = isEditMode 
+        ? 'Failed to update in-person slot. Please try again.'
+        : 'Failed to create in-person slot. Please try again.'
       
       if (error instanceof Error) {
         errorMessage = error.message
@@ -196,7 +264,7 @@ export default function AddInPersonSlotForm() {
       
       addToast({
         type: 'error',
-        title: 'Error Creating Slot',
+        title: isEditMode ? 'Error Updating Slot' : 'Error Creating Slot',
         description: errorMessage,
         duration: 6000,
       })
@@ -207,10 +275,12 @@ export default function AddInPersonSlotForm() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-white">
-          Schedule In-Person Session
+          {isEditMode ? 'Edit In-Person Session' : 'Schedule In-Person Session'}
         </h1>
         <p className="text-gray-400 mt-2">
-          Configure availability windows, pricing, and time slots for your in-person class.
+          {isEditMode 
+            ? 'Update the availability windows, pricing, and time slots for your in-person class.'
+            : 'Configure availability windows, pricing, and time slots for your in-person class.'}
         </p>
       </div>
 
@@ -492,16 +562,16 @@ export default function AddInPersonSlotForm() {
         <div className="flex justify-center gap-4">
           <Button
             type="submit"
-            disabled={createSlotMutation.isPending}
+            disabled={createSlotMutation.isPending || updateSlotMutation.isPending}
             className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
           >
-            {createSlotMutation.isPending ? (
+            {(createSlotMutation.isPending || updateSlotMutation.isPending) ? (
               <>
                 <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                Creating Slot...
+                {isEditMode ? 'Updating Slot...' : 'Creating Slot...'}
               </>
             ) : (
-              'Create In-Person Slot'
+              isEditMode ? 'Update In-Person Slot' : 'Create In-Person Slot'
             )}
           </Button>
         </div>

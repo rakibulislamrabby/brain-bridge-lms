@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/toast'
 import { useDeleteInPersonSlot } from '@/hooks/slots/use-delete-in-person-slot'
-import { Loader2, Plus, Calendar, Clock, DollarSign, BookOpen, XCircle, UserCheck, Trash2 } from 'lucide-react'
+import { Loader2, Plus, Calendar, Clock, DollarSign, BookOpen, XCircle, UserCheck, Trash2, Edit } from 'lucide-react'
 import Link from 'next/link'
 import {
   Pagination,
@@ -243,32 +243,45 @@ export default function InPersonSessionPage() {
                           </Badge>
                         </td>
                         <td className="py-3 px-4">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-red-700 text-red-400 hover:bg-red-900/30 cursor-pointer"
-                            onClick={() => {
-                              const dateLabel = slot.from_date && slot.to_date 
-                                ? (formatDate(slot.from_date) === formatDate(slot.to_date) 
-                                    ? formatDate(slot.from_date)
-                                    : `${formatDate(slot.from_date)} - ${formatDate(slot.to_date)}`)
-                                : slot.from_date 
-                                ? formatDate(slot.from_date)
-                                : 'Slot'
-                              setSlotToDelete({ id: slot.id, label: `${slot.title || slot.subject?.name || 'Slot'} • ${dateLabel}` })
-                              setDeleteDialogOpen(true)
-                            }}
-                            disabled={deleteSlotMutation.isPending && deletingId === slot.id}
-                          >
-                            {deleteSlotMutation.isPending && deletingId === slot.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </>
-                            )}
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-orange-700 text-orange-400 hover:bg-orange-900/30 cursor-pointer"
+                              onClick={() => {
+                                router.push(`/dashboard/in-person-session/edit-slot/${slot.id}`)
+                              }}
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-red-700 text-red-400 hover:bg-red-900/30 cursor-pointer"
+                              onClick={() => {
+                                const dateLabel = slot.from_date && slot.to_date 
+                                  ? (formatDate(slot.from_date) === formatDate(slot.to_date) 
+                                      ? formatDate(slot.from_date)
+                                      : `${formatDate(slot.from_date)} - ${formatDate(slot.to_date)}`)
+                                  : slot.from_date 
+                                  ? formatDate(slot.from_date)
+                                  : 'Slot'
+                                setSlotToDelete({ id: slot.id, label: `${slot.title || slot.subject?.name || 'Slot'} • ${dateLabel}` })
+                                setDeleteDialogOpen(true)
+                              }}
+                              disabled={deleteSlotMutation.isPending && deletingId === slot.id}
+                            >
+                              {deleteSlotMutation.isPending && deletingId === slot.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </>
+                              )}
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}

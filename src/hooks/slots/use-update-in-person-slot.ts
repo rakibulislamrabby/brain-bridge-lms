@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import type { CreateInPersonSlotRequest, CreateInPersonSlotResponse } from './use-create-in-person-slot'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_MAIN_BASE_URL || ''
 
@@ -32,57 +33,13 @@ const getAuthHeaders = (): Record<string, string> => {
   return headers
 }
 
-export interface InPersonSlotTimeRange {
-  start_time: string
-  end_time: string
-}
-
-export interface CreateInPersonSlotRequest {
-  title: string
-  subject_id: number
-  from_date: string
-  to_date: string
-  slots: InPersonSlotTimeRange[]
-  price: number
-  description: string
-  country?: string
-  state?: string
-  city?: string
-  area?: string
-}
-
-export interface InPersonSlotData {
-  id: number
-  country: string
-  state: string
-  city: string
-  area: string
-  title: string
-  teacher_id: number
-  subject_id: number
-  from_date: string
-  to_date: string
-  start_time: string
-  end_time: string
-  price: number
-  description: string
-  created_at: string
-  updated_at: string
-}
-
-export interface CreateInPersonSlotResponse {
-  success: boolean
-  message: string
-  data: InPersonSlotData[]
-}
-
-const createInPersonSlot = async (payload: CreateInPersonSlotRequest): Promise<CreateInPersonSlotResponse> => {
-  const url = joinUrl('teacher/in-person-slots')
+const updateInPersonSlot = async (id: number, payload: CreateInPersonSlotRequest): Promise<CreateInPersonSlotResponse> => {
+  const url = joinUrl(`teacher/in-person-slots/${id}`)
   const headers = getAuthHeaders()
 
   try {
     const response = await fetch(url, {
-      method: 'POST',
+      method: 'PUT',
       headers,
       body: JSON.stringify(payload),
     })
@@ -109,35 +66,41 @@ const createInPersonSlot = async (payload: CreateInPersonSlotRequest): Promise<C
         throw new Error(errorMessages || 'Validation failed')
       }
       
-      const errorMessage = result?.message || result?.error || `Failed to create in-person slot (${response.status})`
+      const errorMessage = result?.message || result?.error || `Failed to update in-person slot (${response.status})`
       throw new Error(errorMessage)
     }
 
     // Validate response structure
     if (!result.success) {
-      throw new Error(result?.message || 'Slot creation failed')
+      throw new Error(result?.message || 'Slot update failed')
     }
 
+    // Handle both array and single object responses
+    // PUT might return a single slot object, while POST returns an array
+    if (!result.data) {
+      throw new Error('Invalid response: missing data field')
+    }
+
+    // If data is not an array, wrap it in an array to match the response type
     if (!Array.isArray(result.data)) {
-      throw new Error('Invalid response: expected array of slots')
-    } 
-    
+      result.data = [result.data]
+    }
 
     return result as CreateInPersonSlotResponse
   } catch (error) {
-    console.error('Create in-person slot error:', error)
+    console.error('Update in-person slot error:', error)
     if (error instanceof Error) {
       throw error
     }
-    throw new Error('Network error: Failed to create in-person slot')
+    throw new Error('Network error: Failed to update in-person slot')
   }
 }
 
-export const useCreateInPersonSlot = () => {
+export const useUpdateInPersonSlot = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: createInPersonSlot,
+    mutationFn: ({ id, payload }: { id: number; payload: CreateInPersonSlotRequest }) => updateInPersonSlot(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['slots'] })
       queryClient.invalidateQueries({ queryKey: ['teacher-slots'] })

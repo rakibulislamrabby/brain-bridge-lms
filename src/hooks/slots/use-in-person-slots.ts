@@ -54,6 +54,10 @@ export interface InPersonSlot {
   start_time: string
   end_time: string
   is_booked: boolean
+  country?: string
+  state?: string
+  city?: string
+  area?: string
   created_at?: string
   updated_at?: string
   subject?: InPersonSlotSubject
