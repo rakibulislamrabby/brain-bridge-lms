@@ -81,17 +81,28 @@ export default function MyCourseRequestsPage() {
 
   const { data: paginatedData, isLoading, error } = useMyCourseRequests(currentPage)
   const deleteMutation = useDeleteCourseRequest()
-  const courseRequests = paginatedData?.data || []
+  const courseRequests = useMemo(() => paginatedData?.data || [], [paginatedData?.data])
 
-  const pagination = paginatedData ? {
-    currentPage: paginatedData.current_page,
-    lastPage: paginatedData.last_page,
-    total: paginatedData.total,
-    from: paginatedData.from,
-    to: paginatedData.to,
-    hasNextPage: paginatedData.next_page_url !== null,
-    hasPrevPage: paginatedData.prev_page_url !== null,
-  } : null
+  const pagination = useMemo(() => {
+    if (!paginatedData) return null
+    return {
+      currentPage: paginatedData.current_page,
+      lastPage: paginatedData.last_page,
+      total: paginatedData.total,
+      from: paginatedData.from,
+      to: paginatedData.to,
+      hasNextPage: paginatedData.next_page_url !== null,
+      hasPrevPage: paginatedData.prev_page_url !== null,
+    }
+  }, [
+    paginatedData?.current_page,
+    paginatedData?.last_page,
+    paginatedData?.total,
+    paginatedData?.from,
+    paginatedData?.to,
+    paginatedData?.next_page_url,
+    paginatedData?.prev_page_url,
+  ])
 
   // Calculate stats - MUST be called before any early returns
   const stats = useMemo(() => {
@@ -100,7 +111,7 @@ export default function MyCourseRequestsPage() {
     const approved = courseRequests.filter((req) => req.status === 'approved').length
     const rejected = courseRequests.filter((req) => req.status === 'rejected').length
     return { total, pending, approved, rejected }
-  }, [courseRequests, pagination])
+  }, [courseRequests, pagination?.total])
 
   useEffect(() => {
     const storedUser = getStoredUser()

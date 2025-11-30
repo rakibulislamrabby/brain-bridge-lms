@@ -322,7 +322,7 @@ export default function CourseDetailPage() {
   }, [allCourses, course])
 
   // Get reviews from course data
-  const reviews = course?.reviews || []
+  const reviews = useMemo(() => course?.reviews || [], [course?.reviews])
   
   // Check if current user has already reviewed this course
   // This checks if the current logged-in user has submitted a review for this course
@@ -332,7 +332,7 @@ export default function CourseDetailPage() {
     // Check if any review has the current user's ID as reviewer_id
     // This ensures each student can only have one review, but different students can all review
     return reviews.some((review) => review.reviewer_id === user.id)
-  }, [user, reviews, course])
+  }, [user?.id, reviews, course?.id])
   
   // Sync user-specific localStorage when we detect a review from API
   useEffect(() => {
