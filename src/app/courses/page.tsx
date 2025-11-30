@@ -5,6 +5,7 @@ import { AppHeader } from "@/components/app-header"
 import Footer from "@/components/shared/Footer"
 import AllCourse from "@/components/Courses/AllCourse"
 import LiveSessions from "@/components/Home/LiveSessions"
+import InPersonSessions from "@/components/Home/InPersonSessions"
 import { Video, Users, MapPin, Clock } from 'lucide-react'
 
 type CourseCategory = 'in-person' | 'video-call' | 'recorded-lesson'
@@ -62,21 +63,21 @@ export default function CoursesPage() {
               {TABS.map((tab) => {
                 const Icon = tab.icon
                 const isActive = activeTab === tab.id
-                const isDisabled = tab.id === 'in-person'
 
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => !isDisabled && setActiveTab(tab.id)}
-                    disabled={isDisabled}
+                    onClick={() => setActiveTab(tab.id)}
                     className={`
                       group relative flex flex-col items-center gap-2 px-6 py-4 rounded-xl 
                       transition-all duration-300 min-w-[140px] md:min-w-[160px] cursor-pointer
                       ${isActive
-                        ? 'bg-gray-800 text-white border-2 border-purple-500 shadow-sm'
-                        : isDisabled
-                        ? 'bg-gray-800/50 text-gray-500 border border-gray-700 cursor-not-allowed opacity-60'
-                        : 'bg-gray-800 text-gray-300 border border-gray-700 hover:border-purple-500/50 hover:text-white hover:bg-gray-800/80'
+                        ? tab.id === 'in-person'
+                          ? 'bg-gray-800 text-white border-2 border-orange-500 shadow-sm'
+                          : tab.id === 'video-call'
+                          ? 'bg-gray-800 text-white border-2 border-purple-500 shadow-sm'
+                          : 'bg-gray-800 text-white border-2 border-blue-500 shadow-sm'
+                        : 'bg-gray-800 text-gray-300 border border-gray-700 hover:border-orange-500/50 hover:text-white hover:bg-gray-800/80'
                       }
                     `}
                     aria-label={tab.label}
@@ -87,11 +88,6 @@ export default function CoursesPage() {
                       }`} 
                     />
                     <span className="font-semibold text-sm md:text-base">{tab.label}</span>
-                    {tab.id === 'in-person' && (
-                      <span className="text-xs bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full mt-1">
-                        Coming Soon
-                      </span>
-                    )}
                   </button>
                 )
               })}
@@ -109,24 +105,11 @@ export default function CoursesPage() {
         {/* Tab Content */}
         <section className="py-8 md:py-12">
           {activeTab === 'in-person' && (
-            <div className="max-w-4xl mx-auto px-4">
-              <div className="text-center py-20">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-orange-500/20 rounded-full mb-6">
-                  <Clock className="w-10 h-10 text-orange-400" />
-                </div>
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                  In-Person Learning Coming Soon
-                </h2>
-                <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-8">
-                  We&apos;re working on bringing you face-to-face learning experiences with expert masters. 
-                  Stay tuned for this exciting new way to learn!
-                </p>
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-500/30 rounded-full text-orange-300 text-sm">
-                  <Clock className="w-4 h-4" />
-                  <span>Coming Soon</span>
-                </div>
-              </div>
-            </div>
+            <InPersonSessions 
+              showPagination={true}
+              showHeader={false}
+              showShowMore={false}
+            />
           )}
 
           {activeTab === 'video-call' && (

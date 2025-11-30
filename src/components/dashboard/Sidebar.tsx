@@ -21,7 +21,8 @@ import {
   FolderOpen,
   Target,
   Users,
-  Calendar
+  Calendar,
+  UserCheck
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -71,6 +72,13 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       allowedRoles: ['student'] // Students only
     },
     {
+      title: 'My In-Person Slots',
+      icon: UserCheck,
+      href: '/dashboard/student-booked-in-person-slots',
+      items: [],
+      allowedRoles: ['student'] // Students only
+    },
+    {
       title: 'My Course Requests',
       icon: BookOpen,
       href: '/dashboard/my-course-requests',
@@ -99,6 +107,13 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     {
+      title: 'Booked In-Person Slots',
+      icon: UserCheck,
+      href: '/dashboard/teacher-booked-in-person-slots',
+      items: [],
+      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
+    },
+    {
       title: 'Course',
       icon: BookOpen,
       href: '/dashboard/course',
@@ -115,6 +130,16 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       items: [
         { title: 'All Slots', href: '/dashboard/one-to-one-session', icon: Video },
         { title: 'Add Slot', href: '/dashboard/one-to-one-session/add-slot', icon: FileText },
+      ],
+      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
+    },
+    {
+      title: 'In Person',
+      icon: UserCheck,
+      href: '/dashboard/in-person-session',
+      items: [
+        { title: 'All In Person Slots', href: '/dashboard/in-person-session', icon: Calendar },
+        { title: 'Add In Person Slot', href: '/dashboard/in-person-session/add-slot', icon: FileText },
       ],
       allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },

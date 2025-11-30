@@ -413,7 +413,7 @@ export default function AllCourse() {
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-white">Request a New Course</DialogTitle>
               <DialogDescription className="text-gray-400">
-                Fill out the form below to request a new course. We'll review your request and get back to you soon.
+                Fill out the form below to request a new course. We&apos;ll review your request and get back to you soon.
               </DialogDescription>
             </DialogHeader>
             

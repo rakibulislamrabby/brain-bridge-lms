@@ -384,7 +384,7 @@ export default function CourseManagement() {
                         <td className="py-3 px-4 text-sm text-gray-300">{formatDate(course.created_at)}</td>
                         <td className="py-3 px-4 text-sm text-gray-300">
                           <div className="flex items-center gap-2">
-                            {/* <Link href={`/dashboard/course/${course.id}/edit`}>
+                            <Link href={`/dashboard/course/${course.id}/edit`}>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -393,7 +393,7 @@ export default function CourseManagement() {
                                 <Pencil className="h-4 w-4 mr-2" />
                                 Edit
                               </Button>
-                            </Link> */}
+                            </Link>
                             <Button
                               variant="outline"
                               size="sm"
