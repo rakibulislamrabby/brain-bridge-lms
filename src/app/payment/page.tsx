@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { useConfirmBooking } from '@/hooks/slots/use-confirm-booking'
+import { useConfirmInPersonBooking } from '@/hooks/slots/use-confirm-in-person-booking'
 import { useConfirmPurchase } from '@/hooks/course/use-confirm-purchase'
 import { useMe } from '@/hooks/use-me'
 import { Input } from '@/components/ui/input'
@@ -68,14 +69,16 @@ interface PaymentFormProps {
   }
   paymentIntentId: string
   pointsToUse?: number
+  slotType?: string // 'in-person' for in-person slots, undefined/null for live sessions
 }
 
-function PaymentForm({ clientSecret, amount, slotInfo, courseInfo, paymentIntentId, pointsToUse: initialPointsToUse }: PaymentFormProps) {
+function PaymentForm({ clientSecret, amount, slotInfo, courseInfo, paymentIntentId, pointsToUse: initialPointsToUse, slotType }: PaymentFormProps) {
   const stripe = useStripe()
   const elements = useElements()
   const router = useRouter()
   const { addToast } = useToast()
   const confirmBookingMutation = useConfirmBooking()
+  const confirmInPersonBookingMutation = useConfirmInPersonBooking()
   const confirmPurchaseMutation = useConfirmPurchase()
   const { data: user } = useMe()
   const [isProcessing, setIsProcessing] = useState(false)
@@ -129,13 +132,25 @@ console.log("paymentIntentId",paymentIntentId)
         // Step 3: Call backend API to confirm booking (only for slots)
         if (slotInfo) {
           try {
-            await confirmBookingMutation.mutateAsync({
-              slot_id: slotInfo.id,
-              scheduled_date: slotInfo.scheduled_date,
-              payment_intent_id: paymentIntentId,
-              points_to_use: pointsToUse,
-              new_payment_amount: newPaymentAmount,
-            })
+            // Use appropriate confirm hook based on slot type
+            if (slotType === 'in-person') {
+              await confirmInPersonBookingMutation.mutateAsync({
+                slot_id: slotInfo.id,
+                scheduled_date: slotInfo.scheduled_date,
+                payment_intent_id: paymentIntentId,
+                points_to_use: pointsToUse,
+                new_payment_amount: newPaymentAmount,
+              })
+            } else {
+              // Live session slot
+              await confirmBookingMutation.mutateAsync({
+                slot_id: slotInfo.id,
+                scheduled_date: slotInfo.scheduled_date,
+                payment_intent_id: paymentIntentId,
+                points_to_use: pointsToUse,
+                new_payment_amount: newPaymentAmount,
+              })
+            }
             
             setPaymentStatus('succeeded')
             addToast({
@@ -540,6 +555,7 @@ function PaymentPageContent() {
   const paymentIntentId = searchParams.get('payment_intent')
   const pointsToUseParam = searchParams.get('points_to_use')
   const pointsToUse = pointsToUseParam ? parseInt(pointsToUseParam) || 0 : 0
+  const slotType = searchParams.get('slot_type') // 'in-person' or null (live session)
   
   // Parse slot info if present
   let slotInfo = null
@@ -644,6 +660,7 @@ function PaymentPageContent() {
         courseInfo={courseInfo || undefined}
         paymentIntentId={paymentIntentId}
         pointsToUse={pointsToUse}
+        slotType={slotType || undefined}
       />
     </Elements>
   )

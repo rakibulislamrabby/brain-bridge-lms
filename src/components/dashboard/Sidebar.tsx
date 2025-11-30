@@ -72,6 +72,13 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       allowedRoles: ['student'] // Students only
     },
     {
+      title: 'My In-Person Slots',
+      icon: UserCheck,
+      href: '/dashboard/student-booked-in-person-slots',
+      items: [],
+      allowedRoles: ['student'] // Students only
+    },
+    {
       title: 'My Course Requests',
       icon: BookOpen,
       href: '/dashboard/my-course-requests',
@@ -96,6 +103,13 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       title: 'Booked Slots',
       icon: Calendar,
       href: '/dashboard/teacher-booked-slots',
+      items: [],
+      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
+    },
+    {
+      title: 'Booked In-Person Slots',
+      icon: UserCheck,
+      href: '/dashboard/teacher-booked-in-person-slots',
       items: [],
       allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },

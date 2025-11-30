@@ -357,6 +357,9 @@ export default function InPersonSessionDetailPage() {
           paymentParams.set('points_to_use', String(pointsToUse))
         }
         
+        // Add slot type to identify in-person slots
+        paymentParams.set('slot_type', 'in-person')
+        
         // Redirect to payment page with URL parameters
         router.push(`/payment?${paymentParams.toString()}`)
       } else {
