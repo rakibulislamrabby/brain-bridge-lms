@@ -2,14 +2,14 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Calendar, Clock, Users, DollarSign, Info, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, Users, DollarSign, Info, ChevronLeft, ChevronRight, Loader2, MapPin } from 'lucide-react'
 import { AppHeader } from '@/components/app-header'
 import Footer from '@/components/shared/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useLiveSessionDetail } from '@/hooks/live-session/use-live-session-detail'
-import { useBookingIntent } from '@/hooks/slots/use-bookings-intent'
+import { useInPersonSlotDetail } from '@/hooks/live-session/use-in-person-slot-detail'
+import { useInPersonBookingIntent } from '@/hooks/slots/use-in-person-booking-intent'
 import { useToast } from '@/components/ui/toast'
 import { useMe } from '@/hooks/use-me'
 import { Input } from '@/components/ui/input'
@@ -97,7 +97,7 @@ const buildCalendarGrid = (monthDate: Date): CalendarCell[] => {
   return cells
 }
 
-export default function LiveSessionDetailPage() {
+export default function InPersonSessionDetailPage() {
   const params = useParams()
   const router = useRouter()
   const sessionId = useMemo(() => {
@@ -106,12 +106,13 @@ export default function LiveSessionDetailPage() {
     return Number.isFinite(parsed) ? parsed : NaN
   }, [params])
 
-  const { data, isLoading, error } = useLiveSessionDetail(sessionId)
-  const bookingIntentMutation = useBookingIntent()
+  const { data, isLoading, error } = useInPersonSlotDetail(sessionId)
+  const bookingIntentMutation = useInPersonBookingIntent()
   const { addToast } = useToast()
   const { data: userData } = useMe()
   const [pointsToUse, setPointsToUse] = useState<number>(0)
 
+  // Calculate available dates based on daily_available_seats
   const availableDates = useMemo(() => {
     if (!data || !data.from_date || !data.to_date) {
       return [] as Date[]
@@ -157,7 +158,11 @@ export default function LiveSessionDetailPage() {
         dateToCheck.setHours(0, 0, 0, 0)
         
         if (dateToCheck >= today) {
-          dates.push(new Date(current))
+          const dateKey = toDateOnlyKey(current)
+          if (dateKey && data.daily_available_seats[dateKey]) {
+            // Include date if it has availability data
+            dates.push(new Date(current))
+          }
         }
         current.setDate(current.getDate() + 1)
       }
@@ -184,14 +189,29 @@ export default function LiveSessionDetailPage() {
     return firstFutureDate ? toDateOnlyKey(firstFutureDate) : null
   })
 
-  const availableDateKeys = useMemo(() => new Set(availableDates.map((date) => toDateOnlyKey(date)).filter((key): key is string => Boolean(key))), [availableDates])
+  const availableDateKeys = useMemo(() => {
+    const keys = new Set<string>()
+    if (data?.daily_available_seats) {
+      Object.keys(data.daily_available_seats).forEach(key => {
+        // Exclude dates that are in booked_slots
+        const isBooked = data.booked_slots?.some(booked => {
+          const bookedDateKey = toDateOnlyKey(booked.scheduled_date)
+          return bookedDateKey === key
+        })
+        if (!isBooked) {
+          keys.add(key)
+        }
+      })
+    }
+    return keys
+  }, [data])
 
   useEffect(() => {
     if (availableDates.length > 0) {
       // Find the first future date (availableDates is already filtered to exclude past dates)
       const firstFutureDate = availableDates[0]
       const firstKey = toDateOnlyKey(firstFutureDate)
-      if (firstKey) {
+      if (firstKey && availableDateKeys.has(firstKey)) {
         setSelectedDateKey(firstKey)
         setCurrentMonth(new Date(firstFutureDate.getFullYear(), firstFutureDate.getMonth(), 1))
       }
@@ -200,7 +220,7 @@ export default function LiveSessionDetailPage() {
       const today = new Date()
       setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1))
     }
-  }, [availableDates])
+  }, [availableDates, availableDateKeys])
 
   const selectedDate = useMemo(() => {
     if (!selectedDateKey) {
@@ -208,6 +228,21 @@ export default function LiveSessionDetailPage() {
     }
     return new Date(selectedDateKey)
   }, [selectedDateKey])
+
+  // Check if a date is full (booked) - must be after selectedDateKey is initialized
+  const isDateFull = useMemo(() => {
+    if (!data || !selectedDateKey) return true
+    const dayData = data.daily_available_seats[selectedDateKey]
+    if (!dayData) return true // If no data, consider it full
+    
+    // Check if this date is in booked_slots
+    const isBooked = data.booked_slots?.some(booked => {
+      const bookedDateKey = toDateOnlyKey(booked.scheduled_date)
+      return bookedDateKey === selectedDateKey
+    }) || false
+    
+    return isBooked
+  }, [data, selectedDateKey])
 
   const calendarCells = useMemo(() => buildCalendarGrid(currentMonth), [currentMonth])
 
@@ -221,12 +256,12 @@ export default function LiveSessionDetailPage() {
       const fromKey = toDateOnlyKey(data.from_date)
       const toKey = toDateOnlyKey(data.to_date)
       if (fromKey && toKey) {
-        return selectedDateKey >= fromKey && selectedDateKey <= toKey
+        return selectedDateKey >= fromKey && selectedDateKey <= toKey && availableDateKeys.has(selectedDateKey)
       }
     }
     
     return false
-  }, [data, selectedDateKey])
+  }, [data, selectedDateKey, availableDateKeys])
 
   // Points system calculations
   const availablePoints = userData?.points || 0
@@ -287,10 +322,10 @@ export default function LiveSessionDetailPage() {
       return
     }
 
-    if (data.available_seats === 0) {
+    if (isDateFull) {
       addToast({
         type: 'error',
-        title: 'Slot Full',
+        title: 'Reservation Failed',
         description: 'This slot is already full. Please select another date.',
         duration: 5000,
       })
@@ -321,6 +356,9 @@ export default function LiveSessionDetailPage() {
         if (pointsToUse > 0) {
           paymentParams.set('points_to_use', String(pointsToUse))
         }
+        
+        // Add slot type to identify in-person slots
+        paymentParams.set('slot_type', 'in-person')
         
         // Redirect to payment page with URL parameters
         router.push(`/payment?${paymentParams.toString()}`)
@@ -355,13 +393,13 @@ export default function LiveSessionDetailPage() {
             onClick={() => router.back()}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to live sessions
+            Back to in-person sessions
           </Button>
 
           {isLoading ? (
             <Card className="bg-gray-800/80 border border-gray-700">
               <CardContent className="py-16 flex justify-center">
-                <Calendar className="h-10 w-10 text-purple-500 animate-pulse" />
+                <Calendar className="h-10 w-10 text-orange-500 animate-pulse" />
               </CardContent>
             </Card>
           ) : error ? (
@@ -369,7 +407,7 @@ export default function LiveSessionDetailPage() {
               <CardContent className="py-16 space-y-3">
                 <Info className="h-10 w-10 text-red-400 mx-auto" />
                 <p className="text-red-200/90">
-                  {error instanceof Error ? error.message : 'Unable to load the live session right now.'}
+                  {error instanceof Error ? error.message : 'Unable to load the in-person session right now.'}
                 </p>
                 <Button onClick={() => router.back()} variant="outline" className="border-red-400 text-red-200 hover:bg-red-400/20">
                   Go back
@@ -380,9 +418,9 @@ export default function LiveSessionDetailPage() {
             <Card className="bg-gray-800/80 border border-gray-700 text-center">
               <CardContent className="py-16 space-y-3">
                 <Info className="h-10 w-10 text-gray-400 mx-auto" />
-                <p className="text-gray-300">Live session not found.</p>
-                <Button onClick={() => router.push('/live-session')} className="bg-purple-600 hover:bg-purple-700 text-white">
-                  Browse live sessions
+                <p className="text-gray-300">In-person session not found.</p>
+                <Button onClick={() => router.push('/courses')} className="bg-orange-600 hover:bg-orange-700 text-white">
+                  Browse in-person sessions
                 </Button>
               </CardContent>
             </Card>
@@ -392,14 +430,14 @@ export default function LiveSessionDetailPage() {
                 <CardHeader className="border-b border-gray-700/70 pb-6">
                   <div className="flex flex-wrap items-start justify-between gap-4 pt-5">
                     <div>
-                      <Badge className="bg-purple-600/20 text-purple-300 border border-purple-600/40 mb-2">
-                        {data.type === 'one_to_one' ? 'One-to-One Session' : (data.type ?? 'Live Session')}
+                      <Badge className="bg-orange-600/20 text-orange-300 border border-orange-600/40 mb-2">
+                        In-Person Session
                       </Badge>
                       <CardTitle className="text-3xl text-white">
                         {data.title || data.teacher?.name || 'Expert Mentor'}
                       </CardTitle>
                       <p className="text-gray-300 mt-2 max-w-xl">
-                        {data.description || 'Connect live with the mentor for personalized guidance and actionable feedback during this session.'}
+                        {data.description || 'Join the mentor for an in-person learning experience with hands-on guidance and personalized feedback.'}
                       </p>
                     </div>
                     <div className="text-right">
@@ -452,9 +490,9 @@ export default function LiveSessionDetailPage() {
                             onClick={() => handleDateSelect(date)}
                             className={`relative flex h-12 items-center justify-center rounded-md border text-sm transition-colors ${
                               isSelected
-                                ? 'border-purple-500 bg-purple-600/20 text-white shadow-inner'
+                                ? 'border-orange-500 bg-orange-600/20 text-white shadow-inner'
                                 : isAvailable && !isPastDate
-                                ? 'border-purple-500/40 bg-purple-500/10 text-purple-200 hover:bg-purple-500/20'
+                                ? 'border-orange-500/40 bg-orange-500/10 text-orange-200 hover:bg-orange-500/20'
                                 : isCurrentMonth
                                 ? 'border-gray-700 bg-gray-800 text-gray-400 cursor-not-allowed opacity-50'
                                 : 'border-gray-800 bg-gray-900 text-gray-700 cursor-not-allowed opacity-50'
@@ -464,7 +502,7 @@ export default function LiveSessionDetailPage() {
                           >
                             {date.getDate()}
                             {isAvailable && !isSelected && !isPastDate && (
-                              <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-purple-400" />
+                              <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-orange-400" />
                             )}
                           </button>
                         )
@@ -472,7 +510,7 @@ export default function LiveSessionDetailPage() {
                     </div>
                     <div className="mt-4 text-sm text-gray-400 space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="inline-block h-3 w-3 rounded-full bg-purple-500"></span>
+                        <span className="inline-block h-3 w-3 rounded-full bg-orange-500"></span>
                         <span>Available date</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -489,12 +527,12 @@ export default function LiveSessionDetailPage() {
                         <div className="space-y-4">
                           <div className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900/50 px-4 py-3">
                             <div className="flex items-center gap-3 text-white">
-                              <Clock className="w-4 h-4 text-purple-400" />
+                              <Clock className="w-4 h-4 text-orange-400" />
                               <div className="flex flex-col">
                                 <span>{data.start_time && data.end_time ? formatTimeRange(data.start_time, data.end_time) : 'Time TBD'}</span>
-                                {data.available_seats > 0 && (
+                                {!isDateFull && (
                                   <span className="text-xs text-gray-400">
-                                    {data.available_seats} {data.available_seats === 1 ? 'seat' : 'seats'} available
+                                    Available
                                   </span>
                                 )}
                               </div>
@@ -502,7 +540,7 @@ export default function LiveSessionDetailPage() {
                           </div>
 
                           {/* Points Usage Section */}
-                          {data.available_seats > 0 && availablePoints > 0 && slotPrice > 0 && (
+                          {!isDateFull && availablePoints > 0 && slotPrice > 0 && (
                             <div className="rounded-lg border border-gray-700 bg-gray-900/50 p-4 space-y-3">
                               <div className="flex items-center justify-between">
                                 <Label className="text-white flex items-center gap-2 text-sm">
@@ -522,7 +560,7 @@ export default function LiveSessionDetailPage() {
                                   value={pointsToUse || ''}
                                   onChange={(e) => handlePointsChange(e.target.value)}
                                   placeholder="0"
-                                  className="bg-gray-800 border-gray-600 text-white flex-1 py-4"
+                                  className="bg-gray-800 border-gray-600 text-white flex-1"
                                   disabled={bookingIntentMutation.isPending}
                                 />
                                 <Button
@@ -561,8 +599,8 @@ export default function LiveSessionDetailPage() {
                           )}
 
                           <Button 
-                            className="w-full bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
-                            disabled={data.available_seats === 0 || bookingIntentMutation.isPending}
+                            className="w-full bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
+                            disabled={isDateFull || bookingIntentMutation.isPending}
                             onClick={handleReserveSlot}
                           >
                             {bookingIntentMutation.isPending ? (
@@ -570,7 +608,7 @@ export default function LiveSessionDetailPage() {
                                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                 Reserving...
                               </>
-                            ) : data.available_seats === 0 ? (
+                            ) : isDateFull ? (
                               'Full'
                             ) : (
                               `Reserve Slot${pointsToUse > 0 ? ` - Pay $${finalAmount.toFixed(2)}` : ''}`
@@ -586,11 +624,11 @@ export default function LiveSessionDetailPage() {
 
                     <div className="rounded-lg border border-gray-700 bg-gray-900/50 p-5 space-y-3 text-sm text-gray-300">
                       <div className="flex items-center gap-2 text-white">
-                        <Users className="w-4 h-4 text-purple-400" />
+                        <Users className="w-4 h-4 text-orange-400" />
                         <span>Teacher</span>
                       </div>
                       <div className="pl-6">
-                        <p className="font-medium text-white">{data.teacher?.name ?? 'Mashter'}</p>
+                        <p className="font-medium text-white">{data.teacher?.name ?? 'Unknown'}</p>
                         {data.teacher?.email && <p className="text-gray-400">{data.teacher.email}</p>}
                       </div>
                       {data.subject && (
@@ -609,15 +647,11 @@ export default function LiveSessionDetailPage() {
                       <div className="pl-6 text-gray-200">
                         {data.price ? `$${Number(data.price).toFixed(2)}` : 'Free'}
                       </div>
-                      {data.type && (
-                        <div className="flex items-center gap-2 text-white pt-2">
-                          <Info className="w-4 h-4 text-blue-400" />
-                          <span>Session Type</span>
-                        </div>
-                      )}
-                      {data.type && (
-                        <div className="pl-6 text-gray-200 capitalize">{data.type.replace(/_/g, ' ')}</div>
-                      )}
+                      <div className="flex items-center gap-2 text-white pt-2">
+                        <MapPin className="w-4 h-4 text-orange-400" />
+                        <span>Session Type</span>
+                      </div>
+                      <div className="pl-6 text-gray-200">In-Person</div>
                     </div>
                   </div>
                 </CardContent>
@@ -630,3 +664,4 @@ export default function LiveSessionDetailPage() {
     </div>
   )
 }
+

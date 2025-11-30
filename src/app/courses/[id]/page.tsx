@@ -30,6 +30,10 @@ import { Loader2, XCircle } from 'lucide-react'
 import CourseReviewModal from '@/components/shared/reviews/CourseReviewModal'
 import { useEnrolledCourses } from '@/hooks/student/use-enrolled-courses'
 import { getStoredUser } from '@/hooks/useAuth'
+import { useMe } from '@/hooks/use-me'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Sparkles, Minus } from 'lucide-react'
 
 const fallbackImage = 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80'
 const MEDIA_BASE_URL = 'https://brainbridge.mitwebsolutions.com/'
@@ -124,11 +128,13 @@ export default function CourseDetailPage() {
   const { data: allCourses = [] } = usePublicCourses()
   const coursePaymentIntentMutation = useCoursePaymentIntent()
   const { data: enrolledCourses = [] } = useEnrolledCourses()
+  const { data: userData } = useMe()
 
   const [expandedSections, setExpandedSections] = useState<Array<number | string>>([])
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
   const [reviewedCourses, setReviewedCourses] = useState<Set<number>>(new Set())
   const [user, setUser] = useState<{ id: number; name: string; email: string; role?: string } | null>(null)
+  const [pointsToUse, setPointsToUse] = useState<number>(0)
 
   // Load user and user-specific reviewed courses from localStorage on mount
   useEffect(() => {
@@ -228,6 +234,23 @@ export default function CourseDetailPage() {
     )
   }
 
+  // Points system calculations
+  const availablePoints = userData?.points || 0
+  const coursePrice = Number(course?.price) || 0
+  const pointsDiscount = Math.min(pointsToUse, coursePrice, availablePoints) // 1 point = $1
+  const finalAmount = Math.max(0, coursePrice - pointsDiscount)
+
+  const handlePointsChange = (value: string) => {
+    const numValue = parseInt(value) || 0
+    const maxPoints = Math.min(availablePoints, Math.floor(coursePrice))
+    setPointsToUse(Math.max(0, Math.min(numValue, maxPoints)))
+  }
+
+  const handleMaxPoints = () => {
+    const maxPoints = Math.min(availablePoints, Math.floor(coursePrice))
+    setPointsToUse(maxPoints)
+  }
+
   const handleEnroll = async () => {
     if (!course) {
       addToast({
@@ -264,6 +287,11 @@ export default function CourseDetailPage() {
         }
         paymentParams.set('course', JSON.stringify(courseInfo))
         
+        // Add points to use if any
+        if (pointsToUse > 0) {
+          paymentParams.set('points_to_use', String(pointsToUse))
+        }
+        
         // Redirect to payment page with URL parameters
         router.push(`/payment?${paymentParams.toString()}`)
       } else {
@@ -294,7 +322,7 @@ export default function CourseDetailPage() {
   }, [allCourses, course])
 
   // Get reviews from course data
-  const reviews = course?.reviews || []
+  const reviews = useMemo(() => course?.reviews || [], [course?.reviews])
   
   // Check if current user has already reviewed this course
   // This checks if the current logged-in user has submitted a review for this course
@@ -304,7 +332,7 @@ export default function CourseDetailPage() {
     // Check if any review has the current user's ID as reviewer_id
     // This ensures each student can only have one review, but different students can all review
     return reviews.some((review) => review.reviewer_id === user.id)
-  }, [user, reviews, course])
+  }, [user?.id, reviews, course?.id])
   
   // Sync user-specific localStorage when we detect a review from API
   useEffect(() => {
@@ -713,6 +741,67 @@ export default function CourseDetailPage() {
                       )}
                     </div>
                     
+                    {/* Points Usage Section */}
+                    {availablePoints > 0 && coursePrice > 0 && (
+                      <div className="mb-4 pb-4 border-b border-gray-700">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-white flex items-center gap-2 text-sm">
+                              <Sparkles className="w-4 h-4 text-yellow-400" />
+                              Use Points (1 point = $1 discount)
+                            </Label>
+                            <span className="text-xs text-gray-400">
+                              Available: <span className="text-yellow-400 font-semibold">{availablePoints}</span> points
+                            </span>
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            <Input
+                              type="number"
+                              min="0"
+                              max={Math.min(availablePoints, Math.floor(coursePrice))}
+                              value={pointsToUse || ''}
+                              onChange={(e) => handlePointsChange(e.target.value)}
+                              placeholder="0"
+                              className="bg-gray-700 border-gray-600 text-white flex-1 py-"
+                              disabled={coursePaymentIntentMutation.isPending}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleMaxPoints}
+                              className="border-yellow-600 text-yellow-400 hover:bg-yellow-900/30 whitespace-nowrap text-xs px-3"
+                              disabled={coursePaymentIntentMutation.isPending || availablePoints === 0}
+                            >
+                              Use Max
+                            </Button>
+                          </div>
+                          
+                          {pointsToUse > 0 && (
+                            <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                              <div className="space-y-1 text-sm">
+                                <div className="flex items-center justify-between text-gray-300">
+                                  <span>Original Price:</span>
+                                  <span>${coursePrice.toFixed(2)}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-yellow-400">
+                                  <span className="flex items-center gap-1">
+                                    <Minus className="w-3 h-3" />
+                                    Points Discount ({pointsToUse} pts):
+                                  </span>
+                                  <span>-${pointsDiscount.toFixed(2)}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-yellow-500/20">
+                                  <span>Final Amount:</span>
+                                  <span>${finalAmount.toFixed(2)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     <Button 
                       onClick={handleEnroll}
                       disabled={!course || coursePaymentIntentMutation.isPending}
@@ -724,7 +813,7 @@ export default function CourseDetailPage() {
                           Processing...
                         </>
                       ) : (
-                        'Enroll Now'
+                        `Enroll Now${pointsToUse > 0 ? ` - Pay $${finalAmount.toFixed(2)}` : ''}`
                       )}
                     </Button>
                     

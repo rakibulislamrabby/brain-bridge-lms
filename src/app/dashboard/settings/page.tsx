@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -83,7 +84,7 @@ export default function SettingsPage() {
         }
       }
     }
-  }, [user, isTeacher])
+  }, [user, isTeacher, profilePictureFile, introductionVideoFile])
 
   useEffect(() => {
     const stored = getStoredUser()
@@ -399,10 +400,13 @@ export default function SettingsPage() {
                     {/* Preview */}
                     {profilePicturePreview && (
                       <div className="relative inline-block">
-                        <img
+                        <Image
                           src={profilePicturePreview}
                           alt="Profile preview"
+                          width={128}
+                          height={128}
                           className="w-32 h-32 object-cover rounded-full border-2 border-gray-600"
+                          unoptimized
                         />
                         <button
                           type="button"

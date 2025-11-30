@@ -33,11 +33,13 @@ export interface Subject {
 export interface CreateSubjectRequest {
   name: string;
   parent_id: number | null;
+  icon?: File | null;
 }
 
 export interface UpdateSubjectRequest {
   name: string;
   parent_id: number | null;
+  icon?: File | null;
 }
 
 export interface SubjectResponse {
