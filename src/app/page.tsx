@@ -4,6 +4,7 @@ import ChooseUs from "@/components/Home/ChooseUs"
 import OurFeature from "@/components/Home/OurFeature"
 import AllCourse from "@/components/Courses/AllCourse"
 import LiveSessions from "@/components/Home/LiveSessions"
+import InPersonSessions from "@/components/Home/InPersonSessions"
 import LearningReimagined from "@/components/Reviews/LearningReimagined"
 import PointSystem from "@/components/Point/PointSystem"
 import Contact from "@/components/shared/Contact"
@@ -22,6 +23,7 @@ export default function Home() {
       {/* <Partner/> */}
       <AllCourse/>
       <LiveSessions limit={6} showShowMore={true} />
+      <InPersonSessions limit={6} showShowMore={true} />
 
       {/* Why Choose Us Section */}
       <ChooseUs/>
