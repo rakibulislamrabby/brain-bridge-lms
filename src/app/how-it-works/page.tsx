@@ -39,12 +39,12 @@ const steps = [
   },
   {
     number: 3,
-    title: "Book in Seconds",
+    title: "Book in Session",
     description: "Choose in-person, video call, or online session. Pick a time and lock it in instantly.",
     icon: Calendar,
     color: "orange",
     actionText: "View Sessions",
-    actionLink: "/courses"
+    actionLink: "/courses?tab=video-call"
   },
   {
     number: 4,
@@ -53,7 +53,7 @@ const steps = [
     icon: Users,
     color: "purple",
     actionText: "Start Learning",
-    actionLink: "/courses"
+    actionLink: "/courses?tab=in-person"
   },
   {
     number: 5,
@@ -62,7 +62,7 @@ const steps = [
     icon: Gift,
     color: "blue",
     actionText: "Learn About Points",
-    actionLink: "#points"
+    actionLink: "/points"
   }
 ]
 
@@ -269,7 +269,7 @@ export default function HowItWorksPage() {
               The more you learn, the more you earn!
             </p>
             <Button asChild size="lg" className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer">
-              <Link href="/#points">
+              <Link href="/points">
                 Learn More About Points
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Link>

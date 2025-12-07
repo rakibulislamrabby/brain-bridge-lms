@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { AppHeader } from "@/components/app-header"
 import Footer from "@/components/shared/Footer"
 import AllCourse from "@/components/Courses/AllCourse"
@@ -39,7 +40,26 @@ const TABS: TabOption[] = [
 ]
 
 export default function CoursesPage() {
-  const [activeTab, setActiveTab] = useState<CourseCategory>('recorded-lesson')
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab') as CourseCategory | null
+  
+  // Validate tab parameter and set default
+  const getValidTab = (tab: CourseCategory | null): CourseCategory => {
+    if (tab && TABS.some(t => t.id === tab)) {
+      return tab
+    }
+    return 'recorded-lesson'
+  }
+
+  const [activeTab, setActiveTab] = useState<CourseCategory>(getValidTab(tabParam))
+
+  // Update active tab when URL parameter changes
+  useEffect(() => {
+    if (tabParam) {
+      const validTab = getValidTab(tabParam)
+      setActiveTab(validTab)
+    }
+  }, [tabParam])
 
   return (
     <>
