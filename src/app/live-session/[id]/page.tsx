@@ -15,6 +15,7 @@ import { useMe } from '@/hooks/use-me'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Sparkles, Minus } from 'lucide-react'
+import { SERVICE_FEE } from '@/lib/constants'
 
 const toDateOnlyKey = (date: Date | string | null | undefined) => {
   if (!date) {
@@ -232,7 +233,8 @@ export default function LiveSessionDetailPage() {
   const availablePoints = userData?.points || 0
   const slotPrice = Number(data?.price) || 0
   const pointsDiscount = Math.min(pointsToUse, slotPrice, availablePoints) // 1 point = $1
-  const finalAmount = Math.max(0, slotPrice - pointsDiscount)
+  const amountAfterPoints = Math.max(0, slotPrice - pointsDiscount)
+  const finalAmount = amountAfterPoints + SERVICE_FEE // Add service fee
 
   const handlePointsChange = (value: string) => {
     const numValue = parseInt(value) || 0
@@ -550,8 +552,34 @@ export default function LiveSessionDetailPage() {
                                       </span>
                                       <span>-${pointsDiscount.toFixed(2)}</span>
                                     </div>
+                                    <div className="flex items-center justify-between text-gray-300">
+                                      <span>Amount After Points:</span>
+                                      <span>${amountAfterPoints.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-gray-400 text-xs">
+                                      <span>Service Fee:</span>
+                                      <span>${SERVICE_FEE.toFixed(2)}</span>
+                                    </div>
                                     <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-yellow-500/20">
                                       <span>Final Amount:</span>
+                                      <span>${finalAmount.toFixed(2)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              {pointsToUse === 0 && slotPrice > 0 && (
+                                <div className="p-3 bg-gray-700/50 border border-gray-600 rounded-lg">
+                                  <div className="space-y-1 text-sm">
+                                    <div className="flex items-center justify-between text-gray-300">
+                                      <span>Session Price:</span>
+                                      <span>${slotPrice.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-gray-400 text-xs">
+                                      <span>Service Fee:</span>
+                                      <span>${SERVICE_FEE.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-gray-600">
+                                      <span>Total Amount:</span>
                                       <span>${finalAmount.toFixed(2)}</span>
                                     </div>
                                   </div>
@@ -573,9 +601,14 @@ export default function LiveSessionDetailPage() {
                             ) : data.available_seats === 0 ? (
                               'Full'
                             ) : (
-                              `Reserve Slot${pointsToUse > 0 ? ` - Pay $${finalAmount.toFixed(2)}` : ''}`
+                              `Reserve Slot - Pay $${finalAmount.toFixed(2)}`
                             )}
                           </Button>
+                          {slotPrice > 0 && (
+                            <p className="text-xs text-gray-400 text-center mt-2">
+                              $7.95 flat service fee applies to all purchases
+                            </p>
+                          )}
                         </div>
                       ) : (
                         <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-6 text-center text-gray-400">
