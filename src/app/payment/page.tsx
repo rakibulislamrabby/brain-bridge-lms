@@ -16,6 +16,7 @@ import { useConfirmPurchase } from '@/hooks/course/use-confirm-purchase'
 import { useMe } from '@/hooks/use-me'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { SERVICE_FEE } from '@/lib/constants'
 
 // Try multiple possible environment variable names for Stripe publishable key
 // Note: In Next.js, only variables prefixed with NEXT_PUBLIC_ are available on the client side
@@ -90,7 +91,8 @@ function PaymentForm({ clientSecret, amount, slotInfo, courseInfo, paymentIntent
   const availablePoints = user?.points || 0
   const originalAmount = parseFloat(amount) || 0
   const pointsDiscount = Math.min(pointsToUse, originalAmount, availablePoints) // 1 point = $1
-  const newPaymentAmount = Math.max(0, originalAmount - pointsDiscount)
+  const amountAfterPoints = Math.max(0, originalAmount - pointsDiscount)
+  const newPaymentAmount = amountAfterPoints + SERVICE_FEE // Add service fee to final amount
   
 console.log("paymentIntentId",paymentIntentId)
   const handleSubmit = async (e: React.FormEvent) => {
@@ -432,8 +434,16 @@ console.log("paymentIntentId",paymentIntentId)
                       </span>
                       <span>-${pointsDiscount.toFixed(2)}</span>
                     </div>
+                    <div className="flex items-center justify-between text-gray-400 text-sm">
+                      <span>Amount After Points:</span>
+                      <span>${amountAfterPoints.toFixed(2)}</span>
+                    </div>
                   </>
                 )}
+                <div className="flex items-center justify-between text-gray-400 text-sm">
+                  <span>Service Fee:</span>
+                  <span>${SERVICE_FEE.toFixed(2)}</span>
+                </div>
                 <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-600/20 to-purple-500/10 rounded-lg border border-purple-500/30">
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-5 h-5 text-purple-400" />
@@ -442,13 +452,23 @@ console.log("paymentIntentId",paymentIntentId)
                     </span>
                   </div>
                   <span className="text-white font-bold text-2xl">
-                    ${pointsToUse > 0 ? newPaymentAmount.toFixed(2) : originalAmount.toFixed(2)}
+                    ${newPaymentAmount.toFixed(2)}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-2 space-y-2">
+              <div className="flex items-start gap-2 p-3 bg-orange-900/20 border border-orange-700/30 rounded-lg">
+                <div className="mt-0.5">
+                  <svg className="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <p className="text-orange-200 text-xs">
+                  <strong>$7.95 flat service fee</strong> applies to all purchases.
+                </p>
+              </div>
               <div className="flex items-start gap-2 p-3 bg-blue-900/20 border border-blue-700/30 rounded-lg">
                 <div className="mt-0.5">
                   <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
@@ -534,7 +554,7 @@ console.log("paymentIntentId",paymentIntentId)
                   ) : (
                     <>
                       <DollarSign className="w-4 h-4 mr-2" />
-                      Pay ${pointsToUse > 0 ? newPaymentAmount.toFixed(2) : originalAmount.toFixed(2)}
+                      Pay ${newPaymentAmount.toFixed(2)}
                     </>
                   )}
                 </Button>

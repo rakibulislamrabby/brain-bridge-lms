@@ -34,6 +34,7 @@ import { useMe } from '@/hooks/use-me'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Sparkles, Minus } from 'lucide-react'
+import { SERVICE_FEE } from '@/lib/constants'
 
 const fallbackImage = 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80'
 const MEDIA_BASE_URL = 'https://brainbridge.mitwebsolutions.com/'
@@ -238,7 +239,8 @@ export default function CourseDetailPage() {
   const availablePoints = userData?.points || 0
   const coursePrice = Number(course?.price) || 0
   const pointsDiscount = Math.min(pointsToUse, coursePrice, availablePoints) // 1 point = $1
-  const finalAmount = Math.max(0, coursePrice - pointsDiscount)
+  const amountAfterPoints = Math.max(0, coursePrice - pointsDiscount)
+  const finalAmount = amountAfterPoints + 7.95 // Add service fee
 
   const handlePointsChange = (value: string) => {
     const numValue = parseInt(value) || 0
@@ -791,8 +793,34 @@ export default function CourseDetailPage() {
                                   </span>
                                   <span>-${pointsDiscount.toFixed(2)}</span>
                                 </div>
+                                <div className="flex items-center justify-between text-gray-300">
+                                  <span>Amount After Points:</span>
+                                  <span>${amountAfterPoints.toFixed(2)}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-gray-400 text-xs">
+                                  <span>Service Fee:</span>
+                                  <span>${SERVICE_FEE.toFixed(2)}</span>
+                                </div>
                                 <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-yellow-500/20">
                                   <span>Final Amount:</span>
+                                  <span>${finalAmount.toFixed(2)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          {pointsToUse === 0 && (
+                            <div className="p-3 bg-gray-700/50 border border-gray-600 rounded-lg">
+                              <div className="space-y-1 text-sm">
+                                <div className="flex items-center justify-between text-gray-300">
+                                  <span>Course Price:</span>
+                                  <span>${coursePrice.toFixed(2)}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-gray-400 text-xs">
+                                  <span>Service Fee:</span>
+                                  <span>${SERVICE_FEE.toFixed(2)}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-gray-600">
+                                  <span>Total Amount:</span>
                                   <span>${finalAmount.toFixed(2)}</span>
                                 </div>
                               </div>
@@ -813,9 +841,12 @@ export default function CourseDetailPage() {
                           Processing...
                         </>
                       ) : (
-                        `Enroll Now${pointsToUse > 0 ? ` - Pay $${finalAmount.toFixed(2)}` : ''}`
+                        `Enroll Now - Pay $${finalAmount.toFixed(2)}`
                       )}
                     </Button>
+                    <p className="text-xs text-gray-400 text-center mt-2">
+                      $7.95 flat service fee applies to all purchases
+                    </p>
                     
                     <div className="space-y-3 text-sm">
                       {(course.features ?? [

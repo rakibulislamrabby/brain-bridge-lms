@@ -9,28 +9,22 @@ import LearningReimagined from "@/components/Reviews/LearningReimagined"
 import PointSystem from "@/components/Point/PointSystem"
 import Contact from "@/components/shared/Contact"
 import RandomSkill from "@/components/Home/RandomSkill"
+import OnBordingStep from "@/components/Home/OnBordingStep"
 
 export default function Home() {
   return (
     <>
     <div className=" mx-auto">
-      {/* Combined Header + Hero Section for Landing Page */}
       <LandingHero />
-      {/* Platform Features */}
-      <OurFeature/>
-
+      <LearningReimagined/>
+      <OnBordingStep/>
       <RandomSkill/>
-      {/* <Partner/> */}
       <AllCourse/>
       <LiveSessions limit={6} showShowMore={true} />
       <InPersonSessions limit={6} showShowMore={true} />
-
-      {/* Why Choose Us Section */}
       <ChooseUs/>
       <PointSystem/>
-      <Contact/>
-      <LearningReimagined/>
-     
+      <Contact/> 
     </div>
      {/* Footer */}
      <Footer/>
