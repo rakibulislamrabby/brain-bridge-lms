@@ -93,6 +93,7 @@ export default function Footer() {
                   How It Works
                 </Link>
               </li>
+              
             </ul>
           </div>
 
@@ -123,6 +124,12 @@ export default function Footer() {
                 <Link href="/referral" className="hover:text-white transition-colors flex items-center gap-2">
                   <Gift className="w-4 h-4" />
                   Referral Program
+                </Link>
+              </li>
+              <li>
+                <Link href="/points" className="hover:text-white transition-colors flex items-center gap-2">
+                  <Gift className="w-4 h-4" />
+                  Points System
                 </Link>
               </li>
             </ul>

@@ -1,8 +1,20 @@
-import React from 'react'
+'use client'
+
+import { useState } from 'react'
 import { Card, CardContent } from '../ui/card'
-import { BookOpen, Clock, Gift, Star, Trophy, Zap } from 'lucide-react'
+import { BookOpen, Clock, Gift, Star, Trophy, Zap, ChevronDown, ChevronUp } from 'lucide-react'
 
 export default function PointSystem() {
+  const [expandedQAs, setExpandedQAs] = useState<number[]>([])
+
+  const toggleQA = (index: number) => {
+    setExpandedQAs(prev => 
+      prev.includes(index)
+        ? prev.filter(i => i !== index)
+        : [...prev, index]
+    )
+  }
+
   const earningMethods = [
     {
       icon: <BookOpen className="w-8 h-8" />,
@@ -154,6 +166,110 @@ export default function PointSystem() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+
+        {/* Q&A Section */}
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+          <div className="text-center mb-8">
+            <h3 className="text-3xl font-bold text-white mb-4 flex items-center justify-center gap-2">
+              <Star className="w-6 h-6 text-yellow-400" />
+              Frequently Asked Questions
+            </h3>
+          </div>
+          
+          <div className="space-y-4">
+            {/* Question 1 */}
+            <Card className="bg-gray-800 border border-gray-700 overflow-hidden">
+              <button
+                onClick={() => toggleQA(0)}
+                className="w-full p-6 text-left hover:bg-gray-700/50 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xl font-semibold text-white pr-4">
+                    What are these rewards?
+                  </h4>
+                  {expandedQAs.includes(0) ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  )}
+                </div>
+              </button>
+              {expandedQAs.includes(0) && (
+                <div className="border-t border-gray-700 bg-gray-700/30">
+                  <CardContent className="p-6">
+                    <div className="space-y-3 text-gray-300 leading-relaxed">
+                      <p>
+                        BrainBridge Points are our way of rewarding your commitment to learning and growth. Every time you book a session, complete a course, or spend time learning with our expert masters, you earn points that unlock real, valuable benefits.
+                      </p>
+                      <p>
+                        Our rewards system includes three main types of benefits:
+                      </p>
+                      <ul className="list-disc list-inside space-y-2 ml-4">
+                        <li>
+                          <strong className="text-orange-400">Free Sessions</strong> - Redeem 500 points for complimentary learning sessions with expert masters. Save money while continuing your learning journey.
+                        </li>
+                        <li>
+                          <strong className="text-purple-400">Premium Courses</strong> - Use 1000 points to access exclusive premium courses at discounted rates. Get advanced content and specialized training that would normally cost more.
+                        </li>
+                        <li>
+                          <strong className="text-blue-400">Priority Booking</strong> - Spend 750 points to get priority access to popular instructors by location. Secure your spot with top-rated masters before others.
+                        </li>
+                      </ul>
+                      <p>
+                        These rewards are designed to make quality education more accessible while recognizing your dedication to personal and professional development.
+                      </p>
+                    </div>
+                  </CardContent>
+                </div>
+              )}
+            </Card>
+
+            {/* Question 2 */}
+            <Card className="bg-gray-800 border border-gray-700 overflow-hidden">
+              <button
+                onClick={() => toggleQA(1)}
+                className="w-full p-6 text-left hover:bg-gray-700/50 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xl font-semibold text-white pr-4">
+                    Why should people want to earn points to achieve this reward?
+                  </h4>
+                  {expandedQAs.includes(1) ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  )}
+                </div>
+              </button>
+              {expandedQAs.includes(1) && (
+                <div className="border-t border-gray-700 bg-gray-700/30">
+                  <CardContent className="p-6">
+                    <div className="space-y-3 text-gray-300 leading-relaxed">
+                      <p>
+                        Earning BrainBridge Points isn't just about collecting rewards—it's about maximizing the value of your learning investment. Here's why you should actively earn and use points:
+                      </p>
+                      <p>
+                        <strong className="text-white">Financial Benefits:</strong> Points directly translate to savings. Instead of paying full price for sessions and courses, you can use your earned points to reduce or eliminate costs. This makes continuous learning more affordable and sustainable.
+                      </p>
+                      <p>
+                        <strong className="text-white">Enhanced Learning Opportunities:</strong> Priority booking ensures you never miss out on learning with the most sought-after masters. When popular instructors have limited availability, your points give you first access to their expertise.
+                      </p>
+                      <p>
+                        <strong className="text-white">Recognition of Commitment:</strong> The more you learn, the more you earn. This system rewards your dedication to growth, making every session and course completion feel more valuable. It's our way of saying "thank you" for investing in yourself.
+                      </p>
+                      <p>
+                        <strong className="text-white">Long-term Value:</strong> Points never expire and accumulate over time. As you continue your learning journey, your points grow, unlocking increasingly valuable rewards that enhance your educational experience.
+                      </p>
+                      <p>
+                        In essence, earning points transforms your learning journey into a rewarding cycle: learn more, earn more, save more, and access better opportunities. It's a win-win system that benefits both your education and your wallet.
+                      </p>
+                    </div>
+                  </CardContent>
+                </div>
+              )}
+            </Card>
           </div>
         </div>
 

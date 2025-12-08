@@ -15,7 +15,15 @@ import {
   Target,
   MapPin,
   Video,
-  BookOpen
+  BookOpen,
+  Palette,
+  GraduationCap,
+  Dumbbell,
+  Code,
+  Heart,
+  Briefcase,
+  Camera,
+  Gamepad2
 } from 'lucide-react'
 
 const steps = [
@@ -67,14 +75,14 @@ const steps = [
 ]
 
 const categories = [
-  { name: "Programming", icon: Target, color: "from-blue-500 to-cyan-500" },
-  { name: "Design", icon: Target, color: "from-purple-500 to-pink-500" },
-  { name: "Business", icon: Target, color: "from-orange-500 to-red-500" },
-  { name: "Marketing", icon: Target, color: "from-green-500 to-emerald-500" },
-  { name: "Photography", icon: Target, color: "from-indigo-500 to-purple-500" },
-  { name: "Music", icon: Target, color: "from-pink-500 to-rose-500" },
-  { name: "Cooking", icon: Target, color: "from-amber-500 to-orange-500" },
-  { name: "Fitness", icon: Target, color: "from-red-500 to-pink-500" }
+  { name: "Creative arts", icon: Palette, color: "from-purple-500 to-pink-500" },
+  { name: "Academic and school success", icon: GraduationCap, color: "from-blue-500 to-cyan-500" },
+  { name: "Sports and physical training", icon: Dumbbell, color: "from-red-500 to-pink-500" },
+  { name: "Tech and future skills", icon: Code, color: "from-indigo-500 to-purple-500" },
+  { name: "Life skills", icon: Heart, color: "from-green-500 to-emerald-500" },
+  { name: "Business & Careers", icon: Briefcase, color: "from-orange-500 to-red-500" },
+  { name: "Creator and influencer skills", icon: Camera, color: "from-pink-500 to-rose-500" },
+  { name: "Hobbies and fun", icon: Gamepad2, color: "from-amber-500 to-orange-500" }
 ]
 
 const sessionTypes = [
