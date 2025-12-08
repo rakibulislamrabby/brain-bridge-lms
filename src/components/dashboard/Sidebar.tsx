@@ -22,7 +22,8 @@ import {
   Target,
   Users,
   Calendar,
-  UserCheck
+  UserCheck,
+  CheckSquare
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -119,7 +120,8 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       href: '/dashboard/course',
       items: [
         { title: 'All Courses', href: '/dashboard/course', icon: BookOpen },
-        { title: 'Add Course', href: '/dashboard/course/add-course', icon: FileText }
+        { title: 'Add Course', href: '/dashboard/course/add-course', icon: FileText },
+        { title: 'Select Main Course', href: '/dashboard/course/add-selected-course', icon: CheckSquare }
       ],
       allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },

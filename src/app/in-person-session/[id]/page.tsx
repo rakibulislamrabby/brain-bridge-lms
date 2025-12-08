@@ -15,6 +15,7 @@ import { useMe } from '@/hooks/use-me'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Sparkles, Minus } from 'lucide-react'
+import { SERVICE_FEE } from '@/lib/constants'
 
 const toDateOnlyKey = (date: Date | string | null | undefined) => {
   if (!date) {
@@ -267,7 +268,8 @@ export default function InPersonSessionDetailPage() {
   const availablePoints = userData?.points || 0
   const slotPrice = Number(data?.price) || 0
   const pointsDiscount = Math.min(pointsToUse, slotPrice, availablePoints) // 1 point = $1
-  const finalAmount = Math.max(0, slotPrice - pointsDiscount)
+  const amountAfterPoints = Math.max(0, slotPrice - pointsDiscount)
+  const finalAmount = amountAfterPoints + 7.95 // Add service fee
 
   const handlePointsChange = (value: string) => {
     const numValue = parseInt(value) || 0
@@ -540,7 +542,7 @@ export default function InPersonSessionDetailPage() {
                           </div>
 
                           {/* Points Usage Section */}
-                          {!isDateFull && availablePoints > 0 && slotPrice > 0 && (
+                          {!isDateFull && slotPrice > 0 && (
                             <div className="rounded-lg border border-gray-700 bg-gray-900/50 p-4 space-y-3">
                               <div className="flex items-center justify-between">
                                 <Label className="text-white flex items-center gap-2 text-sm">
@@ -552,48 +554,82 @@ export default function InPersonSessionDetailPage() {
                                 </span>
                               </div>
                               
-                              <div className="flex gap-2">
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max={Math.min(availablePoints, Math.floor(slotPrice))}
-                                  value={pointsToUse || ''}
-                                  onChange={(e) => handlePointsChange(e.target.value)}
-                                  placeholder="0"
-                                  className="bg-gray-800 border-gray-600 text-white flex-1"
-                                  disabled={bookingIntentMutation.isPending}
-                                />
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  onClick={handleMaxPoints}
-                                  className="border-yellow-600 text-yellow-400 hover:bg-yellow-900/30 whitespace-nowrap text-xs px-3"
-                                  disabled={bookingIntentMutation.isPending || availablePoints === 0}
-                                >
-                                  Use Max
-                                </Button>
-                              </div>
-                              
-                              {pointsToUse > 0 && (
-                                <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                                  <div className="space-y-1 text-sm">
-                                    <div className="flex items-center justify-between text-gray-300">
-                                      <span>Original Price:</span>
-                                      <span>${slotPrice.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-yellow-400">
-                                      <span className="flex items-center gap-1">
-                                        <Minus className="w-3 h-3" />
-                                        Points Discount ({pointsToUse} pts):
-                                      </span>
-                                      <span>-${pointsDiscount.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-yellow-500/20">
-                                      <span>Final Amount:</span>
-                                      <span>${finalAmount.toFixed(2)}</span>
-                                    </div>
+                              {availablePoints > 0 ? (
+                                <>
+                                  <div className="flex gap-2">
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      max={Math.min(availablePoints, Math.floor(slotPrice))}
+                                      value={pointsToUse || ''}
+                                      onChange={(e) => handlePointsChange(e.target.value)}
+                                      placeholder="0"
+                                      className="bg-gray-800 border-gray-600 text-white flex-1"
+                                      disabled={bookingIntentMutation.isPending}
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      onClick={handleMaxPoints}
+                                      className="border-yellow-600 text-yellow-400 hover:bg-yellow-900/30 whitespace-nowrap text-xs px-3"
+                                      disabled={bookingIntentMutation.isPending}
+                                    >
+                                      Use Max
+                                    </Button>
                                   </div>
-                                </div>
+                                  
+                                  {pointsToUse > 0 && (
+                                    <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                                      <div className="space-y-1 text-sm">
+                                        <div className="flex items-center justify-between text-gray-300">
+                                          <span>Original Price:</span>
+                                          <span>${slotPrice.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-yellow-400">
+                                          <span className="flex items-center gap-1">
+                                            <Minus className="w-3 h-3" />
+                                            Points Discount ({pointsToUse} pts):
+                                          </span>
+                                          <span>-${pointsDiscount.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-gray-300">
+                                          <span>Amount After Points:</span>
+                                          <span>${amountAfterPoints.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-gray-400 text-xs">
+                                          <span>Service Fee:</span>
+                                          <span>${SERVICE_FEE.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-yellow-500/20">
+                                          <span>Final Amount:</span>
+                                          <span>${finalAmount.toFixed(2)}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {pointsToUse === 0 && slotPrice > 0 && (
+                                    <div className="p-3 bg-gray-700/50 border border-gray-600 rounded-lg">
+                                      <div className="space-y-1 text-sm">
+                                        <div className="flex items-center justify-between text-gray-300">
+                                          <span>Session Price:</span>
+                                          <span>${slotPrice.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-gray-400 text-xs">
+                                          <span>Service Fee:</span>
+                                          <span>${SERVICE_FEE.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-gray-600">
+                                          <span>Total Amount:</span>
+                                          <span>${finalAmount.toFixed(2)}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <p className="text-xs text-gray-500 text-center py-2">
+                                  You don&apos;t have any points available. Earn points by completing courses and sessions!
+                                </p>
                               )}
                             </div>
                           )}
@@ -611,9 +647,14 @@ export default function InPersonSessionDetailPage() {
                             ) : isDateFull ? (
                               'Full'
                             ) : (
-                              `Reserve Slot${pointsToUse > 0 ? ` - Pay $${finalAmount.toFixed(2)}` : ''}`
+                              `Reserve Slot - Pay $${finalAmount.toFixed(2)}`
                             )}
                           </Button>
+                          {slotPrice > 0 && (
+                            <p className="text-xs text-gray-400 text-center mt-2">
+                              $7.95 flat service fee applies to all purchases
+                            </p>
+                          )}
                         </div>
                       ) : (
                         <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-6 text-center text-gray-400">

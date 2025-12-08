@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { useTeachers, Teacher } from '@/hooks/teacher/use-teachers'
 import { useSkills } from '@/hooks/skills/use-skills'
-import { ArrowLeft, Star, Users, Award, Loader2, Search, Mail, Phone, MapPin, Info, ExternalLink, DollarSign, Play, X } from 'lucide-react'
+import { getStoredUser } from '@/hooks/useAuth'
+import { ArrowLeft, Star, Users, Award, Loader2, Search, Mail, Phone, MapPin, Info, ExternalLink, DollarSign, Play, X, LogIn } from 'lucide-react'
 import Image from 'next/image'
 
 const STORAGE_BASE_URL = process.env.NEXT_PUBLIC_MAIN_STORAGE_URL || ''
@@ -58,6 +59,15 @@ function MastersPageContent() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false)
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+  
+  // Check if user is logged in
+  useEffect(() => {
+    setIsClient(true)
+    const user = getStoredUser()
+    setIsLoggedIn(!!user)
+  }, [])
   
   // Debounce search input
   useEffect(() => {
@@ -285,7 +295,37 @@ function MastersPageContent() {
             </div>
           </div>
 
-          {isLoading ? (
+          {!isClient ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="h-12 w-12 text-purple-500 animate-spin" />
+            </div>
+          ) : !isLoggedIn ? (
+            <Card className="bg-gray-800/80 border border-gray-700 text-center">
+              <CardContent className="py-16 space-y-4">
+                <LogIn className="h-16 w-16 text-purple-400 mx-auto" />
+                <h3 className="text-2xl font-bold text-white mb-2">Login First</h3>
+                <p className="text-gray-400 mb-6">
+                  Please log in to view available masters and their profiles.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button 
+                    onClick={() => router.push('/signin')} 
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Sign In
+                  </Button>
+                  <Button 
+                    onClick={() => router.push('/signup')} 
+                    variant="outline"
+                    className="border-purple-400 text-purple-300 hover:bg-purple-900/30"
+                  >
+                    Sign Up
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : isLoading ? (
             <div className="flex justify-center items-center py-20">
               <Loader2 className="h-12 w-12 text-purple-500 animate-spin" />
             </div>

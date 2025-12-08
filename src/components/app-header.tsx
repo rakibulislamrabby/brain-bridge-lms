@@ -196,6 +196,9 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
               <Button asChild variant="outline" className="border-2 border-white text-white hover:bg-white/10 text-sm font-medium py-2 px-4">
                 <Link href="/signup?role=master">Become a Master</Link>
               </Button>
+              <Button asChild variant="outline" className="border-2 border-white text-white hover:bg-white/10 text-sm font-medium py-2 px-4">
+                <Link href="/signup">Become a Student</Link>
+              </Button>
               <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium py-2 px-4">
                 <Link href="/signin">Sign In</Link>
               </Button>
@@ -270,6 +273,9 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
             <div className="flex items-center gap-3">
               <Button asChild variant="outline" className="border-2 border-white text-white hover:bg-white/10 text-sm font-medium py-2 px-4">
                 <Link href="/signup?role=master">Become a Master</Link>
+              </Button>
+              <Button asChild variant="outline" className="border-2 border-white text-white hover:bg-white/10 text-sm font-medium py-2 px-4">
+                <Link href="/signup">Become a Student</Link>
               </Button>
               <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium py-2 px-4">
                 <Link href="/signin">Sign In</Link>
