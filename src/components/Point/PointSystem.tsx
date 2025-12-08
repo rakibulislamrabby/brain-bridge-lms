@@ -248,7 +248,7 @@ export default function PointSystem() {
                   <CardContent className="p-6">
                     <div className="space-y-3 text-gray-300 leading-relaxed">
                       <p>
-                        Earning BrainBridge Points isn't just about collecting rewards—it's about maximizing the value of your learning investment. Here's why you should actively earn and use points:
+                        Earning BrainBridge Points isn&apos;t just about collecting rewards—it&apos;s about maximizing the value of your learning investment. Here&apos;s why you should actively earn and use points:
                       </p>
                       <p>
                         <strong className="text-white">Financial Benefits:</strong> Points directly translate to savings. Instead of paying full price for sessions and courses, you can use your earned points to reduce or eliminate costs. This makes continuous learning more affordable and sustainable.
@@ -257,13 +257,13 @@ export default function PointSystem() {
                         <strong className="text-white">Enhanced Learning Opportunities:</strong> Priority booking ensures you never miss out on learning with the most sought-after masters. When popular instructors have limited availability, your points give you first access to their expertise.
                       </p>
                       <p>
-                        <strong className="text-white">Recognition of Commitment:</strong> The more you learn, the more you earn. This system rewards your dedication to growth, making every session and course completion feel more valuable. It's our way of saying "thank you" for investing in yourself.
+                        <strong className="text-white">Recognition of Commitment:</strong> The more you learn, the more you earn. This system rewards your dedication to growth, making every session and course completion feel more valuable. It&apos;s our way of saying &quot;thank you&quot; for investing in yourself.
                       </p>
                       <p>
                         <strong className="text-white">Long-term Value:</strong> Points never expire and accumulate over time. As you continue your learning journey, your points grow, unlocking increasingly valuable rewards that enhance your educational experience.
                       </p>
                       <p>
-                        In essence, earning points transforms your learning journey into a rewarding cycle: learn more, earn more, save more, and access better opportunities. It's a win-win system that benefits both your education and your wallet.
+                        In essence, earning points transforms your learning journey into a rewarding cycle: learn more, earn more, save more, and access better opportunities. It&apos;s a win-win system that benefits both your education and your wallet.
                       </p>
                     </div>
                   </CardContent>

@@ -157,7 +157,7 @@ export default function AddSelectedCoursePage() {
           <Card className="bg-gray-800 border-gray-700">
             <CardContent className="py-16 text-center">
               <p className="text-gray-400">
-                You don't have any courses yet. Create a course first.
+                You don&apos;t have any courses yet. Create a course first.
               </p>
             </CardContent>
           </Card>

@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AppHeader } from "@/components/app-header"
 import Footer from "@/components/shared/Footer"
 import AllCourse from "@/components/Courses/AllCourse"
 import LiveSessions from "@/components/Home/LiveSessions"
 import InPersonSessions from "@/components/Home/InPersonSessions"
-import { Video, Users, MapPin, Clock } from 'lucide-react'
+import { Video, Users, MapPin, Clock, Loader2 } from 'lucide-react'
 
 type CourseCategory = 'in-person' | 'video-call' | 'recorded-lesson'
 
@@ -39,7 +39,7 @@ const TABS: TabOption[] = [
   }
 ]
 
-export default function CoursesPage() {
+function CoursesPageContent() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab') as CourseCategory | null
   
@@ -147,5 +147,21 @@ export default function CoursesPage() {
       </div>
       <Footer />
     </>
+  )
+}
+
+export default function CoursesPage() {
+  return (
+    <Suspense fallback={
+      <div className="px-4 mx-auto bg-gray-900 min-h-screen">
+        <AppHeader />
+        <div className="flex justify-center items-center py-20">
+          <Loader2 className="h-12 w-12 text-purple-500 animate-spin" />
+        </div>
+        <Footer />
+      </div>
+    }>
+      <CoursesPageContent />
+    </Suspense>
   )
 }
