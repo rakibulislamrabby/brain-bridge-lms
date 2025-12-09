@@ -37,6 +37,8 @@ const getAuthHeaders = (): Record<string, string> => {
 export interface InPersonBookingIntentRequest {
   slot_id: number
   scheduled_date: Date
+  points_to_use?: number
+  new_payment_amount?: number
 }
 
 export interface SlotInfo {
@@ -53,6 +55,7 @@ export interface InPersonBookingIntentResponse {
   client_secret?: string
   payment_intent_id?: string
   amount?: string
+  new_payment_amount?: number | string
   slot?: SlotInfo
   message?: string
   [key: string]: unknown
@@ -71,9 +74,17 @@ const createInPersonBookingIntent = async (payload: InPersonBookingIntentRequest
   const headers = getAuthHeaders()
 
   // Convert Date to YYYY-MM-DD string format
-  const requestBody = {
+  const requestBody: any = {
     slot_id: payload.slot_id,
     scheduled_date: formatDateToString(payload.scheduled_date),
+  }
+
+  if (payload.points_to_use !== undefined && payload.points_to_use > 0) {
+    requestBody.points_to_use = payload.points_to_use
+  }
+
+  if (payload.new_payment_amount !== undefined) {
+    requestBody.new_payment_amount = payload.new_payment_amount
   }
 
   console.log('🟢 In-Person Booking Intent Request:', { url, requestBody })

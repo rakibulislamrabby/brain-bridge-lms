@@ -36,6 +36,8 @@ const getAuthHeaders = (): Record<string, string> => {
 
 export interface CoursePaymentIntentRequest {
   course_id: number
+  points_to_use?: number
+  new_payment_amount?: number
 }
 
 export interface CourseInfo {
@@ -53,6 +55,7 @@ export interface CoursePaymentIntentResponse {
   client_secret?: string
   payment_intent_id?: string
   amount?: number | string
+  new_payment_amount?: number | string
   course?: CourseInfo
   message?: string
   [key: string]: unknown
@@ -64,8 +67,16 @@ const createCoursePaymentIntent = async (
   const url = joinUrl('courses/payment-intent')
   const headers = getAuthHeaders()
 
-  const requestBody = {
+  const requestBody: any = {
     course_id: payload.course_id,
+  }
+
+  if (payload.points_to_use !== undefined && payload.points_to_use > 0) {
+    requestBody.points_to_use = payload.points_to_use
+  }
+
+  if (payload.new_payment_amount !== undefined) {
+    requestBody.new_payment_amount = payload.new_payment_amount
   }
 
   console.log('🟢 Course Payment Intent Request:', { url, requestBody })

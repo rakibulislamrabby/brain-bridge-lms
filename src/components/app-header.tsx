@@ -160,30 +160,30 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
 
   return (
     <header className={`${isLanding ? 'bg-transparent' : 'border-b border-gray-700 bg-gray-900/50 backdrop-blur-sm'} max-w-7xl mx-auto relative z-50`}>
-      <div className="container flex h-12 sm:h-14 lg:h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="text-xl sm:text-2xl font-bold text-white">BrainBridge</Link>
+      <div className="container flex h-12 sm:h-14 md:h-14 lg:h-16 items-center justify-between px-3 sm:px-4 md:px-6 lg:px-8">
+        <Link href="/" className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold text-white">BrainBridge</Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden md:flex items-center gap-4 lg:gap-6">
           <NavigationMenu>
-            <NavigationMenuList>
+            <NavigationMenuList className="gap-2 lg:gap-0">
               <NavigationMenuItem>
-                <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
+                <NavigationMenuLink asChild className="text-sm md:text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors px-2 lg:px-3">
                   <Link href="/courses">Courses</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
+                <NavigationMenuLink asChild className="text-sm md:text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors px-2 lg:px-3">
                   <Link href="/how-it-works">How It Works</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
+                <NavigationMenuLink asChild className="text-sm md:text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors px-2 lg:px-3">
                   <Link href="/about">About</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuLink asChild className="text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors">
+                <NavigationMenuLink asChild className="text-sm md:text-sm lg:text-base font-medium text-white hover:text-purple-400 transition-colors px-2 lg:px-3">
                   <Link href="/contact">Contact Us</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
@@ -192,15 +192,15 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
 
           {/* Right-side Auth / Dropdown */}
           {!isClient ? (
-            <div className="flex items-center gap-3">
-              <Button asChild variant="outline" className="border-2 border-white text-white hover:bg-white/10 text-sm font-medium py-2 px-4">
-                <Link href="/signup?role=master">Become a Master</Link>
+            <div className="flex items-center gap-2 lg:gap-3">
+              <Button asChild variant="outline" className="border-2 border-white text-white hover:bg-white/10 text-xs md:text-sm font-medium py-1.5 md:py-2 px-2 md:px-3 lg:px-4">
+                <Link href="/signup?role=master" className="whitespace-nowrap">Master</Link>
               </Button>
-              <Button asChild variant="outline" className="border-2 border-white text-white hover:bg-white/10 text-sm font-medium py-2 px-4">
-                <Link href="/signup">Become a Student</Link>
+              <Button asChild variant="outline" className="border-2 border-white text-white hover:bg-white/10 text-xs md:text-sm font-medium py-1.5 md:py-2 px-2 md:px-3 lg:px-4 hidden lg:inline-flex">
+                <Link href="/signup">Student</Link>
               </Button>
-              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium py-2 px-4">
-                <Link href="/signin">Sign In</Link>
+              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white text-xs md:text-sm font-medium py-1.5 md:py-2 px-2 md:px-3 lg:px-4">
+                <Link href="/signin" className="whitespace-nowrap">Sign In</Link>
               </Button>
             </div>
           ) : user ? (
@@ -270,28 +270,28 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
               )}
             </div>
           ) : (
-            <div className="flex items-center gap-3">
-              <Button asChild variant="outline" className="border-2 border-white text-white hover:bg-white/10 text-sm font-medium py-2 px-4">
-                <Link href="/signup?role=master">Become a Master</Link>
+            <div className="flex items-center gap-2 lg:gap-3">
+              <Button asChild variant="outline" className="border-2 border-white text-white hover:bg-white/10 text-xs md:text-sm font-medium py-1.5 md:py-2 px-2 md:px-3 lg:px-4">
+                <Link href="/signup?role=master" className="whitespace-nowrap">Master</Link>
               </Button>
-              <Button asChild variant="outline" className="border-2 border-white text-white hover:bg-white/10 text-sm font-medium py-2 px-4">
-                <Link href="/signup">Become a Student</Link>
+              <Button asChild variant="outline" className="border-2 border-white text-white hover:bg-white/10 text-xs md:text-sm font-medium py-1.5 md:py-2 px-2 md:px-3 lg:px-4 hidden lg:inline-flex">
+                <Link href="/signup">Student</Link>
               </Button>
-              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium py-2 px-4">
-                <Link href="/signin">Sign In</Link>
+              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white text-xs md:text-sm font-medium py-1.5 md:py-2 px-2 md:px-3 lg:px-4">
+                <Link href="/signin" className="whitespace-nowrap">Sign In</Link>
               </Button>
             </div>
           )}
         </div>
 
         {/* Mobile */}
-        <div className="md:hidden flex items-center gap-3">
+        <div className="md:hidden flex items-center gap-2">
           {!isClient ? (
             <div className="flex items-center gap-2">
-              <Button asChild variant="outline" className="border border-white text-white hover:bg-white/10 text-sm font-medium py-2 px-3">
+              <Button asChild variant="outline" className="border border-white text-white hover:bg-white/10 text-xs sm:text-sm font-medium py-1.5 sm:py-2 px-2 sm:px-3">
                 <Link href="/signup?role=master">Master</Link>
               </Button>
-              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium py-2 px-3">
+              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white text-xs sm:text-sm font-medium py-1.5 sm:py-2 px-2 sm:px-3">
                 <Link href="/signin">Sign In</Link>
               </Button>
             </div>
@@ -363,10 +363,10 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Button asChild variant="outline" className="border border-white text-white hover:bg-white/10 text-sm font-medium py-2 px-3">
+              <Button asChild variant="outline" className="border border-white text-white hover:bg-white/10 text-xs sm:text-sm font-medium py-1.5 sm:py-2 px-2 sm:px-3">
                 <Link href="/signup?role=master">Master</Link>
               </Button>
-              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium py-2 px-3">
+              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white text-xs sm:text-sm font-medium py-1.5 sm:py-2 px-2 sm:px-3">
                 <Link href="/signin">Sign In</Link>
               </Button>
             </div>
@@ -374,13 +374,13 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
 
           <button
             onClick={toggleMobileMenu}
-            className="p-2 rounded-md hover:bg-gray-700 transition-colors"
+            className="p-1.5 sm:p-2 rounded-md hover:bg-gray-700 transition-colors"
             aria-label="Toggle mobile menu"
           >
             {isMobileMenuOpen ? (
-              <X className="w-5 h-5 text-white" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             ) : (
-              <Menu className="w-5 h-5 text-white" />
+              <Menu className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             )}
           </button>
         </div>

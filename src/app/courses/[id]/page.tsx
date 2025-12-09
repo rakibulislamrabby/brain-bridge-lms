@@ -239,8 +239,7 @@ export default function CourseDetailPage() {
   const availablePoints = userData?.points || 0
   const coursePrice = Number(course?.price) || 0
   const pointsDiscount = Math.min(pointsToUse, coursePrice, availablePoints) // 1 point = $1
-  const amountAfterPoints = Math.max(0, coursePrice - pointsDiscount)
-  const finalAmount = amountAfterPoints + 7.95 // Add service fee
+  const newPaymentAmount = Math.max(0, coursePrice - pointsDiscount) // Course price - points used
 
   const handlePointsChange = (value: string) => {
     const numValue = parseInt(value) || 0
@@ -267,6 +266,8 @@ export default function CourseDetailPage() {
     try {
       const result = await coursePaymentIntentMutation.mutateAsync({
         course_id: course.id,
+        points_to_use: pointsToUse > 0 ? pointsToUse : undefined,
+        new_payment_amount: newPaymentAmount,
       })
 
       // Check if payment is required
@@ -796,7 +797,7 @@ export default function CourseDetailPage() {
                             <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                               <div className="space-y-1 text-sm">
                                 <div className="flex items-center justify-between text-gray-300">
-                                  <span>Original Price:</span>
+                                  <span>Course Price:</span>
                                   <span>${coursePrice.toFixed(2)}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-yellow-400">
@@ -806,17 +807,13 @@ export default function CourseDetailPage() {
                                   </span>
                                   <span>-${pointsDiscount.toFixed(2)}</span>
                                 </div>
-                                <div className="flex items-center justify-between text-gray-300">
-                                  <span>Amount After Points:</span>
-                                  <span>${amountAfterPoints.toFixed(2)}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-gray-400 text-xs">
-                                  <span>Service Fee:</span>
-                                  <span>${SERVICE_FEE.toFixed(2)}</span>
-                                </div>
                                 <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-yellow-500/20">
-                                  <span>Final Amount:</span>
-                                  <span>${finalAmount.toFixed(2)}</span>
+                                  <span>New Payment Amount:</span>
+                                  <span>${newPaymentAmount.toFixed(2)}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-gray-400 text-xs pt-1">
+                                  <span>Service Fee:</span>
+                                  <span>${SERVICE_FEE.toFixed(2)} (flat)</span>
                                 </div>
                               </div>
                             </div>
@@ -828,13 +825,9 @@ export default function CourseDetailPage() {
                                   <span>Course Price:</span>
                                   <span>${coursePrice.toFixed(2)}</span>
                                 </div>
-                                <div className="flex items-center justify-between text-gray-400 text-xs">
+                                <div className="flex items-center justify-between text-gray-400 text-xs pt-1">
                                   <span>Service Fee:</span>
-                                  <span>${SERVICE_FEE.toFixed(2)}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-gray-600">
-                                  <span>Total Amount:</span>
-                                  <span>${finalAmount.toFixed(2)}</span>
+                                  <span>${SERVICE_FEE.toFixed(2)} (flat)</span>
                                 </div>
                               </div>
                             </div>
@@ -854,7 +847,7 @@ export default function CourseDetailPage() {
                           Processing...
                         </>
                       ) : (
-                        `Enroll Now - Pay $${finalAmount.toFixed(2)}`
+                        `Enroll Now${pointsToUse > 0 ? ` - Pay $${newPaymentAmount.toFixed(2)}` : ''}`
                       )}
                     </Button>
                     <p className="text-xs text-gray-400 text-center mt-2">
