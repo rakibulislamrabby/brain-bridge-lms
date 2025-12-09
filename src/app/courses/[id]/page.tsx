@@ -510,9 +510,22 @@ export default function CourseDetailPage() {
 
               {/* Instructor */}
               <div className="bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-700">
-                <h2 className="text-2xl font-bold text-white mb-4">Instructor</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-white">Instructor</h2>
+                  {course.teacher_id && (
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="border-orange-600 text-orange-400 hover:bg-orange-900/30 cursor-pointer"
+                    >
+                      <Link href={`/masters/${course.teacher_id}`}>
+                        View Master Profile
+                      </Link>
+                    </Button>
+                  )}
+                </div>
                 <div className="flex items-center gap-4">
-                  <div>
+                  <div className="flex-1">
                     <h3 className="text-xl font-semibold text-white">{teacherName}</h3>
                     {course.teacher?.email && (
                       <p className="text-sm text-gray-400 mb-1">{course.teacher.email}</p>
