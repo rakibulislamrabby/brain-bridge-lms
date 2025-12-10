@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { ArrowLeft, Calendar, Clock, Users, DollarSign, Info, ChevronLeft, ChevronRight, Loader2, MapPin } from 'lucide-react'
 import { AppHeader } from '@/components/app-header'
 import Footer from '@/components/shared/Footer'
@@ -651,9 +652,23 @@ export default function InPersonSessionDetailPage() {
                     </div>
 
                     <div className="rounded-lg border border-gray-700 bg-gray-900/50 p-5 space-y-3 text-sm text-gray-300">
-                      <div className="flex items-center gap-2 text-white">
-                        <Users className="w-4 h-4 text-orange-400" />
-                        <span>Teacher</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-white">
+                          <Users className="w-4 h-4 text-orange-400" />
+                          <span>Master</span>
+                        </div>
+                        {data.teacher?.id && (
+                          <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            className="border-orange-600 text-orange-400 hover:bg-orange-900/30 cursor-pointer"
+                          >
+                            <Link href={`/masters/${data.teacher.id}`}>
+                              Show Master Details
+                            </Link>
+                          </Button>
+                        )}
                       </div>
                       <div className="pl-6">
                         <p className="font-medium text-white">{data.teacher?.name ?? 'Unknown'}</p>
