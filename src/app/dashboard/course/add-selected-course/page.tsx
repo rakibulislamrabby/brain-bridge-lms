@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useCourses } from '@/hooks/course/use-courses'
+import { useCourses, useSelectMainCourses } from '@/hooks/course/use-courses'
 import { useMe } from '@/hooks/use-me'
 import { Loader2, CheckCircle2 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
@@ -14,7 +14,7 @@ export default function AddSelectedCoursePage() {
   const { data: user } = useMe()
   const { addToast } = useToast()
   const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const selectMainCoursesMutation = useSelectMainCourses()
 
   // Filter courses to show only teacher's own courses
   const teacherCourses = useMemo(() => {
@@ -26,6 +26,18 @@ export default function AddSelectedCoursePage() {
       return courseTeacherId === user.id
     })
   }, [courses, user])
+
+  // Pre-select courses where is_main === 1
+  useEffect(() => {
+    if (teacherCourses.length > 0) {
+      const mainCourseIds = teacherCourses
+        .filter(course => course.is_main === 1)
+        .map(course => course.id)
+      if (mainCourseIds.length > 0) {
+        setSelectedCourseIds(mainCourseIds)
+      }
+    }
+  }, [teacherCourses])
 
   const handleToggleCourse = (courseId: number) => {
     setSelectedCourseIds(prev => 
@@ -44,34 +56,15 @@ export default function AddSelectedCoursePage() {
   }
 
   const handleSubmit = async () => {
-    if (selectedCourseIds.length === 0) {
-      addToast({
-        type: 'error',
-        title: 'No Courses Selected',
-        description: 'Please select at least one course to proceed.',
-        duration: 5000,
-      })
-      return
-    }
-
-    setIsSubmitting(true)
     try {
-      // TODO: Implement POST API call here
-      // Example structure:
-      // const response = await fetch('/api/courses/select', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${token}`
-      //   },
-      //   body: JSON.stringify({ course_ids: selectedCourseIds })
-      // })
+      await selectMainCoursesMutation.mutateAsync(selectedCourseIds)
       
-      // For now, just show success message
       addToast({
         type: 'success',
-        title: 'Courses Selected',
-        description: `Successfully selected ${selectedCourseIds.length} course(s). API implementation pending.`,
+        title: 'Courses Updated',
+        description: selectedCourseIds.length > 0
+          ? `Successfully selected ${selectedCourseIds.length} course(s) as main courses.`
+          : 'Successfully cleared all main course selections.',
         duration: 5000,
       })
       
@@ -84,8 +77,6 @@ export default function AddSelectedCoursePage() {
         description: error instanceof Error ? error.message : 'Failed to submit selected courses.',
         duration: 5000,
       })
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -134,10 +125,10 @@ export default function AddSelectedCoursePage() {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={selectedCourseIds.length === 0 || isSubmitting}
+              disabled={selectMainCoursesMutation.isPending}
               className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
             >
-              {isSubmitting ? (
+              {selectMainCoursesMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Processing...
@@ -157,7 +148,7 @@ export default function AddSelectedCoursePage() {
           <Card className="bg-gray-800 border-gray-700">
             <CardContent className="py-16 text-center">
               <p className="text-gray-400">
-                You don't have any courses yet. Create a course first.
+                You don&apos;t have any courses yet. Create a course first.
               </p>
             </CardContent>
           </Card>

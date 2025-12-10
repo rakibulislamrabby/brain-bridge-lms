@@ -13,54 +13,54 @@ export default function Hero({ variant = 'default' }: HeroProps) {
   
   if (isLanding) {
     return (
-      <section className="relative w-full bg-gray-900">
-        {/* Hero Background Image - Full width fit without cropping */}
-        <div className="relative w-full">
+      <section className="relative w-full bg-gray-900 overflow-hidden">
+        {/* Hero Background Image - Responsive with proper aspect ratio */}
+        <div className="relative w-full h-[500px] sm:h-[600px] md:h-[700px] lg:h-auto">
           <Image
             src="/images/hero/hero-2.png"
             alt="Learning collage"
             width={1920}
             height={1080}
-            className="w-full h-auto brightness-[1.15] contrast-[1.15] saturate-[1.2]"
-            sizes="100vw"
+            className="w-full h-full object-cover object-center brightness-[1.15] contrast-[1.15] saturate-[1.2]"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1920px"
             priority
             quality={95}
             style={{
               display: 'block',
-              width: '100%',
-              height: 'auto'
             }}
           />
           
           {/* Subtle overlay for better text readability without dulling colors */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/15 z-10 pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/20 z-10 pointer-events-none"></div>
           
           {/* Vibrant color enhancement overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-600/8 via-transparent to-blue-600/8 z-20 mix-blend-soft-light pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-blue-600/10 z-20 mix-blend-soft-light pointer-events-none"></div>
         </div>
 
         {/* Hero Content - Absolute positioned over image */}
-        <div className="absolute inset-0 z-30 flex items-center justify-center">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <div className="text-center space-y-8 sm:space-y-12">
+        <div className="absolute inset-0 z-30 flex items-center justify-center py-20 md:py-24 lg:py-0">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-8 w-full">
+            <div className="text-center space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12">
             {/* Main Headline */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-tight px-2 sm:px-0">
               Learn Anything.
-              <br />
+              <br className="hidden sm:block" />
+              <span className="sm:hidden"> </span>
               From Anyone.
-              <br />
+              <br className="hidden sm:block" />
+              <span className="sm:hidden"> </span>
               Anywhere.
             </h1>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
-              <Button asChild className="bg-purple-800 hover:bg-purple-900 text-white px-10 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-medium">
-                <Link href="/courses" className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-5 lg:gap-6 px-4 sm:px-0">
+              <Button asChild className="bg-purple-800 hover:bg-purple-900 text-white px-6 sm:px-8 md:px-10 lg:px-12 py-3 sm:py-4 md:py-5 lg:py-6 text-base sm:text-lg md:text-xl font-medium w-full sm:w-auto">
+                <Link href="/courses" className="flex items-center justify-center gap-2">
                   Start Learning
-                  <ArrowRight className="w-6 h-6" />
+                  <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="border-2 border-white/20 text-black bg-white/60 hover:text-gray-900 hover:bg-white/80 px-10 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-medium">
+              <Button asChild variant="outline" className="border-2 border-white/20 text-black bg-white/60 hover:text-gray-900 hover:bg-white/80 px-6 sm:px-8 md:px-10 lg:px-12 py-3 sm:py-4 md:py-5 lg:py-6 text-base sm:text-lg md:text-xl font-medium w-full sm:w-auto">
                 <Link href="/signup?role=master">Become a Master</Link>
               </Button>
             </div>

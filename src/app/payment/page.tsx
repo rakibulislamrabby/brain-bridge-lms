@@ -4,7 +4,7 @@ import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, Calendar, Clock, User, BookOpen, DollarSign, Sparkles, Minus } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, Calendar, Clock, User, BookOpen, DollarSign } from 'lucide-react'
 import { AppHeader } from '@/components/app-header'
 import Footer from '@/components/shared/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -88,11 +88,10 @@ function PaymentForm({ clientSecret, amount, slotInfo, courseInfo, paymentIntent
   
   // Points system - read from query params (set on details page)
   const pointsToUse = initialPointsToUse || 0
-  const availablePoints = user?.points || 0
-  const originalAmount = parseFloat(amount) || 0
-  const pointsDiscount = Math.min(pointsToUse, originalAmount, availablePoints) // 1 point = $1
-  const amountAfterPoints = Math.max(0, originalAmount - pointsDiscount)
-  const newPaymentAmount = amountAfterPoints + SERVICE_FEE // Add service fee to final amount
+  
+  // The amount from API is already the final amount (after points discount + service fee)
+  // Use it directly without recalculating or adding service fee again
+  const finalPaymentAmount = parseFloat(amount) || 0
   
 console.log("paymentIntentId",paymentIntentId)
   const handleSubmit = async (e: React.FormEvent) => {
@@ -141,7 +140,7 @@ console.log("paymentIntentId",paymentIntentId)
                 scheduled_date: slotInfo.scheduled_date,
                 payment_intent_id: paymentIntentId,
                 points_to_use: pointsToUse,
-                new_payment_amount: newPaymentAmount,
+                new_payment_amount: finalPaymentAmount,
               })
             } else {
               // Live session slot
@@ -150,7 +149,7 @@ console.log("paymentIntentId",paymentIntentId)
                 scheduled_date: slotInfo.scheduled_date,
                 payment_intent_id: paymentIntentId,
                 points_to_use: pointsToUse,
-                new_payment_amount: newPaymentAmount,
+                new_payment_amount: finalPaymentAmount,
               })
             }
             
@@ -210,7 +209,7 @@ console.log("paymentIntentId",paymentIntentId)
               course_id: courseInfo.id,
               payment_intent_id: paymentIntentId,
               points_to_use: pointsToUse,
-              new_payment_amount: newPaymentAmount,
+              new_payment_amount: finalPaymentAmount,
             })
             
             setPaymentStatus('succeeded')
@@ -404,42 +403,8 @@ console.log("paymentIntentId",paymentIntentId)
               ) : null}
             </div>
 
-            {/* Points Discount Display (if points were used) */}
-            {pointsToUse > 0 && (
-              <div className="pt-4 border-t border-gray-700/70">
-                <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-300 flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-yellow-400" />
-                      Points Applied ({pointsToUse} pts):
-                    </span>
-                    <span className="text-yellow-400 font-semibold">-${pointsDiscount.toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
             <div className="pt-4 border-t border-gray-700/70">
               <div className="space-y-2">
-                {pointsToUse > 0 && (
-                  <>
-                    <div className="flex items-center justify-between text-gray-400 text-sm">
-                      <span>Original Amount:</span>
-                      <span>${originalAmount.toFixed(2)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-yellow-400 text-sm">
-                      <span className="flex items-center gap-1">
-                        <Minus className="w-4 h-4" />
-                        Points Discount ({pointsToUse} pts):
-                      </span>
-                      <span>-${pointsDiscount.toFixed(2)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-gray-400 text-sm">
-                      <span>Amount After Points:</span>
-                      <span>${amountAfterPoints.toFixed(2)}</span>
-                    </div>
-                  </>
-                )}
                 <div className="flex items-center justify-between text-gray-400 text-sm">
                   <span>Service Fee:</span>
                   <span>${SERVICE_FEE.toFixed(2)}</span>
@@ -447,12 +412,10 @@ console.log("paymentIntentId",paymentIntentId)
                 <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-600/20 to-purple-500/10 rounded-lg border border-purple-500/30">
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-5 h-5 text-purple-400" />
-                    <span className="text-gray-300 font-medium">
-                      {pointsToUse > 0 ? 'Amount to Pay' : 'Total Amount'}
-                    </span>
+                    <span className="text-gray-300 font-medium">Total Amount</span>
                   </div>
                   <span className="text-white font-bold text-2xl">
-                    ${newPaymentAmount.toFixed(2)}
+                    ${finalPaymentAmount.toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -554,7 +517,7 @@ console.log("paymentIntentId",paymentIntentId)
                   ) : (
                     <>
                       <DollarSign className="w-4 h-4 mr-2" />
-                      Pay ${newPaymentAmount.toFixed(2)}
+                      Pay ${finalPaymentAmount.toFixed(2)}
                     </>
                   )}
                 </Button>

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { ArrowLeft, Calendar, Clock, Users, DollarSign, Info, ChevronLeft, ChevronRight, Loader2, MapPin } from 'lucide-react'
 import { AppHeader } from '@/components/app-header'
 import Footer from '@/components/shared/Footer'
@@ -268,8 +269,7 @@ export default function InPersonSessionDetailPage() {
   const availablePoints = userData?.points || 0
   const slotPrice = Number(data?.price) || 0
   const pointsDiscount = Math.min(pointsToUse, slotPrice, availablePoints) // 1 point = $1
-  const amountAfterPoints = Math.max(0, slotPrice - pointsDiscount)
-  const finalAmount = amountAfterPoints + 7.95 // Add service fee
+  const newPaymentAmount = Math.max(0, slotPrice - pointsDiscount) // Slot price - points used
 
   const handlePointsChange = (value: string) => {
     const numValue = parseInt(value) || 0
@@ -338,6 +338,8 @@ export default function InPersonSessionDetailPage() {
       const result = await bookingIntentMutation.mutateAsync({
         slot_id: data.id,
         scheduled_date: selectedDate,
+        points_to_use: pointsToUse > 0 ? pointsToUse : undefined,
+        new_payment_amount: newPaymentAmount,
       })
 
       // Check if payment is required
@@ -542,95 +544,81 @@ export default function InPersonSessionDetailPage() {
                           </div>
 
                           {/* Points Usage Section */}
-                          {!isDateFull && slotPrice > 0 && (
-                            <div className="rounded-lg border border-gray-700 bg-gray-900/50 p-4 space-y-3">
-                              <div className="flex items-center justify-between">
-                                <Label className="text-white flex items-center gap-2 text-sm">
-                                  <Sparkles className="w-4 h-4 text-yellow-400" />
-                                  Use Points (1 point = $1 discount)
-                                </Label>
-                                <span className="text-xs text-gray-400">
-                                  Available: <span className="text-yellow-400 font-semibold">{availablePoints}</span> points
-                                </span>
-                              </div>
-                              
-                              {availablePoints > 0 ? (
-                                <>
-                                  <div className="flex gap-2">
-                                    <Input
-                                      type="number"
-                                      min="0"
-                                      max={Math.min(availablePoints, Math.floor(slotPrice))}
-                                      value={pointsToUse || ''}
-                                      onChange={(e) => handlePointsChange(e.target.value)}
-                                      placeholder="0"
-                                      className="bg-gray-800 border-gray-600 text-white flex-1"
-                                      disabled={bookingIntentMutation.isPending}
-                                    />
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      onClick={handleMaxPoints}
-                                      className="border-yellow-600 text-yellow-400 hover:bg-yellow-900/30 whitespace-nowrap text-xs px-3"
-                                      disabled={bookingIntentMutation.isPending}
-                                    >
-                                      Use Max
-                                    </Button>
+                          {availablePoints > 0 && slotPrice > 0 && (
+                            <div className="mb-4 pb-4 border-b border-gray-700">
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <Label className="text-white flex items-center gap-2 text-sm">
+                                    <Sparkles className="w-4 h-4 text-yellow-400" />
+                                    Use Points (1 point = $1 discount)
+                                  </Label>
+                                  <span className="text-xs text-gray-400">
+                                    Available: <span className="text-yellow-400 font-semibold">{availablePoints}</span> points
+                                  </span>
+                                </div>
+                                
+                                <div className="flex gap-2">
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max={Math.min(availablePoints, Math.floor(slotPrice))}
+                                    value={pointsToUse || ''}
+                                    onChange={(e) => handlePointsChange(e.target.value)}
+                                    placeholder="0"
+                                    className="bg-gray-700 border-gray-600 text-white flex-1 py-"
+                                    disabled={bookingIntentMutation.isPending}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleMaxPoints}
+                                    className="border-yellow-600 text-yellow-400 hover:bg-yellow-900/30 whitespace-nowrap text-xs px-3"
+                                    disabled={bookingIntentMutation.isPending || availablePoints === 0}
+                                  >
+                                    Use Max
+                                  </Button>
+                                </div>
+                                
+                                {pointsToUse > 0 && (
+                                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                                    <div className="space-y-1 text-sm">
+                                      <div className="flex items-center justify-between text-gray-300">
+                                        <span>Session Price:</span>
+                                        <span>${slotPrice.toFixed(2)}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-yellow-400">
+                                        <span className="flex items-center gap-1">
+                                          <Minus className="w-3 h-3" />
+                                          Points Discount ({pointsToUse} pts):
+                                        </span>
+                                        <span>-${pointsDiscount.toFixed(2)}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-yellow-500/20">
+                                        <span>New Payment Amount:</span>
+                                        <span>${newPaymentAmount.toFixed(2)}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-gray-400 text-xs pt-1">
+                                        <span>Service Fee:</span>
+                                        <span>${SERVICE_FEE.toFixed(2)} (flat)</span>
+                                      </div>
+                                    </div>
                                   </div>
-                                  
-                                  {pointsToUse > 0 && (
-                                    <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                                      <div className="space-y-1 text-sm">
-                                        <div className="flex items-center justify-between text-gray-300">
-                                          <span>Original Price:</span>
-                                          <span>${slotPrice.toFixed(2)}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-yellow-400">
-                                          <span className="flex items-center gap-1">
-                                            <Minus className="w-3 h-3" />
-                                            Points Discount ({pointsToUse} pts):
-                                          </span>
-                                          <span>-${pointsDiscount.toFixed(2)}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-gray-300">
-                                          <span>Amount After Points:</span>
-                                          <span>${amountAfterPoints.toFixed(2)}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-gray-400 text-xs">
-                                          <span>Service Fee:</span>
-                                          <span>${SERVICE_FEE.toFixed(2)}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-yellow-500/20">
-                                          <span>Final Amount:</span>
-                                          <span>${finalAmount.toFixed(2)}</span>
-                                        </div>
+                                )}
+                                {pointsToUse === 0 && (
+                                  <div className="p-3 bg-gray-700/50 border border-gray-600 rounded-lg">
+                                    <div className="space-y-1 text-sm">
+                                      <div className="flex items-center justify-between text-gray-300">
+                                        <span>Session Price:</span>
+                                        <span>${slotPrice.toFixed(2)}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-gray-400 text-xs pt-1">
+                                        <span>Service Fee:</span>
+                                        <span>${SERVICE_FEE.toFixed(2)} (flat)</span>
                                       </div>
                                     </div>
-                                  )}
-                                  {pointsToUse === 0 && slotPrice > 0 && (
-                                    <div className="p-3 bg-gray-700/50 border border-gray-600 rounded-lg">
-                                      <div className="space-y-1 text-sm">
-                                        <div className="flex items-center justify-between text-gray-300">
-                                          <span>Session Price:</span>
-                                          <span>${slotPrice.toFixed(2)}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-gray-400 text-xs">
-                                          <span>Service Fee:</span>
-                                          <span>${SERVICE_FEE.toFixed(2)}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-gray-600">
-                                          <span>Total Amount:</span>
-                                          <span>${finalAmount.toFixed(2)}</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                </>
-                              ) : (
-                                <p className="text-xs text-gray-500 text-center py-2">
-                                  You don&apos;t have any points available. Earn points by completing courses and sessions!
-                                </p>
-                              )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           )}
 
@@ -647,7 +635,7 @@ export default function InPersonSessionDetailPage() {
                             ) : isDateFull ? (
                               'Full'
                             ) : (
-                              `Reserve Slot - Pay $${finalAmount.toFixed(2)}`
+                              `Reserve Slot${pointsToUse > 0 ? ` - Pay $${newPaymentAmount.toFixed(2)}` : ''}`
                             )}
                           </Button>
                           {slotPrice > 0 && (
@@ -664,9 +652,23 @@ export default function InPersonSessionDetailPage() {
                     </div>
 
                     <div className="rounded-lg border border-gray-700 bg-gray-900/50 p-5 space-y-3 text-sm text-gray-300">
-                      <div className="flex items-center gap-2 text-white">
-                        <Users className="w-4 h-4 text-orange-400" />
-                        <span>Teacher</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-white">
+                          <Users className="w-4 h-4 text-orange-400" />
+                          <span>Master</span>
+                        </div>
+                        {data.teacher?.id && (
+                          <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            className="border-orange-600 text-orange-400 hover:bg-orange-900/30 cursor-pointer"
+                          >
+                            <Link href={`/masters/${data.teacher.id}`}>
+                              Show Master Details
+                            </Link>
+                          </Button>
+                        )}
                       </div>
                       <div className="pl-6">
                         <p className="font-medium text-white">{data.teacher?.name ?? 'Unknown'}</p>

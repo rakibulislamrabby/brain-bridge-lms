@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { ArrowLeft, Calendar, Clock, Users, DollarSign, Info, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { AppHeader } from '@/components/app-header'
 import Footer from '@/components/shared/Footer'
@@ -12,6 +13,7 @@ import { useLiveSessionDetail } from '@/hooks/live-session/use-live-session-deta
 import { useBookingIntent } from '@/hooks/slots/use-bookings-intent'
 import { useToast } from '@/components/ui/toast'
 import { useMe } from '@/hooks/use-me'
+import { useStudentBookedSlots } from '@/hooks/student/use-booked-slots'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Sparkles, Minus } from 'lucide-react'
@@ -112,6 +114,31 @@ export default function LiveSessionDetailPage() {
   const { addToast } = useToast()
   const { data: userData } = useMe()
   const [pointsToUse, setPointsToUse] = useState<number>(0)
+  
+  // Fetch student's booked slots to disable already reserved dates
+  const { data: bookedSlotsData } = useStudentBookedSlots(1)
+  
+  // Extract booked dates for this specific session
+  const bookedDateKeys = useMemo(() => {
+    if (!bookedSlotsData?.data || !sessionId) {
+      return new Set<string>()
+    }
+    
+    const bookedDates = new Set<string>()
+    
+    // Filter booked slots for this specific session
+    bookedSlotsData.data.forEach((bookedSlot) => {
+      // Check if this booking is for the current session
+      if (bookedSlot.slot_id === sessionId && bookedSlot.scheduled_date) {
+        const dateKey = toDateOnlyKey(bookedSlot.scheduled_date)
+        if (dateKey) {
+          bookedDates.add(dateKey)
+        }
+      }
+    })
+    
+    return bookedDates
+  }, [bookedSlotsData, sessionId])
 
   const availableDates = useMemo(() => {
     if (!data || !data.from_date || !data.to_date) {
@@ -233,8 +260,7 @@ export default function LiveSessionDetailPage() {
   const availablePoints = userData?.points || 0
   const slotPrice = Number(data?.price) || 0
   const pointsDiscount = Math.min(pointsToUse, slotPrice, availablePoints) // 1 point = $1
-  const amountAfterPoints = Math.max(0, slotPrice - pointsDiscount)
-  const finalAmount = amountAfterPoints + SERVICE_FEE // Add service fee
+  const newPaymentAmount = Math.max(0, slotPrice - pointsDiscount) // Slot price - points used
 
   const handlePointsChange = (value: string) => {
     const numValue = parseInt(value) || 0
@@ -258,6 +284,17 @@ export default function LiveSessionDetailPage() {
   const handleDateSelect = (date: Date) => {
     const key = toDateOnlyKey(date)
     if (!key) {
+      return
+    }
+    
+    // Check if date is already booked
+    if (bookedDateKeys.has(key)) {
+      addToast({
+        type: 'error',
+        title: 'Already Reserved',
+        description: 'You have already reserved this date. Please select another date.',
+        duration: 5000,
+      })
       return
     }
     
@@ -303,6 +340,8 @@ export default function LiveSessionDetailPage() {
       const result = await bookingIntentMutation.mutateAsync({
         slot_id: data.id,
         scheduled_date: selectedDate,
+        points_to_use: pointsToUse > 0 ? pointsToUse : undefined,
+        new_payment_amount: newPaymentAmount,
       })
 
       // Check if payment is required
@@ -438,6 +477,7 @@ export default function LiveSessionDetailPage() {
                         const key = toDateOnlyKey(date)
                         const isAvailable = key ? availableDateKeys.has(key) : false
                         const isSelected = key === selectedDateKey
+                        const isBooked = key ? bookedDateKeys.has(key) : false
                         
                         // Check if date is in the past (today is allowed)
                         const today = new Date()
@@ -446,7 +486,7 @@ export default function LiveSessionDetailPage() {
                         dateToCheck.setHours(0, 0, 0, 0)
                         // Only block dates that are strictly before today (today >= today, so today is allowed)
                         const isPastDate = dateToCheck < today
-                        const isDisabled = !isAvailable || isPastDate
+                        const isDisabled = !isAvailable || isPastDate || isBooked
 
                         return (
                           <button
@@ -455,6 +495,8 @@ export default function LiveSessionDetailPage() {
                             className={`relative flex h-12 items-center justify-center rounded-md border text-sm transition-colors ${
                               isSelected
                                 ? 'border-purple-500 bg-purple-600/20 text-white shadow-inner'
+                                : isBooked
+                                ? 'border-red-500/40 bg-red-500/10 text-red-300 cursor-not-allowed opacity-60'
                                 : isAvailable && !isPastDate
                                 ? 'border-purple-500/40 bg-purple-500/10 text-purple-200 hover:bg-purple-500/20'
                                 : isCurrentMonth
@@ -462,10 +504,19 @@ export default function LiveSessionDetailPage() {
                                 : 'border-gray-800 bg-gray-900 text-gray-700 cursor-not-allowed opacity-50'
                             }`}
                             disabled={isDisabled}
-                            title={isPastDate ? 'Past dates cannot be selected' : undefined}
+                            title={
+                              isPastDate 
+                                ? 'Past dates cannot be selected' 
+                                : isBooked 
+                                ? 'You have already reserved this date' 
+                                : undefined
+                            }
                           >
                             {date.getDate()}
-                            {isAvailable && !isSelected && !isPastDate && (
+                            {isBooked && (
+                              <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-red-400" />
+                            )}
+                            {isAvailable && !isSelected && !isPastDate && !isBooked && (
                               <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-purple-400" />
                             )}
                           </button>
@@ -476,6 +527,10 @@ export default function LiveSessionDetailPage() {
                       <div className="flex items-center gap-2">
                         <span className="inline-block h-3 w-3 rounded-full bg-purple-500"></span>
                         <span>Available date</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block h-3 w-3 rounded-full bg-red-500"></span>
+                        <span>Already reserved by you</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="inline-block h-3 w-3 rounded-full bg-gray-500"></span>
@@ -504,87 +559,81 @@ export default function LiveSessionDetailPage() {
                           </div>
 
                           {/* Points Usage Section */}
-                          {data.available_seats > 0 && availablePoints > 0 && slotPrice > 0 && (
-                            <div className="rounded-lg border border-gray-700 bg-gray-900/50 p-4 space-y-3">
-                              <div className="flex items-center justify-between">
-                                <Label className="text-white flex items-center gap-2 text-sm">
-                                  <Sparkles className="w-4 h-4 text-yellow-400" />
-                                  Use Points (1 point = $1 discount)
-                                </Label>
-                                <span className="text-xs text-gray-400">
-                                  Available: <span className="text-yellow-400 font-semibold">{availablePoints}</span> points
-                                </span>
-                              </div>
-                              
-                              <div className="flex gap-2">
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max={Math.min(availablePoints, Math.floor(slotPrice))}
-                                  value={pointsToUse || ''}
-                                  onChange={(e) => handlePointsChange(e.target.value)}
-                                  placeholder="0"
-                                  className="bg-gray-800 border-gray-600 text-white flex-1 py-4"
-                                  disabled={bookingIntentMutation.isPending}
-                                />
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  onClick={handleMaxPoints}
-                                  className="border-yellow-600 text-yellow-400 hover:bg-yellow-900/30 whitespace-nowrap text-xs px-3"
-                                  disabled={bookingIntentMutation.isPending || availablePoints === 0}
-                                >
-                                  Use Max
-                                </Button>
-                              </div>
-                              
-                              {pointsToUse > 0 && (
-                                <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                                  <div className="space-y-1 text-sm">
-                                    <div className="flex items-center justify-between text-gray-300">
-                                      <span>Original Price:</span>
-                                      <span>${slotPrice.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-yellow-400">
-                                      <span className="flex items-center gap-1">
-                                        <Minus className="w-3 h-3" />
-                                        Points Discount ({pointsToUse} pts):
-                                      </span>
-                                      <span>-${pointsDiscount.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-gray-300">
-                                      <span>Amount After Points:</span>
-                                      <span>${amountAfterPoints.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-gray-400 text-xs">
-                                      <span>Service Fee:</span>
-                                      <span>${SERVICE_FEE.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-yellow-500/20">
-                                      <span>Final Amount:</span>
-                                      <span>${finalAmount.toFixed(2)}</span>
+                          {availablePoints > 0 && slotPrice > 0 && (
+                            <div className="mb-4 pb-4 border-b border-gray-700">
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <Label className="text-white flex items-center gap-2 text-sm">
+                                    <Sparkles className="w-4 h-4 text-yellow-400" />
+                                    Use Points (1 point = $1 discount)
+                                  </Label>
+                                  <span className="text-xs text-gray-400">
+                                    Available: <span className="text-yellow-400 font-semibold">{availablePoints}</span> points
+                                  </span>
+                                </div>
+                                
+                                <div className="flex gap-2">
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max={Math.min(availablePoints, Math.floor(slotPrice))}
+                                    value={pointsToUse || ''}
+                                    onChange={(e) => handlePointsChange(e.target.value)}
+                                    placeholder="0"
+                                    className="bg-gray-700 border-gray-600 text-white flex-1 py-"
+                                    disabled={bookingIntentMutation.isPending}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleMaxPoints}
+                                    className="border-yellow-600 text-yellow-400 hover:bg-yellow-900/30 whitespace-nowrap text-xs px-3"
+                                    disabled={bookingIntentMutation.isPending || availablePoints === 0}
+                                  >
+                                    Use Max
+                                  </Button>
+                                </div>
+                                
+                                {pointsToUse > 0 && (
+                                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                                    <div className="space-y-1 text-sm">
+                                      <div className="flex items-center justify-between text-gray-300">
+                                        <span>Session Price:</span>
+                                        <span>${slotPrice.toFixed(2)}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-yellow-400">
+                                        <span className="flex items-center gap-1">
+                                          <Minus className="w-3 h-3" />
+                                          Points Discount ({pointsToUse} pts):
+                                        </span>
+                                        <span>-${pointsDiscount.toFixed(2)}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-yellow-500/20">
+                                        <span>New Payment Amount:</span>
+                                        <span>${newPaymentAmount.toFixed(2)}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-gray-400 text-xs pt-1">
+                                        <span>Service Fee:</span>
+                                        <span>${SERVICE_FEE.toFixed(2)} (flat)</span>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              )}
-                              {pointsToUse === 0 && slotPrice > 0 && (
-                                <div className="p-3 bg-gray-700/50 border border-gray-600 rounded-lg">
-                                  <div className="space-y-1 text-sm">
-                                    <div className="flex items-center justify-between text-gray-300">
-                                      <span>Session Price:</span>
-                                      <span>${slotPrice.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-gray-400 text-xs">
-                                      <span>Service Fee:</span>
-                                      <span>${SERVICE_FEE.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-gray-600">
-                                      <span>Total Amount:</span>
-                                      <span>${finalAmount.toFixed(2)}</span>
+                                )}
+                                {pointsToUse === 0 && (
+                                  <div className="p-3 bg-gray-700/50 border border-gray-600 rounded-lg">
+                                    <div className="space-y-1 text-sm">
+                                      <div className="flex items-center justify-between text-gray-300">
+                                        <span>Session Price:</span>
+                                        <span>${slotPrice.toFixed(2)}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-gray-400 text-xs pt-1">
+                                        <span>Service Fee:</span>
+                                        <span>${SERVICE_FEE.toFixed(2)} (flat)</span>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              )}
+                                )}
+                              </div>
                             </div>
                           )}
 
@@ -601,7 +650,7 @@ export default function LiveSessionDetailPage() {
                             ) : data.available_seats === 0 ? (
                               'Full'
                             ) : (
-                              `Reserve Slot - Pay $${finalAmount.toFixed(2)}`
+                              `Reserve Slot${pointsToUse > 0 ? ` - Pay $${newPaymentAmount.toFixed(2)}` : ''}`
                             )}
                           </Button>
                           {slotPrice > 0 && (
@@ -618,9 +667,23 @@ export default function LiveSessionDetailPage() {
                     </div>
 
                     <div className="rounded-lg border border-gray-700 bg-gray-900/50 p-5 space-y-3 text-sm text-gray-300">
-                      <div className="flex items-center gap-2 text-white">
-                        <Users className="w-4 h-4 text-purple-400" />
-                        <span>Teacher</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-white">
+                          <Users className="w-4 h-4 text-purple-400" />
+                          <span>Master</span>
+                        </div>
+                        {data.teacher?.id && (
+                          <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            className="border-purple-600 text-purple-400 hover:bg-purple-900/30 cursor-pointer"
+                          >
+                            <Link href={`/masters/${data.teacher.id}`}>
+                              Show Master Details
+                            </Link>
+                          </Button>
+                        )}
                       </div>
                       <div className="pl-6">
                         <p className="font-medium text-white">{data.teacher?.name ?? 'Mashter'}</p>
