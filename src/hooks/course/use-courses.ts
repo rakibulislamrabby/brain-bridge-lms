@@ -106,6 +106,7 @@ export interface CourseResponse {
   rating?: number;
   reviews?: CourseReview[];
   enrollment_count?: number;
+  is_main?: number;
 }
 
 const normalizeCourseArray = (result: any): CourseResponse[] => {
@@ -260,6 +261,44 @@ const fetchCourse = async (id: number): Promise<CourseResponse> => {
   }
 };
 
+const selectMainCourses = async (ids: number[]): Promise<void> => {
+  const url = joinUrl('teachers/select-main-courses');
+  const headers = {
+    ...getAuthHeaders(),
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
+
+  console.log('Selecting main courses:', ids, url);
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ ids }),
+    });
+
+    if (!response.ok) {
+      let result: any = null;
+      try {
+        const text = await response.text();
+        result = text ? JSON.parse(text) : null;
+      } catch (parseError) {
+        // ignore parse error, use generic message below
+      }
+
+      const errorMessage = result?.message || result?.error || `Failed to select main courses (${response.status})`;
+      throw new Error(errorMessage);
+    }
+  } catch (error) {
+    console.error('Select main courses error:', error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Network error: Failed to select main courses');
+  }
+};
+
 export const useCourses = () => {
   return useQuery({
     queryKey: ['courses'],
@@ -282,6 +321,17 @@ export const useDeleteCourse = () => {
 
   return useMutation({
     mutationFn: deleteCourse,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+    },
+  });
+};
+
+export const useSelectMainCourses = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: selectMainCourses,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
     },
