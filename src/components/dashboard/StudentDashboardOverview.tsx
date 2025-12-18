@@ -246,7 +246,7 @@ export default function StudentDashboardOverview() {
                   return (
                     <Link
                       key={course.id || course.course_id}
-                      href={`/courses/${course.course_id || course.course?.id}`}
+                      href={`/dashboard/enrolled-courses/${course.course_id || course.course?.id}`}
                       className="flex items-center gap-3 p-3 border border-gray-700 rounded-lg bg-gray-700/50 hover:bg-gray-700 transition-colors group"
                     >
                       <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">

@@ -50,6 +50,14 @@ export interface UpdateProfileRequest {
   introduction_video?: string | null | File;
   base_pay?: number | null;
   skills?: ProfileSkill[];
+  // Payment fields
+  payment_method?: string | null;
+  bank_account_number?: string | null;
+  bank_routing_number?: string | null;
+  bank_name?: string | null;
+  paypal_email?: string | null;
+  stripe_account_id?: string | null;
+  tax_id?: string | null;
 }
 
 interface UpdateProfileResponse {
@@ -126,6 +134,15 @@ const updateProfile = async (data: UpdateProfileRequest): Promise<UserProfile> =
       });
     }
     
+    // Add payment fields
+    if (data.payment_method !== undefined) formData.append('payment_method', data.payment_method || '');
+    if (data.bank_account_number !== undefined) formData.append('bank_account_number', data.bank_account_number || '');
+    if (data.bank_routing_number !== undefined) formData.append('bank_routing_number', data.bank_routing_number || '');
+    if (data.bank_name !== undefined) formData.append('bank_name', data.bank_name || '');
+    if (data.paypal_email !== undefined) formData.append('paypal_email', data.paypal_email || '');
+    if (data.stripe_account_id !== undefined) formData.append('stripe_account_id', data.stripe_account_id || '');
+    if (data.tax_id !== undefined) formData.append('tax_id', data.tax_id || '');
+    
     // Log FormData contents for debugging
     console.log('📦 FormData entries:');
     for (const [key, value] of formData.entries()) {
@@ -151,6 +168,8 @@ const updateProfile = async (data: UpdateProfileRequest): Promise<UserProfile> =
     if (jsonData.introduction_video === undefined || jsonData.introduction_video === null || jsonData.introduction_video instanceof File) {
       delete jsonData.introduction_video;
     }
+    // Include payment fields in JSON
+    // Payment fields are already in jsonData, they'll be included if defined
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify(jsonData);
   }

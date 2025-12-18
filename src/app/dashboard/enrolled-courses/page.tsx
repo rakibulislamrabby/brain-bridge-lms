@@ -357,7 +357,7 @@ export default function EnrolledCoursesPage() {
                           </td>
                           <td className="py-4 px-4">
                             <div className="flex items-center gap-2">
-                              <Link href={`/courses/${course.id}`}>
+                              <Link href={`/dashboard/enrolled-courses/${course.id}`}>
                                 <Button
                                   variant="outline"
                                   size="sm"
