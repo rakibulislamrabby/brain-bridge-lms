@@ -23,12 +23,13 @@ import { Loader2, XCircle } from 'lucide-react'
 import { getStoredUser } from '@/hooks/useAuth'
 import CourseChat from '@/components/dashboard/CourseChat'
 
-const MEDIA_BASE_URL = 'https://brainbridge.mitwebsolutions.com/'
+const MEDIA_BASE_URL = process.env.NEXT_PUBLIC_MEDIA_BASE_URL
 
 const resolveMediaUrl = (path?: string | null) => {
   if (!path) return undefined
   if (/^https?:\/\//i.test(path)) return path
-  const base = MEDIA_BASE_URL.endsWith('/') ? MEDIA_BASE_URL : `${MEDIA_BASE_URL}/`
+  const base = MEDIA_BASE_URL?.endsWith('/') ? MEDIA_BASE_URL : `${MEDIA_BASE_URL}/`
+  if (!base) return undefined
   
   if (path.startsWith('videos/') || path.startsWith('/videos/')) {
     const cleanedPath = path.replace(/^\/?videos\//, '').replace(/^\/+/, '')

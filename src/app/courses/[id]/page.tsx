@@ -37,7 +37,7 @@ import { Sparkles, Minus } from 'lucide-react'
 import { SERVICE_FEE } from '@/lib/constants'
 
 const fallbackImage = 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80'
-const MEDIA_BASE_URL = 'https://brainbridge.mitwebsolutions.com/'
+const MEDIA_BASE_URL = process.env.NEXT_PUBLIC_MEDIA_BASE_URL
 
 const resolveMediaUrl = (path?: string | null, fallback?: string) => {
   if (!path) {

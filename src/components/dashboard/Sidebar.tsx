@@ -159,6 +159,13 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       items: [],
       allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
+    {
+      title: 'Chat',
+      icon: MessageSquare,
+      href: '/dashboard/teacher-chat',
+      items: [],
+      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
+    },
     // {
     //   title: 'Teacher',
     //   icon: Users,
@@ -177,7 +184,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       icon: Users,
       href: '/dashboard/user-list',
       items: [],
-      allowedRoles: ['admin'] // Only admin can see this
+      allowedRoles: ['admin',] // Only admin can see this
     },
     
     {
@@ -198,8 +205,9 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       }
       
       if (isTeacher) {
-        // Teachers can see items with 'teacher' or 'admin' role
-        return item.allowedRoles?.includes('teacher') || item.allowedRoles?.includes('admin') || false
+        // Teachers can only see items that explicitly include 'teacher' role
+        // They cannot see admin-only items unless 'teacher' is also in allowedRoles
+        return item.allowedRoles?.includes('teacher') || false
       }
       
       if (isStudent) {
