@@ -13,13 +13,15 @@ import {
   ArrowLeft,
   Video,
   BookOpen,
-  Clock,
-  Award
+  Clock, 
+  Award,
+  MessageSquare
 } from 'lucide-react'
 import { usePublicCourse } from '@/hooks/course/public/use-public-courses'
 import { useEnrolledCourses } from '@/hooks/student/use-enrolled-courses'
 import { Loader2, XCircle } from 'lucide-react'
 import { getStoredUser } from '@/hooks/useAuth'
+import CourseChat from '@/components/dashboard/CourseChat'
 
 const MEDIA_BASE_URL = 'https://brainbridge.mitwebsolutions.com/'
 
@@ -45,6 +47,7 @@ export default function EnrolledCourseViewerPage() {
   const [user, setUser] = useState<{ id: number; name: string; email: string } | null>(null)
   const [activeLesson, setActiveLesson] = useState<any>(null)
   const [expandedModules, setExpandedModules] = useState<Set<number>>(new Set())
+  const [activeTab, setActiveTab] = useState<'content' | 'chat'>('content')
 
   const { data: course, isLoading: courseLoading, error: courseError } = usePublicCourse(courseId)
   const { data: enrolledCourses = [], isLoading: enrollmentsLoading } = useEnrolledCourses()
@@ -169,6 +172,18 @@ export default function EnrolledCourseViewerPage() {
                 </div>
                 <span className="text-xs text-gray-400 font-medium">{enrollment.progress_percentage || 0}% Complete</span>
               </div>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => setActiveTab('chat')}
+                className="border-blue-600 text-blue-400 hover:bg-blue-900/30 relative"
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Chat with Master
+                {activeTab === 'chat' && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full border-2 border-gray-800"></span>
+                )}
+              </Button>
               <Button size="sm" variant="outline" className="border-orange-600 text-orange-500 hover:bg-orange-500/10">
                 <Award className="h-4 w-4 mr-2" />
                 Certificate
@@ -221,92 +236,129 @@ export default function EnrolledCourseViewerPage() {
             </div>
           </div>
 
-          {/* Sidebar: Course Content */}
-          <div className="w-full lg:w-96 bg-gray-800/50 border-l border-gray-700 overflow-y-auto custom-scrollbar">
-            <div className="p-4 border-b border-gray-700">
-              <h3 className="font-bold text-white flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-orange-500" />
-                Course Content
-              </h3>
+          {/* Sidebar: Course Content & Chat */}
+          <div className="w-full lg:w-96 bg-gray-800/50 border-l border-gray-700 overflow-hidden flex flex-col">
+            <div className="flex border-b border-gray-700 bg-gray-800">
+              <button
+                onClick={() => setActiveTab('content')}
+                className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                  activeTab === 'content' 
+                    ? 'text-orange-500 border-b-2 border-orange-500' 
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                <BookOpen className="h-4 w-4" />
+                Content
+              </button>
+              <button
+                onClick={() => setActiveTab('chat')}
+                className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                  activeTab === 'chat' 
+                    ? 'text-orange-500 border-b-2 border-orange-500' 
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                <MessageSquare className="h-4 w-4" />
+                Chat
+              </button>
             </div>
             
-            <div className="divide-y divide-gray-700/50">
-              {modules.map((module: any, index: number) => {
-                const isExpanded = expandedModules.has(module.id || 0)
-                const lessons = module.video_lessons || module.videos || []
-                
-                return (
-                  <div key={module.id || index} className="bg-transparent">
-                    <button
-                      onClick={() => toggleModule(module.id || 0)}
-                      className="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-700/50 transition-colors group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-bold text-gray-500 group-hover:text-orange-500 transition-colors">
-                          {String(index + 1).padStart(2, '0')}
-                        </span>
-                        <div className="text-left">
-                          <h4 className="text-sm font-semibold text-white group-hover:text-orange-400 transition-colors line-clamp-1">
-                            {module.title}
-                          </h4>
-                          <span className="text-[10px] text-gray-500 uppercase tracking-wider">
-                            {lessons.length} Lessons
-                          </span>
-                        </div>
-                      </div>
-                      {isExpanded ? (
-                        <ChevronDown className="h-4 w-4 text-gray-500" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 text-gray-500" />
-                      )}
-                    </button>
-
-                    {isExpanded && (
-                      <div className="bg-gray-900/30">
-                        {lessons.length === 0 ? (
-                          <div className="px-11 py-3 text-xs text-gray-500 italic">
-                            No lessons available.
+            <div className="flex-1 overflow-y-auto custom-scrollbar bg-gray-900/10">
+              {activeTab === 'content' ? (
+                <div className="divide-y divide-gray-700/50">
+                  {modules.map((module: any, index: number) => {
+                    const isExpanded = expandedModules.has(module.id || 0)
+                    const lessons = module.video_lessons || module.videos || []
+                    
+                    return (
+                      <div key={module.id || index} className="bg-transparent">
+                        <button
+                          onClick={() => toggleModule(module.id || 0)}
+                          className="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-700/50 transition-colors group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-bold text-gray-500 group-hover:text-orange-500 transition-colors">
+                              {String(index + 1).padStart(2, '0')}
+                            </span>
+                            <div className="text-left">
+                              <h4 className="text-sm font-semibold text-white group-hover:text-orange-400 transition-colors line-clamp-1">
+                                {module.title}
+                              </h4>
+                              <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+                                {lessons.length} Lessons
+                              </span>
+                            </div>
                           </div>
-                        ) : (
-                          lessons.map((lesson: any, lIndex: number) => {
-                            const isActive = activeLesson?.id === lesson.id
-                            return (
-                              <button
-                                key={lesson.id || lIndex}
-                                onClick={() => setActiveLesson(lesson)}
-                                className={`w-full px-4 py-3 flex items-center gap-3 transition-all border-l-2 ${
-                                  isActive 
-                                    ? 'bg-orange-500/10 border-orange-500' 
-                                    : 'border-transparent hover:bg-gray-700/30'
-                                }`}
-                              >
-                                <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
-                                  isActive ? 'bg-orange-500 text-white' : 'bg-gray-700 text-gray-400'
-                                }`}>
-                                  <Play className="h-3 w-3 fill-current" />
-                                </div>
-                                <div className="flex-1 text-left">
-                                  <p className={`text-sm ${isActive ? 'text-white font-medium' : 'text-gray-400'}`}>
-                                    {lesson.title}
-                                  </p>
-                                  {lesson.duration && (
-                                    <span className="text-[10px] text-gray-500 font-mono">
-                                      {lesson.duration}
-                                    </span>
-                                  )}
-                                </div>
-                                {isActive && (
-                                  <CheckCircle className="h-3 w-3 text-orange-500" />
-                                )}
-                              </button>
-                            )
-                          })
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4 text-gray-500" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-gray-500" />
+                          )}
+                        </button>
+
+                        {isExpanded && (
+                          <div className="bg-gray-900/30">
+                            {lessons.length === 0 ? (
+                              <div className="px-11 py-3 text-xs text-gray-500 italic">
+                                No lessons available.
+                              </div>
+                            ) : (
+                              lessons.map((lesson: any, lIndex: number) => {
+                                const isActive = activeLesson?.id === lesson.id
+                                return (
+                                  <button
+                                    key={lesson.id || lIndex}
+                                    onClick={() => setActiveLesson(lesson)}
+                                    className={`w-full px-4 py-3 flex items-center gap-3 transition-all border-l-2 ${
+                                      isActive 
+                                        ? 'bg-orange-500/10 border-orange-500' 
+                                        : 'border-transparent hover:bg-gray-700/30'
+                                    }`}
+                                  >
+                                    <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
+                                      isActive ? 'bg-orange-500 text-white' : 'bg-gray-700 text-gray-400'
+                                    }`}>
+                                      <Play className="h-3 w-3 fill-current" />
+                                    </div>
+                                    <div className="flex-1 text-left">
+                                      <p className={`text-sm ${isActive ? 'text-white font-medium' : 'text-gray-400'}`}>
+                                        {lesson.title}
+                                      </p>
+                                      {lesson.duration && (
+                                        <span className="text-[10px] text-gray-500 font-mono">
+                                          {lesson.duration}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {isActive && (
+                                      <CheckCircle className="h-3 w-3 text-orange-500" />
+                                    )}
+                                  </button>
+                                )
+                              })
+                            )}
+                          </div>
                         )}
                       </div>
-                    )}
-                  </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                user && course.teacher && (
+                  <CourseChat 
+                    courseId={course.id} 
+                    master={{
+                      id: course.teacher.id,
+                      name: course.teacher.name,
+                      avatar: course.teacher.avatar_url
+                    }}
+                    currentUser={{
+                      id: user.id,
+                      name: user.name
+                    }}
+                  />
                 )
-              })}
+              )}
             </div>
           </div>
         </div>
