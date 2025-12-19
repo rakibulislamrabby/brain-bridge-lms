@@ -177,7 +177,7 @@ export default function EnrolledCourseViewerPage() {
                 size="sm" 
                 variant="outline" 
                 onClick={() => setActiveTab('chat')}
-                className="border-blue-600 text-blue-400 hover:bg-blue-900/30 relative"
+                className="border-blue-600 text-blue-400 hover:bg-blue-900/30 relative cursor-pointer"
               >
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Chat with Master

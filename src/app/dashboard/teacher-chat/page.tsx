@@ -9,6 +9,10 @@ import Image from 'next/image'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import { useTeacherEnrolledCourses } from '@/hooks/teacher/use-enrolled-courses'
 import { getStoredUser } from '@/hooks/useAuth'
+import { useChatMessages, useSendMessage, ChatMessage } from '@/hooks/chat/use-chat'
+import { subscribeToChat } from '@/lib/pusher'
+import { useToast } from '@/components/ui/toast'
+import { useQueryClient } from '@tanstack/react-query'
 
 const STORAGE_BASE_URL = process.env.NEXT_PUBLIC_MAIN_STORAGE_URL || process.env.NEXT_PUBLIC_MEDIA_BASE_URL || ''
 
@@ -58,43 +62,82 @@ interface TeacherChatProps {
 }
 
 function TeacherChatWindow({ student, currentUser }: TeacherChatProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      sender_id: currentUser.id,
-      text: `Hello ${student.name}! How can I help you with ${student.course_title}?`,
-      timestamp: new Date().toISOString(),
-      is_me: true,
-    }
-  ])
   const [newMessage, setNewMessage] = useState('')
-  const [isSending, setIsSending] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const { addToast } = useToast()
+  const queryClient = useQueryClient()
+  
+  // Use student.id as chatId (receiver_id from teacher's perspective for API)
+  const chatId = student.id
+  
+  const { data: messagesData, isLoading: isLoadingMessages } = useChatMessages(chatId, true)
+  const sendMessageMutation = useSendMessage(chatId)
 
+  // Transform API messages to UI format
+  const messages = useMemo(() => {
+    if (!messagesData?.data) return []
+    return messagesData.data.map((msg: ChatMessage) => ({
+      id: msg.id.toString(),
+      sender_id: msg.sender_id,
+      text: msg.body,
+      timestamp: msg.created_at,
+      is_me: msg.sender_id === currentUser.id,
+    }))
+  }, [messagesData, currentUser.id])
+
+  // Subscribe to Pusher for real-time updates
+  // Use both user IDs to create consistent channel name
+  useEffect(() => {
+    const unsubscribe = subscribeToChat(
+      currentUser.id,
+      student.id,
+      (newMessage: ChatMessage) => {
+        console.log('New message received via Pusher:', newMessage)
+        // Message received via Pusher - invalidate query to refetch immediately
+        queryClient.invalidateQueries({ queryKey: ['chat-messages', chatId] })
+      },
+      (error) => {
+        console.error('Pusher subscription error:', error)
+      }
+    )
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe()
+      }
+    }
+  }, [currentUser.id, student.id, chatId, queryClient])
+
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages])
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newMessage.trim() || isSending) return
+    if (!newMessage.trim() || sendMessageMutation.isPending) return
 
-    setIsSending(true)
-
-    // Simulate sending for now (UI only)
-    const msg: Message = {
-      id: Date.now().toString(),
-      sender_id: currentUser.id,
-      text: newMessage.trim(),
-      timestamp: new Date().toISOString(),
-      is_me: true,
-    }
-
-    setMessages(prev => [...prev, msg])
+    const messageText = newMessage.trim()
     setNewMessage('')
-    setIsSending(false)
+
+    try {
+      await sendMessageMutation.mutateAsync({
+        receiver_id: student.id,
+        body: messageText,
+      })
+      // Message will appear via Pusher or refetch
+    } catch (error) {
+      addToast({
+        type: 'error',
+        title: 'Failed to send message',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        duration: 5000,
+      })
+      // Restore message on error
+      setNewMessage(messageText)
+    }
   }
 
   return (
@@ -134,27 +177,37 @@ function TeacherChatWindow({ student, currentUser }: TeacherChatProps) {
         className="flex-1 p-4 overflow-y-auto custom-scrollbar" 
         ref={scrollRef}
       >
-        <div className="space-y-4">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.is_me ? 'justify-end' : 'justify-start'}`}
-            >
+        {isLoadingMessages ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-gray-400">
+            <p className="text-sm">No messages yet. Start the conversation!</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {messages.map((msg) => (
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
-                  msg.is_me
-                    ? 'bg-orange-600 text-white rounded-tr-none'
-                    : 'bg-gray-800 text-gray-200 rounded-tl-none border border-gray-700'
-                }`}
+                key={msg.id}
+                className={`flex ${msg.is_me ? 'justify-end' : 'justify-start'}`}
               >
-                <p className="leading-relaxed">{msg.text}</p>
-                <p className={`text-[10px] mt-1 ${msg.is_me ? 'text-orange-200' : 'text-gray-500'}`}>
-                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
+                <div
+                  className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
+                    msg.is_me
+                      ? 'bg-orange-600 text-white rounded-tr-none'
+                      : 'bg-gray-800 text-gray-200 rounded-tl-none border border-gray-700'
+                  }`}
+                >
+                  <p className="leading-relaxed">{msg.text}</p>
+                  <p className={`text-[10px] mt-1 ${msg.is_me ? 'text-orange-200' : 'text-gray-500'}`}>
+                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Chat Input */}
@@ -169,10 +222,10 @@ function TeacherChatWindow({ student, currentUser }: TeacherChatProps) {
           <Button 
             type="submit" 
             size="icon" 
-            disabled={!newMessage.trim() || isSending}
+            disabled={!newMessage.trim() || sendMessageMutation.isPending}
             className="bg-orange-600 hover:bg-orange-700 text-white shrink-0 h-10 w-10"
           >
-            {isSending ? (
+            {sendMessageMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Send className="h-4 w-4" />
