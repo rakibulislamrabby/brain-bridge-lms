@@ -5,50 +5,135 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '../ui/button'
 import { Card, CardContent } from '../ui/card'
-import { AlertTriangle, Search } from 'lucide-react'
-import { useSkills } from '@/hooks/skills/use-skills'
+import { AlertTriangle, Search, Shuffle } from 'lucide-react'
+import { useSubjects } from '@/hooks/subject/use-subject'
+import { useSkills, type SkillResponse } from '@/hooks/skills/use-skills'
+
+interface SubjectInfo {
+  id: number
+  name: string
+}
 
 interface RandomSkillInfo {
   id: number
   name: string
-  subjectName?: string | null
+  subjectName: string
+  subjectId: number
 }
 
 export default function RandomSkill() {
   const router = useRouter()
-  const { data: skills = [], isLoading, isError, error } = useSkills()
+  const { data: subjects = [], isLoading: isLoadingSubjects, isError: isSubjectsError, error: subjectsError } = useSubjects()
+  const { data: skills = [], isLoading: isLoadingSkills, isError: isSkillsError, error: skillsError } = useSkills()
   const [selectedSkill, setSelectedSkill] = useState<RandomSkillInfo | null>(null)
-  const [selectedSkillId, setSelectedSkillId] = useState<string>('')
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('')
+  const [randomizedSubjects, setRandomizedSubjects] = useState<SubjectInfo[]>([])
 
-  const normalizedSkills = useMemo<RandomSkillInfo[]>(() => {
-    if (!Array.isArray(skills)) {
+  const isLoading = isLoadingSubjects || isLoadingSkills
+  const isError = isSubjectsError || isSkillsError
+  const error = subjectsError || skillsError
+
+  const normalizedSubjects = useMemo<SubjectInfo[]>(() => {
+    if (!Array.isArray(subjects)) {
       return []
     }
-    return skills.map((skill) => ({
-      id: skill.id,
-      name: skill.name,
-      subjectName: skill.subject?.name ?? null,
+    return subjects.map((subject) => ({
+      id: subject.id,
+      name: subject.name,
     }))
+  }, [subjects])
+
+  // Group skills by subject_id
+  const skillsBySubject = useMemo(() => {
+    if (!Array.isArray(skills)) {
+      return new Map<number, SkillResponse[]>()
+    }
+    const grouped = new Map<number, SkillResponse[]>()
+    skills.forEach((skill) => {
+      const subjectId = skill.subject_id
+      if (!grouped.has(subjectId)) {
+        grouped.set(subjectId, [])
+      }
+      grouped.get(subjectId)!.push(skill)
+    })
+    return grouped
   }, [skills])
 
+  // Randomize subjects when they are loaded
   useEffect(() => {
-    if (!isLoading && normalizedSkills.length === 0) {
-      setSelectedSkill(null)
-      setSelectedSkillId('')
+    if (normalizedSubjects.length > 0) {
+      const shuffled = [...normalizedSubjects].sort(() => Math.random() - 0.5)
+      setRandomizedSubjects(shuffled)
     }
-  }, [isLoading, normalizedSkills.length])
+  }, [normalizedSubjects])
 
-  const handleSkillChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const skillId = e.target.value
-    setSelectedSkillId(skillId)
+  useEffect(() => {
+    if (!isLoading && normalizedSubjects.length === 0) {
+      setSelectedSkill(null)
+      setSelectedSubjectId('')
+    }
+  }, [isLoading, normalizedSubjects.length])
+
+  const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const subjectId = e.target.value
+    setSelectedSubjectId(subjectId)
     
-    if (skillId && skillId !== '') {
-      const skill = normalizedSkills.find(s => s.id.toString() === skillId)
-      if (skill) {
-        setSelectedSkill(skill)
+    if (subjectId && subjectId !== '') {
+      const subjectIdNum = parseInt(subjectId, 10)
+      const subject = normalizedSubjects.find(s => s.id === subjectIdNum)
+      const subjectSkills = skillsBySubject.get(subjectIdNum) || []
+      
+      if (subject && subjectSkills.length > 0) {
+        // Pick a random skill from this subject
+        const randomSkill = subjectSkills[Math.floor(Math.random() * subjectSkills.length)]
+        setSelectedSkill({
+          id: randomSkill.id,
+          name: randomSkill.name,
+          subjectName: subject.name,
+          subjectId: subject.id,
+        })
+      } else {
+        setSelectedSkill(null)
       }
     } else {
       setSelectedSkill(null)
+    }
+  }
+
+  const handleRandomize = () => {
+    if (normalizedSubjects.length > 0 && skillsBySubject.size > 0) {
+      // Get subjects that have skills
+      const subjectsWithSkills = normalizedSubjects.filter(subject => 
+        skillsBySubject.has(subject.id) && skillsBySubject.get(subject.id)!.length > 0
+      )
+      
+      if (subjectsWithSkills.length > 0) {
+        // Pick a random subject that has skills
+        const randomSubject = subjectsWithSkills[Math.floor(Math.random() * subjectsWithSkills.length)]
+        const subjectSkills = skillsBySubject.get(randomSubject.id) || []
+        
+        if (subjectSkills.length > 0) {
+          // Pick a random skill from that subject
+          const randomSkill = subjectSkills[Math.floor(Math.random() * subjectSkills.length)]
+          setSelectedSkill({
+            id: randomSkill.id,
+            name: randomSkill.name,
+            subjectName: randomSubject.name,
+            subjectId: randomSubject.id,
+          })
+          setSelectedSubjectId(randomSubject.id.toString())
+        }
+      }
+      
+      // Also shuffle the dropdown list
+      const shuffled = [...normalizedSubjects].sort(() => Math.random() - 0.5)
+      setRandomizedSubjects(shuffled)
+    }
+  }
+
+  const handleChooseSkill = () => {
+    if (selectedSkill?.id) {
+      router.push(`/masters?skill_id=${selectedSkill.id}`)
     }
   }
 
@@ -68,24 +153,24 @@ export default function RandomSkill() {
           </div>
 
           <p className="text-gray-300 text-lg sm:text-xl max-w-3xl mx-auto mb-12 leading-relaxed">
-            Not sure what skill to tackle next? Select a skill from the catalog and discover tailored courses and mentors.
+            Not sure what skill to tackle next? Select a subject from the catalog and discover tailored courses and mentors.
           </p>
 
           <div className="relative max-w-md mx-auto">
-            <div className="relative">
+            <div className="relative mb-4">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <select
-                value={selectedSkillId}
-                onChange={handleSkillChange}
-                disabled={isLoading || normalizedSkills.length === 0}
+                value={selectedSubjectId}
+                onChange={handleSubjectChange}
+                disabled={isLoading || normalizedSubjects.length === 0}
                 className="w-full pl-12 pr-4 py-5 bg-gray-800 border-2 border-gray-700 rounded-2xl text-white text-lg font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed appearance-none"
             >
                 <option value="">
-                  {isLoading ? 'Loading skills...' : normalizedSkills.length === 0 ? 'No skills available' : 'Select a skill to discover'}
+                  {isLoading ? 'Loading subjects...' : normalizedSubjects.length === 0 ? 'No subjects available' : 'Select a subject to discover'}
                 </option>
-                {normalizedSkills.map((skill) => (
-                  <option key={skill.id} value={skill.id.toString()}>
-                    {skill.name} {skill.subjectName ? `(${skill.subjectName})` : ''}
+                {randomizedSubjects.map((subject) => (
+                  <option key={subject.id} value={subject.id.toString()}>
+                    {subject.name}
                   </option>
                 ))}
               </select>
@@ -95,6 +180,14 @@ export default function RandomSkill() {
                 </svg>
               </div>
             </div>
+            <Button
+              onClick={handleRandomize}
+              disabled={isLoading || normalizedSubjects.length === 0 || skillsBySubject.size === 0}
+              className="w-full bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/50 font-medium py-2 px-4 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Shuffle className="w-4 h-4" />
+              Get Random Skill
+            </Button>
           </div>
         </div>
 
@@ -104,9 +197,9 @@ export default function RandomSkill() {
               <CardContent className="p-6 flex items-start gap-3">
                 <AlertTriangle className="w-6 h-6 text-red-400 mt-1" />
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">Unable to load skills</h3>
+                  <h3 className="text-lg font-semibold text-white mb-1">Unable to load data</h3>
                   <p className="text-sm text-red-200/90">
-                    {error instanceof Error ? error.message : 'Something went wrong while fetching the skill catalog.'}
+                    {error instanceof Error ? error.message : 'Something went wrong while fetching the catalog.'}
                   </p>
                 </div>
               </CardContent>
@@ -114,13 +207,13 @@ export default function RandomSkill() {
           </div>
         )}
 
-        {normalizedSkills.length === 0 && !isLoading && !isError && (
+        {normalizedSubjects.length === 0 && !isLoading && !isError && (
           <div className="flex justify-center">
             <Card className="w-full max-w-lg bg-gray-800 border border-gray-700/80">
               <CardContent className="p-6 text-center space-y-2">
-                <h3 className="text-lg font-semibold text-white">No skills available yet</h3>
+                <h3 className="text-lg font-semibold text-white">No subjects available yet</h3>
                 <p className="text-sm text-gray-300">
-                  Once new skills are added to the catalog, you will be able to discover them here.
+                  Once new subjects are added to the catalog, you will be able to discover them here.
                 </p>
               </CardContent>
             </Card>
@@ -135,22 +228,16 @@ export default function RandomSkill() {
                   <h3 className="text-xl font-bold text-white mb-1">
                     {selectedSkill.name}
                   </h3>
-                  {selectedSkill.subjectName && (
-                    <p className="text-sm text-purple-300 font-medium uppercase tracking-wide">
-                      {selectedSkill.subjectName}
-                    </p>
-                  )}
+                  <p className="text-sm text-purple-300 font-medium uppercase tracking-wide">
+                    {selectedSkill.subjectName}
+                  </p>
                 </div>
                 <p className="text-gray-300 text-sm">
-                  Ready to master this? Explore tailored courses and mentors aligned with this skill.
+                  Ready to master this skill? Explore tailored courses and mentors aligned with this skill.
                 </p>
                 <Button 
-                  onClick={() => {
-                    if (selectedSkill?.id) {
-                      router.push(`/masters?skill_id=${selectedSkill.id}`)
-                    }
-                  }}
-                  className="bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 cursor-pointer"
+                  onClick={handleChooseSkill}
+                  className="bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 cursor-pointer w-full"
                 >
                   Find Master
                 </Button>
