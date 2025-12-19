@@ -186,7 +186,13 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       items: [],
       allowedRoles: ['admin',] // Only admin can see this
     },
-    
+    {
+      title: 'Teacher List',
+      icon: GraduationCap,
+      href: '/dashboard/teacher-list',
+      items: [],
+      allowedRoles: ['admin',] // Only admin can see this
+    },
     {
       title: 'Settings',
       icon: Settings,

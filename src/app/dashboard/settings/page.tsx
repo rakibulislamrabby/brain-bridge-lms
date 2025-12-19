@@ -110,16 +110,25 @@ export default function SettingsPage() {
       })
       
       // Set previews from existing URLs (only if no file is currently selected)
-      if (!profilePictureFile && user.profile_picture) {
-        const profilePicUrl = resolveMediaUrl(user.profile_picture)
-        if (profilePicUrl) {
-          setProfilePicturePreview(profilePicUrl)
+      // This ensures existing media is shown when the page loads
+      if (!profilePictureFile) {
+        if (user.profile_picture) {
+          const profilePicUrl = resolveMediaUrl(user.profile_picture)
+          if (profilePicUrl) {
+            setProfilePicturePreview(profilePicUrl)
+          }
+        } else {
+          setProfilePicturePreview(null)
         }
       }
-      if (!introductionVideoFile && user.teacher?.introduction_video) {
-        const videoUrl = resolveMediaUrl(user.teacher.introduction_video)
-        if (videoUrl) {
-          setIntroductionVideoPreview(videoUrl)
+      if (!introductionVideoFile) {
+        if (user.teacher?.introduction_video) {
+          const videoUrl = resolveMediaUrl(user.teacher.introduction_video)
+          if (videoUrl) {
+            setIntroductionVideoPreview(videoUrl)
+          }
+        } else {
+          setIntroductionVideoPreview(null)
         }
       }
 
@@ -134,7 +143,28 @@ export default function SettingsPage() {
         }
       }
     }
-  }, [user, isTeacher, profilePictureFile, introductionVideoFile])
+  }, [user, isTeacher])
+  
+  // Separate effect to handle file previews (when user selects a new file)
+  useEffect(() => {
+    if (profilePictureFile) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProfilePicturePreview(reader.result as string)
+      }
+      reader.readAsDataURL(profilePictureFile)
+    }
+  }, [profilePictureFile])
+  
+  useEffect(() => {
+    if (introductionVideoFile) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setIntroductionVideoPreview(reader.result as string)
+      }
+      reader.readAsDataURL(introductionVideoFile)
+    }
+  }, [introductionVideoFile])
 
   useEffect(() => {
     const stored = getStoredUser()
@@ -176,16 +206,19 @@ export default function SettingsPage() {
       }
       
       setProfilePictureFile(file)
-      
-      // Create preview
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setProfilePicturePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+      // Preview will be set by the useEffect hook
     } else {
       // Clear file if no file selected
       setProfilePictureFile(null)
+      // Restore preview from existing URL if available
+      if (user?.profile_picture) {
+        const profilePicUrl = resolveMediaUrl(user.profile_picture)
+        if (profilePicUrl) {
+          setProfilePicturePreview(profilePicUrl)
+        }
+      } else {
+        setProfilePicturePreview(null)
+      }
     }
   }
 
@@ -215,13 +248,19 @@ export default function SettingsPage() {
       }
       
       setIntroductionVideoFile(file)
-      
-      // Create preview
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setIntroductionVideoPreview(reader.result as string)
+      // Preview will be set by the useEffect hook
+    } else {
+      // Clear file if no file selected
+      setIntroductionVideoFile(null)
+      // Restore preview from existing URL if available
+      if (user?.teacher?.introduction_video) {
+        const videoUrl = resolveMediaUrl(user.teacher.introduction_video)
+        if (videoUrl) {
+          setIntroductionVideoPreview(videoUrl)
+        }
+      } else {
+        setIntroductionVideoPreview(null)
       }
-      reader.readAsDataURL(file)
     }
   }
 
@@ -229,12 +268,22 @@ export default function SettingsPage() {
     setProfilePictureFile(null)
     setProfilePicturePreview(null)
     setFormData(prev => ({ ...prev, profile_picture: '' }))
+    // Also clear the input element
+    const input = document.getElementById('profile_picture') as HTMLInputElement
+    if (input) {
+      input.value = ''
+    }
   }
 
   const handleRemoveIntroductionVideo = () => {
     setIntroductionVideoFile(null)
     setIntroductionVideoPreview(null)
     setFormData(prev => ({ ...prev, introduction_video: '' }))
+    // Also clear the input element
+    const input = document.getElementById('introduction_video') as HTMLInputElement
+    if (input) {
+      input.value = ''
+    }
   }
 
   const handleAddSkill = () => {
@@ -287,24 +336,22 @@ export default function SettingsPage() {
         address: formData.address || null,
       }
 
-      // Include profile_picture - file takes priority, otherwise preserve existing URL
+      // Include profile_picture ONLY if a new file is selected
+      // Don't include it if not provided - backend will preserve existing or leave empty
       if (profilePictureFile instanceof File) {
         updateData.profile_picture = profilePictureFile
-      } else if (formData.profile_picture && formData.profile_picture.trim() !== '') {
-        // Preserve existing profile picture URL if no new file selected
-        updateData.profile_picture = formData.profile_picture
       }
+      // Don't send profile_picture if no new file - let backend handle existing value
 
       // Add teacher-specific fields if user is a teacher
       if (isTeacher) {
         updateData.title = formData.title || null
-        // Include introduction_video - file takes priority, otherwise preserve existing URL
+        // Include introduction_video ONLY if a new file is selected
+        // Don't include it if not provided - backend will preserve existing or leave empty
         if (introductionVideoFile instanceof File) {
           updateData.introduction_video = introductionVideoFile
-        } else if (formData.introduction_video && formData.introduction_video.trim() !== '') {
-          // Preserve existing introduction video URL if no new file selected
-          updateData.introduction_video = formData.introduction_video
         }
+        // Don't send introduction_video if no new file - let backend handle existing value
         updateData.base_pay = formData.base_pay ? Number(formData.base_pay) : null
         
         // Only include skills if there are any
@@ -341,20 +388,6 @@ export default function SettingsPage() {
 
       const updatedUser = await updateProfileMutation.mutateAsync(updateData)
 
-      // Update previews from the response
-      if (updatedUser?.profile_picture) {
-        const profilePicUrl = resolveMediaUrl(updatedUser.profile_picture)
-        if (profilePicUrl) {
-          setProfilePicturePreview(profilePicUrl)
-        }
-      }
-      if (updatedUser?.teacher?.introduction_video) {
-        const videoUrl = resolveMediaUrl(updatedUser.teacher.introduction_video)
-        if (videoUrl) {
-          setIntroductionVideoPreview(videoUrl)
-        }
-      }
-
       // Clear file states after successful upload (they'll be available from the updated user profile)
       setProfilePictureFile(null)
       setIntroductionVideoFile(null)
@@ -366,6 +399,9 @@ export default function SettingsPage() {
           profile_picture: updatedUser.profile_picture || prev.profile_picture,
           introduction_video: updatedUser.teacher?.introduction_video || prev.introduction_video,
         }))
+        
+        // Update previews from the response - this will trigger the useEffect to update previews
+        // Since we cleared the file states, the useEffect will now use the URLs from updatedUser
       }
 
       addToast({
@@ -376,11 +412,17 @@ export default function SettingsPage() {
       })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update profile. Please try again.'
+      // Check if it's a video-specific error
+      const isVideoError = errorMessage.toLowerCase().includes('introduction video') || 
+                           errorMessage.toLowerCase().includes('video')
+      
       addToast({
         type: 'error',
-        title: 'Update Failed',
-        description: errorMessage,
-        duration: 5000,
+        title: isVideoError ? 'Video Upload Failed' : 'Update Failed',
+        description: isVideoError 
+          ? 'The introduction video failed to upload, but other profile information was updated successfully. You can try uploading the video again later.'
+          : errorMessage,
+        duration: 6000,
       })
     }
   }

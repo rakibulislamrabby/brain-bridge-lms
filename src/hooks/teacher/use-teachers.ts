@@ -67,6 +67,14 @@ export interface Teacher {
     average_rating: number
     teacher_level?: TeacherLevel
     skills?: TeacherSkill[]
+    // Payment fields
+    payment_method?: string | null
+    bank_account_number?: string | null
+    bank_routing_number?: string | null
+    bank_name?: string | null
+    paypal_email?: string | null
+    stripe_account_id?: string | null
+    tax_id?: string | null
   }
 }
 
