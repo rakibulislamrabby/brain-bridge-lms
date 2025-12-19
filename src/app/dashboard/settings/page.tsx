@@ -16,6 +16,34 @@ import { useToast } from '@/components/ui/toast'
 import { Loader2, Plus, X, Save, Image as ImageIcon, Video, Upload, XCircle } from 'lucide-react'
 import { getStoredUser } from '@/hooks/useAuth'
 
+// Helper function to resolve media URLs
+const resolveMediaUrl = (path?: string | null): string | null => {
+  if (!path || typeof path !== 'string') {
+    return null
+  }
+
+  // If already a full URL, return as is
+  if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+
+  // Try to use storage base URL first, fallback to API base URL
+  const storageBase = process.env.NEXT_PUBLIC_MAIN_STORAGE_URL || ''
+  const apiBase = process.env.NEXT_PUBLIC_MAIN_BASE_URL || ''
+  
+  let base = storageBase
+  if (!base && apiBase) {
+    base = apiBase.replace('/api', '').replace(/\/$/, '')
+  }
+  if (!base) {
+    base = 'https://brainbridge.mitwebsolutions.com'
+  }
+  
+  const cleanedBase = base.endsWith('/') ? base.slice(0, -1) : base
+  const cleanedPath = path.startsWith('/') ? path.slice(1) : path
+  return `${cleanedBase}/${cleanedPath}`
+}
+
 export default function SettingsPage() {
   const router = useRouter()
   const { data: user, isLoading: loadingUser } = useMe()
@@ -40,6 +68,14 @@ export default function SettingsPage() {
     title: '',
     introduction_video: '',
     base_pay: '',
+    // Payment fields
+    payment_method: '',
+    bank_account_number: '',
+    bank_routing_number: '',
+    bank_name: '',
+    paypal_email: '',
+    stripe_account_id: '',
+    tax_id: '',
   })
 
   // File state for uploads
@@ -63,14 +99,37 @@ export default function SettingsPage() {
         title: user.teacher?.title || '',
         introduction_video: user.teacher?.introduction_video || '',
         base_pay: user.teacher?.base_pay || '',
+        // Payment fields
+        payment_method: user.teacher?.payment_method || '',
+        bank_account_number: user.teacher?.bank_account_number || '',
+        bank_routing_number: user.teacher?.bank_routing_number || '',
+        bank_name: user.teacher?.bank_name || '',
+        paypal_email: user.teacher?.paypal_email || '',
+        stripe_account_id: user.teacher?.stripe_account_id || '',
+        tax_id: user.teacher?.tax_id || '',
       })
       
       // Set previews from existing URLs (only if no file is currently selected)
-      if (!profilePictureFile && user.profile_picture) {
-        setProfilePicturePreview(user.profile_picture)
+      // This ensures existing media is shown when the page loads
+      if (!profilePictureFile) {
+        if (user.profile_picture) {
+          const profilePicUrl = resolveMediaUrl(user.profile_picture)
+          if (profilePicUrl) {
+            setProfilePicturePreview(profilePicUrl)
+          }
+        } else {
+          setProfilePicturePreview(null)
+        }
       }
-      if (!introductionVideoFile && user.teacher?.introduction_video) {
-        setIntroductionVideoPreview(user.teacher.introduction_video)
+      if (!introductionVideoFile) {
+        if (user.teacher?.introduction_video) {
+          const videoUrl = resolveMediaUrl(user.teacher.introduction_video)
+          if (videoUrl) {
+            setIntroductionVideoPreview(videoUrl)
+          }
+        } else {
+          setIntroductionVideoPreview(null)
+        }
       }
 
       // Load existing skills if teacher has them (check both user.skills and teacher.skills)
@@ -84,7 +143,28 @@ export default function SettingsPage() {
         }
       }
     }
-  }, [user, isTeacher, profilePictureFile, introductionVideoFile])
+  }, [user, isTeacher])
+  
+  // Separate effect to handle file previews (when user selects a new file)
+  useEffect(() => {
+    if (profilePictureFile) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProfilePicturePreview(reader.result as string)
+      }
+      reader.readAsDataURL(profilePictureFile)
+    }
+  }, [profilePictureFile])
+  
+  useEffect(() => {
+    if (introductionVideoFile) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setIntroductionVideoPreview(reader.result as string)
+      }
+      reader.readAsDataURL(introductionVideoFile)
+    }
+  }, [introductionVideoFile])
 
   useEffect(() => {
     const stored = getStoredUser()
@@ -126,16 +206,19 @@ export default function SettingsPage() {
       }
       
       setProfilePictureFile(file)
-      
-      // Create preview
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setProfilePicturePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+      // Preview will be set by the useEffect hook
     } else {
       // Clear file if no file selected
       setProfilePictureFile(null)
+      // Restore preview from existing URL if available
+      if (user?.profile_picture) {
+        const profilePicUrl = resolveMediaUrl(user.profile_picture)
+        if (profilePicUrl) {
+          setProfilePicturePreview(profilePicUrl)
+        }
+      } else {
+        setProfilePicturePreview(null)
+      }
     }
   }
 
@@ -165,13 +248,19 @@ export default function SettingsPage() {
       }
       
       setIntroductionVideoFile(file)
-      
-      // Create preview
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setIntroductionVideoPreview(reader.result as string)
+      // Preview will be set by the useEffect hook
+    } else {
+      // Clear file if no file selected
+      setIntroductionVideoFile(null)
+      // Restore preview from existing URL if available
+      if (user?.teacher?.introduction_video) {
+        const videoUrl = resolveMediaUrl(user.teacher.introduction_video)
+        if (videoUrl) {
+          setIntroductionVideoPreview(videoUrl)
+        }
+      } else {
+        setIntroductionVideoPreview(null)
       }
-      reader.readAsDataURL(file)
     }
   }
 
@@ -179,12 +268,22 @@ export default function SettingsPage() {
     setProfilePictureFile(null)
     setProfilePicturePreview(null)
     setFormData(prev => ({ ...prev, profile_picture: '' }))
+    // Also clear the input element
+    const input = document.getElementById('profile_picture') as HTMLInputElement
+    if (input) {
+      input.value = ''
+    }
   }
 
   const handleRemoveIntroductionVideo = () => {
     setIntroductionVideoFile(null)
     setIntroductionVideoPreview(null)
     setFormData(prev => ({ ...prev, introduction_video: '' }))
+    // Also clear the input element
+    const input = document.getElementById('introduction_video') as HTMLInputElement
+    if (input) {
+      input.value = ''
+    }
   }
 
   const handleAddSkill = () => {
@@ -237,25 +336,37 @@ export default function SettingsPage() {
         address: formData.address || null,
       }
 
-      // Include profile_picture file if selected - match course thumbnail pattern exactly
-      // Same pattern as course: thumbnailFile instanceof File ? thumbnailFile : undefined
-      updateData.profile_picture = profilePictureFile instanceof File ? profilePictureFile : undefined
+      // Include profile_picture ONLY if a new file is selected
+      // Don't include it if not provided - backend will preserve existing or leave empty
+      if (profilePictureFile instanceof File) {
+        updateData.profile_picture = profilePictureFile
+      }
+      // Don't send profile_picture if no new file - let backend handle existing value
 
       // Add teacher-specific fields if user is a teacher
       if (isTeacher) {
         updateData.title = formData.title || null
-        // Only include introduction_video if there's a file to upload
-        if (introductionVideoFile) {
+        // Include introduction_video ONLY if a new file is selected
+        // Don't include it if not provided - backend will preserve existing or leave empty
+        if (introductionVideoFile instanceof File) {
           updateData.introduction_video = introductionVideoFile
-        } else if (formData.introduction_video && formData.introduction_video.trim() !== '') {
-          updateData.introduction_video = formData.introduction_video
         }
+        // Don't send introduction_video if no new file - let backend handle existing value
         updateData.base_pay = formData.base_pay ? Number(formData.base_pay) : null
         
         // Only include skills if there are any
         if (userSkills.length > 0) {
           updateData.skills = userSkills.filter(skill => skill.skill_id > 0 && skill.years_of_experience > 0)
         }
+        
+        // Add payment fields
+        updateData.payment_method = formData.payment_method || null
+        updateData.bank_account_number = formData.bank_account_number || null
+        updateData.bank_routing_number = formData.bank_routing_number || null
+        updateData.bank_name = formData.bank_name || null
+        updateData.paypal_email = formData.paypal_email || null
+        updateData.stripe_account_id = formData.stripe_account_id || null
+        updateData.tax_id = formData.tax_id || null
       }
 
       console.log('📤 Sending update data:', {
@@ -275,11 +386,23 @@ export default function SettingsPage() {
         })
       }
 
-      await updateProfileMutation.mutateAsync(updateData)
+      const updatedUser = await updateProfileMutation.mutateAsync(updateData)
 
       // Clear file states after successful upload (they'll be available from the updated user profile)
       setProfilePictureFile(null)
       setIntroductionVideoFile(null)
+
+      // Update form data with the response to ensure consistency
+      if (updatedUser) {
+        setFormData(prev => ({
+          ...prev,
+          profile_picture: updatedUser.profile_picture || prev.profile_picture,
+          introduction_video: updatedUser.teacher?.introduction_video || prev.introduction_video,
+        }))
+        
+        // Update previews from the response - this will trigger the useEffect to update previews
+        // Since we cleared the file states, the useEffect will now use the URLs from updatedUser
+      }
 
       addToast({
         type: 'success',
@@ -289,11 +412,17 @@ export default function SettingsPage() {
       })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update profile. Please try again.'
+      // Check if it's a video-specific error
+      const isVideoError = errorMessage.toLowerCase().includes('introduction video') || 
+                           errorMessage.toLowerCase().includes('video')
+      
       addToast({
         type: 'error',
-        title: 'Update Failed',
-        description: errorMessage,
-        duration: 5000,
+        title: isVideoError ? 'Video Upload Failed' : 'Update Failed',
+        description: isVideoError 
+          ? 'The introduction video failed to upload, but other profile information was updated successfully. You can try uploading the video again later.'
+          : errorMessage,
+        duration: 6000,
       })
     }
   }
@@ -591,6 +720,102 @@ export default function SettingsPage() {
                         </Button>
                       </div>
                     ))}
+                  </div>
+
+                  {/* Payment Information Section */}
+                  <div className="space-y-4 pt-6 border-t border-gray-700">
+                    <h3 className="text-lg font-semibold text-white">Payment Information</h3>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="payment_method" className="text-white">Payment Method</Label>
+                      <select
+                        id="payment_method"
+                        value={formData.payment_method}
+                        onChange={(e) => handleInputChange('payment_method', e.target.value)}
+                        className="w-full h-10 rounded-md border border-gray-600 bg-gray-700 text-white px-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      >
+                        <option value="">Select payment method</option>
+                        <option value="bank">Bank Transfer</option>
+                        <option value="paypal">PayPal</option>
+                        <option value="stripe">Stripe</option>
+                      </select>
+                    </div>
+
+                    {/* Bank Information */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="bank_name" className="text-white">Bank Name</Label>
+                        <Input
+                          id="bank_name"
+                          type="text"
+                          value={formData.bank_name}
+                          onChange={(e) => handleInputChange('bank_name', e.target.value)}
+                          className="bg-gray-700 border-gray-600 text-white"
+                          placeholder="Enter bank name"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bank_account_number" className="text-white">Bank Account Number</Label>
+                        <Input
+                          id="bank_account_number"
+                          type="text"
+                          value={formData.bank_account_number}
+                          onChange={(e) => handleInputChange('bank_account_number', e.target.value)}
+                          className="bg-gray-700 border-gray-600 text-white"
+                          placeholder="Enter account number"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bank_routing_number" className="text-white">Bank Routing Number</Label>
+                        <Input
+                          id="bank_routing_number"
+                          type="text"
+                          value={formData.bank_routing_number}
+                          onChange={(e) => handleInputChange('bank_routing_number', e.target.value)}
+                          className="bg-gray-700 border-gray-600 text-white"
+                          placeholder="Enter routing number"
+                        />
+                      </div>
+                    </div>
+
+                    {/* PayPal Information */}
+                    <div className="space-y-2">
+                      <Label htmlFor="paypal_email" className="text-white">PayPal Email</Label>
+                      <Input
+                        id="paypal_email"
+                        type="email"
+                        value={formData.paypal_email}
+                        onChange={(e) => handleInputChange('paypal_email', e.target.value)}
+                        className="bg-gray-700 border-gray-600 text-white"
+                        placeholder="Enter PayPal email"
+                      />
+                    </div>
+
+                    {/* Stripe Information */}
+                    <div className="space-y-2">
+                      <Label htmlFor="stripe_account_id" className="text-white">Stripe Account ID</Label>
+                      <Input
+                        id="stripe_account_id"
+                        type="text"
+                        value={formData.stripe_account_id}
+                        onChange={(e) => handleInputChange('stripe_account_id', e.target.value)}
+                        className="bg-gray-700 border-gray-600 text-white"
+                        placeholder="Enter Stripe account ID"
+                      />
+                    </div>
+
+                    {/* Tax ID */}
+                    <div className="space-y-2">
+                      <Label htmlFor="tax_id" className="text-white">Tax ID</Label>
+                      <Input
+                        id="tax_id"
+                        type="text"
+                        value={formData.tax_id}
+                        onChange={(e) => handleInputChange('tax_id', e.target.value)}
+                        className="bg-gray-700 border-gray-600 text-white"
+                        placeholder="Enter tax ID"
+                      />
+                    </div>
                   </div>
                 </div>
               )}

@@ -50,6 +50,14 @@ export interface UpdateProfileRequest {
   introduction_video?: string | null | File;
   base_pay?: number | null;
   skills?: ProfileSkill[];
+  // Payment fields
+  payment_method?: string | null;
+  bank_account_number?: string | null;
+  bank_routing_number?: string | null;
+  bank_name?: string | null;
+  paypal_email?: string | null;
+  stripe_account_id?: string | null;
+  tax_id?: string | null;
 }
 
 interface UpdateProfileResponse {
@@ -108,15 +116,14 @@ const updateProfile = async (data: UpdateProfileRequest): Promise<UserProfile> =
       formData.append('base_pay', data.base_pay.toString());
     }
     
-    // Add introduction video file if present
+    // Add introduction video file ONLY if it's a File
+    // Don't send it at all if not provided - backend will preserve existing or skip
     if (hasIntroductionVideo && data.introduction_video instanceof File) {
       console.log('📎 Appending introduction video file:', data.introduction_video.name, data.introduction_video.size, 'bytes');
       formData.append('introduction_video', data.introduction_video);
-    } else if (data.introduction_video !== undefined && data.introduction_video !== null && typeof data.introduction_video === 'string' && data.introduction_video.trim() !== '') {
-      // If it's a string (URL), append it
-      console.log('🔗 Appending introduction video URL:', data.introduction_video);
-      formData.append('introduction_video', data.introduction_video);
     }
+    // Note: We don't send introduction_video if it's not a File
+    // The backend should preserve the existing video if no new file is provided
     
     // Add skills if present
     if (data.skills && Array.isArray(data.skills) && data.skills.length > 0) {
@@ -125,6 +132,15 @@ const updateProfile = async (data: UpdateProfileRequest): Promise<UserProfile> =
         formData.append(`skills[${index}][years_of_experience]`, skill.years_of_experience.toString());
       });
     }
+    
+    // Add payment fields
+    if (data.payment_method !== undefined) formData.append('payment_method', data.payment_method || '');
+    if (data.bank_account_number !== undefined) formData.append('bank_account_number', data.bank_account_number || '');
+    if (data.bank_routing_number !== undefined) formData.append('bank_routing_number', data.bank_routing_number || '');
+    if (data.bank_name !== undefined) formData.append('bank_name', data.bank_name || '');
+    if (data.paypal_email !== undefined) formData.append('paypal_email', data.paypal_email || '');
+    if (data.stripe_account_id !== undefined) formData.append('stripe_account_id', data.stripe_account_id || '');
+    if (data.tax_id !== undefined) formData.append('tax_id', data.tax_id || '');
     
     // Log FormData contents for debugging
     console.log('📦 FormData entries:');
@@ -141,16 +157,20 @@ const updateProfile = async (data: UpdateProfileRequest): Promise<UserProfile> =
     delete headers['Content-Type'];
   } else {
     // Use JSON if no files
-    // Remove file fields from data if they're undefined/null (to prevent sending null/undefined)
+    // Remove file fields from data if they're undefined/null/File (only include if explicitly provided as string URL)
     const jsonData: any = { ...data };
-    // Remove profile_picture if it's undefined (only include if it's a string URL)
+    // Remove profile_picture if it's undefined, null, or a File
+    // Only keep it if it's a valid string URL that the user wants to update
     if (jsonData.profile_picture === undefined || jsonData.profile_picture === null || jsonData.profile_picture instanceof File) {
       delete jsonData.profile_picture;
     }
-    // Remove introduction_video if it's undefined (only include if it's a string URL)
+    // Remove introduction_video if it's undefined, null, or a File
+    // Only keep it if it's a valid string URL that the user wants to update
     if (jsonData.introduction_video === undefined || jsonData.introduction_video === null || jsonData.introduction_video instanceof File) {
       delete jsonData.introduction_video;
     }
+    // Include payment fields in JSON
+    // Payment fields are already in jsonData, they'll be included if defined
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify(jsonData);
   }
@@ -177,12 +197,42 @@ const updateProfile = async (data: UpdateProfileRequest): Promise<UserProfile> =
 
   if (!response.ok) {
     const errorObj = result as Record<string, unknown>;
-    const errorMessage =
-      errorObj?.message ||
-      errorObj?.error ||
-      (typeof errorObj?.data === 'string' ? errorObj.data : null) ||
-      (typeof errorObj?.data === 'object' && errorObj.data !== null ? JSON.stringify(errorObj.data) : null) ||
-      `Failed to update profile (${response.status})`;
+    
+    // Check for specific field errors
+    let errorMessage: string = '';
+    if (errorObj?.errors && typeof errorObj.errors === 'object') {
+      const errors = errorObj.errors as Record<string, unknown>;
+      const errorMessages: string[] = [];
+      
+      if (errors.introduction_video) {
+        const videoErrors = Array.isArray(errors.introduction_video) 
+          ? errors.introduction_video.join(', ') 
+          : String(errors.introduction_video);
+        errorMessages.push(`Introduction video: ${videoErrors}`);
+      }
+      if (errors.profile_picture) {
+        const picErrors = Array.isArray(errors.profile_picture) 
+          ? errors.profile_picture.join(', ') 
+          : String(errors.profile_picture);
+        errorMessages.push(`Profile picture: ${picErrors}`);
+      }
+      
+      if (errorMessages.length > 0) {
+        errorMessage = errorMessages.join('. ');
+      }
+    }
+    
+    // Fallback to general error message
+    if (!errorMessage) {
+      const fallbackMessage =
+        errorObj?.message ||
+        errorObj?.error ||
+        (typeof errorObj?.data === 'string' ? errorObj.data : null) ||
+        (typeof errorObj?.data === 'object' && errorObj.data !== null ? JSON.stringify(errorObj.data) : null) ||
+        `Failed to update profile (${response.status})`;
+      errorMessage = typeof fallbackMessage === 'string' ? fallbackMessage : `Failed to update profile (${response.status})`;
+    }
+    
     console.error('🔴 Profile Update Error:', {
       status: response.status,
       statusText: response.statusText,

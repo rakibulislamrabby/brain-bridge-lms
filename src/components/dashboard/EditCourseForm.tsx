@@ -42,7 +42,7 @@ interface VideoFormState {
   type?: string | null
 }
 
-const MEDIA_BASE_URL = 'https://brainbridge.mitwebsolutions.com/'
+const MEDIA_BASE_URL = process.env.NEXT_PUBLIC_MEDIA_BASE_URL
 
 const resolveMediaUrl = (path?: string | null) => {
   if (!path) {
@@ -51,7 +51,8 @@ const resolveMediaUrl = (path?: string | null) => {
   if (/^https?:\/\//i.test(path)) {
     return path
   }
-  const base = MEDIA_BASE_URL.endsWith('/') ? MEDIA_BASE_URL : `${MEDIA_BASE_URL}/`
+  const base = MEDIA_BASE_URL?.endsWith('/') ? MEDIA_BASE_URL : `${MEDIA_BASE_URL}/`
+  if (!base) return ''
   const cleanedPath = path.startsWith('/') ? path.slice(1) : path
   return `${base}${cleanedPath}`
 }

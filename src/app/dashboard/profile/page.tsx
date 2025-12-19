@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { useMe } from '@/hooks/use-me'
 import { useToast } from '@/components/ui/toast'
 import { useTeacherLevelProgress } from '@/hooks/teacher/use-teacher-level-progress'
-import { User, Mail, Phone, MapPin, Calendar, Shield, Loader2, Edit, Copy, Check, Gift, Award, Star } from 'lucide-react'
+import { User, Mail, Phone, MapPin, Calendar, Shield, Loader2, Edit, Copy, Check, Gift, Award, Star, DollarSign, Building2, CreditCard, FileText } from 'lucide-react'
 
 const STORAGE_BASE_URL = process.env.NEXT_PUBLIC_MAIN_STORAGE_URL || ''
 
@@ -455,6 +455,96 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Payment Information */}
+                {(user.teacher.payment_method || 
+                  user.teacher.bank_name || 
+                  user.teacher.bank_account_number || 
+                  user.teacher.bank_routing_number ||
+                  user.teacher.paypal_email || 
+                  user.teacher.stripe_account_id || 
+                  user.teacher.tax_id) && (
+                  <div>
+                    <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-orange-400 flex-shrink-0" />
+                      Payment Information
+                    </h3>
+                    <div className="bg-gray-700/30 p-4 rounded-lg space-y-4 border border-gray-600">
+                      {user.teacher.payment_method && (
+                        <div>
+                          <label className="text-sm text-gray-400 flex items-center gap-2 mb-1">
+                            <CreditCard className="h-4 w-4" />
+                            Payment Method
+                          </label>
+                          <p className="text-white font-medium capitalize">{user.teacher.payment_method}</p>
+                        </div>
+                      )}
+
+                      {/* Bank Information */}
+                      {(user.teacher.bank_name || user.teacher.bank_account_number || user.teacher.bank_routing_number) && (
+                        <div className="space-y-3 pt-3 border-t border-gray-600">
+                          <h5 className="text-sm font-semibold text-gray-300 flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-orange-500" />
+                            Bank Account Details
+                          </h5>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-6">
+                            {user.teacher.bank_name && (
+                              <div>
+                                <label className="text-xs text-gray-500">Bank Name</label>
+                                <p className="text-white">{user.teacher.bank_name}</p>
+                              </div>
+                            )}
+                            {user.teacher.bank_account_number && (
+                              <div>
+                                <label className="text-xs text-gray-500">Account Number</label>
+                                <p className="text-white font-mono text-sm break-all">{user.teacher.bank_account_number}</p>
+                              </div>
+                            )}
+                            {user.teacher.bank_routing_number && (
+                              <div>
+                                <label className="text-xs text-gray-500">Routing Number</label>
+                                <p className="text-white font-mono text-sm break-all">{user.teacher.bank_routing_number}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* PayPal Information */}
+                      {user.teacher.paypal_email && (
+                        <div className="pt-3 border-t border-gray-600">
+                          <label className="text-sm text-gray-400 flex items-center gap-2 mb-1">
+                            <Mail className="h-4 w-4 text-orange-500" />
+                            PayPal Email
+                          </label>
+                          <p className="text-white break-all">{user.teacher.paypal_email}</p>
+                        </div>
+                      )}
+
+                      {/* Stripe Information */}
+                      {user.teacher.stripe_account_id && (
+                        <div className="pt-3 border-t border-gray-600">
+                          <label className="text-sm text-gray-400 flex items-center gap-2 mb-1">
+                            <CreditCard className="h-4 w-4 text-orange-500" />
+                            Stripe Account ID
+                          </label>
+                          <p className="text-white font-mono text-sm break-all">{user.teacher.stripe_account_id}</p>
+                        </div>
+                      )}
+
+                      {/* Tax ID */}
+                      {user.teacher.tax_id && (
+                        <div className="pt-3 border-t border-gray-600">
+                          <label className="text-sm text-gray-400 flex items-center gap-2 mb-1">
+                            <FileText className="h-4 w-4 text-orange-500" />
+                            Tax ID
+                          </label>
+                          <p className="text-white font-mono text-sm break-all">{user.teacher.tax_id}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 
                 {/* Teacher Skills */}
                 {user.teacher.skills && user.teacher.skills.length > 0 && (

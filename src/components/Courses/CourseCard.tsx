@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { Card } from '../ui/card'
 import { Layers, Video, Calendar as CalendarIcon, BookOpen, DollarSign, Star } from 'lucide-react'
 
-const MEDIA_BASE_URL = 'https://brainbridge.mitwebsolutions.com/'
+const MEDIA_BASE_URL = process.env.NEXT_PUBLIC_MEDIA_BASE_URL
 const FALLBACK_COURSE_IMAGE = `${MEDIA_BASE_URL}storage/thumbnails/1762758606_69118fce0e74a.jpg`
 
 interface CourseCardProps {
