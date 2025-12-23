@@ -8,6 +8,7 @@ import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuL
 import { ArrowRightIcon, Menu, X, LogOut, User, LayoutDashboard, ChevronDown, ChevronUp } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { getStoredUser, clearAuthData } from "@/hooks/useAuth"
+import { useMe } from "@/hooks/use-me"
 
 const STORAGE_BASE_URL = process.env.NEXT_PUBLIC_MAIN_STORAGE_URL || ''
 
@@ -33,7 +34,6 @@ interface AppHeaderProps {
 
 export function AppHeader({ variant = 'default' }: AppHeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [user, setUser] = useState<{ id: number; name: string; email: string; profile_picture?: string | null } | null>(null)
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
   const [isClient, setIsClient] = useState(false)
   const desktopDropdownRef = useRef<HTMLDivElement>(null)
@@ -41,39 +41,16 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
   const isLanding = variant === 'landing'
 
   const router = useRouter()
+  
+  // Fetch full user profile including profile_picture
+  const { data: userProfile, isLoading: isLoadingUser } = useMe()
+  
+  // Get user data - prefer API data, fallback to stored user
+  const user = userProfile || (isClient ? getStoredUser() : null)
 
-  // Detect client & load user
+  // Detect client
   useEffect(() => {
     setIsClient(true)
-    const storedUser = getStoredUser()
-    setUser(storedUser)
-    
-    // Listen for user updates (e.g., after registration)
-    const handleUserUpdate = (event: CustomEvent) => {
-      const updatedUser = event.detail
-      if (updatedUser && updatedUser.name) {
-        setUser(updatedUser)
-      }
-    }
-    
-    // Also check localStorage periodically in case it was updated
-    const checkUserUpdate = () => {
-      const storedUser = getStoredUser()
-      if (storedUser && storedUser.name) {
-        setUser(storedUser)
-      }
-    }
-    
-    window.addEventListener('userUpdated', handleUserUpdate as EventListener)
-    
-    // Check for user updates every 500ms for the first 3 seconds after mount
-    const intervalId = setInterval(checkUserUpdate, 500)
-    setTimeout(() => clearInterval(intervalId), 3000)
-    
-    return () => {
-      window.removeEventListener('userUpdated', handleUserUpdate as EventListener)
-      clearInterval(intervalId)
-    }
   }, [])
 
   // Close dropdown when clicking outside - using click event instead of mousedown
@@ -113,7 +90,6 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
     e.stopPropagation()
     setIsUserDropdownOpen(false)
     clearAuthData()
-    setUser(null)
     setTimeout(() => {
       router.push('/signin')
     }, 10)
