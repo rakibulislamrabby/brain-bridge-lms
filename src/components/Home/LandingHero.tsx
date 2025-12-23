@@ -1,19 +1,19 @@
 'use client'
 
 import { AppHeader } from "@/components/app-header"
-import Hero from "@/components/Home/Hero"
+import HeroNew from "./HeroNew"
 
 export default function LandingHero() {
   return (
-    <div className="relative w-full min-h-[500px] sm:min-h-[600px] md:min-h-[700px] lg:min-h-[800px]">
-      {/* Header overlaying the hero */}
-      <div className="absolute top-0 left-0 right-0 z-50">
+    <div className="relative w-full bg-gray-900">
+      {/* Header - completely separate from image */}
+      <div className="relative z-50 bg-gray-900">
         <AppHeader variant="landing" />
       </div>
       
-      {/* Hero with background */}
+      {/* Hero with background image and search bar - separate section */}
       <div className="relative w-full">
-        <Hero variant="landing" />
+        <HeroNew variant="landing" />
       </div>
     </div>
   )
