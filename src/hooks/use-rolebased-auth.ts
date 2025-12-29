@@ -7,6 +7,9 @@ export interface RegisterTeacherRequest {
   email: string;
   password: string;
   title: string;
+  address?: string | null;
+  date_of_birth?: string | null;
+  profile_picture?: File | null;
 }
 
 export interface RegisterStudentRequest {
@@ -14,6 +17,8 @@ export interface RegisterStudentRequest {
   email: string;
   password: string;
   referral_code?: string;
+  address?: string | null;
+  date_of_birth?: string | null;
 }
 
 export interface AuthResponse {
@@ -25,28 +30,72 @@ export interface AuthResponse {
 
 // API function to register a teacher
 const registerTeacher = async (data: RegisterTeacherRequest): Promise<AuthResponse> => {
-  // Clean data - remove any empty strings or undefined values
-  const cleanData = {
-    name: data.name.trim(),
-    email: data.email.trim(),
-    password: data.password,
-    title: data.title.trim()
+  // Check if we need to send FormData (if profile_picture is a File)
+  const hasProfilePicture = data.profile_picture instanceof File;
+  
+  let body: FormData | string;
+  const headers: Record<string, string> = {
+    'Accept': 'application/json',
   };
+
+  // Get auth token if available (for consistency)
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  if (hasProfilePicture) {
+    // Use FormData for file upload
+    const formData = new FormData();
+    formData.append('name', data.name.trim());
+    formData.append('email', data.email.trim());
+    formData.append('password', data.password);
+    formData.append('title', data.title.trim());
+    
+    if (data.address && data.address.trim()) {
+      formData.append('address', data.address.trim());
+    }
+    if (data.date_of_birth) {
+      formData.append('date_of_birth', data.date_of_birth);
+    }
+    if (data.profile_picture instanceof File) {
+      formData.append('profile_picture', data.profile_picture);
+    }
+    
+    body = formData;
+    // Don't set Content-Type for FormData - browser will set it with boundary
+  } else {
+    // Use JSON if no file
+    const cleanData: any = {
+      name: data.name.trim(),
+      email: data.email.trim(),
+      password: data.password,
+      title: data.title.trim()
+    };
+    
+    if (data.address && data.address.trim()) {
+      cleanData.address = data.address.trim();
+    }
+    if (data.date_of_birth) {
+      cleanData.date_of_birth = data.date_of_birth;
+    }
+    
+    headers['Content-Type'] = 'application/json';
+    body = JSON.stringify(cleanData);
+  }
   
   // Validate required fields
-  if (!cleanData.name || !cleanData.email || !cleanData.password || !cleanData.title) {
-    throw new Error('All fields are required for teacher registration');
+  if (!data.name.trim() || !data.email.trim() || !data.password || !data.title.trim()) {
+    throw new Error('All required fields must be filled for teacher registration');
   }
   
   const url = `${API_BASE_URL}teachers`;
-  console.log('Registering as Master/Teacher - POST:', { url, data: cleanData });
+  console.log('Registering as Master/Teacher - POST:', { url, hasFile: hasProfilePicture });
   
   const response = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(cleanData),
+    headers,
+    body,
   });
 
   const result = await response.json();
@@ -74,9 +123,19 @@ const registerStudent = async (data: RegisterStudentRequest): Promise<AuthRespon
     cleanData.referral_code = data.referral_code.trim();
   }
   
+  // Add address if provided
+  if (data.address && data.address.trim()) {
+    cleanData.address = data.address.trim();
+  }
+  
+  // Add date_of_birth if provided
+  if (data.date_of_birth) {
+    cleanData.date_of_birth = data.date_of_birth;
+  }
+  
   // Validate required fields
   if (!cleanData.name || !cleanData.email || !cleanData.password) {
-    throw new Error('All fields are required for student registration');
+    throw new Error('All required fields must be filled for student registration');
   }
   
   const url = `${API_BASE_URL}students`;

@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
 import { RegisterRequest, LoginRequest, AuthResponse } from '@/types/auth';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_MAIN_BASE_URL || 'http://192.168.1.108:8000/api/';
@@ -98,11 +99,22 @@ export const getStoredUser = () => {
   return null;
 };
 
-export const clearAuthData = () => {
+export const clearAuthData = (queryClient?: QueryClient) => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
     // Also clear cookie
     document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    
+    // Clear React Query cache if queryClient is provided
+    if (queryClient) {
+      // Remove user data from cache
+      queryClient.removeQueries({ queryKey: ['me'] });
+      queryClient.setQueryData(['me'], undefined);
+      // Invalidate all queries to ensure fresh data on next login
+      // This marks queries as stale so they refetch when needed
+      queryClient.invalidateQueries();
+    }
   }
 };

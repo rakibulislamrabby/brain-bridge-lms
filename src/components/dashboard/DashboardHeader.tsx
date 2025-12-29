@@ -10,6 +10,8 @@ import { UserProfile } from '@/hooks/use-me'
 import { useTeacherLevelProgress } from '@/hooks/teacher/use-teacher-level-progress'
 import { useLatestNotification } from '@/hooks/notifications/use-latest-notification'
 import { useNotifications } from '@/hooks/notifications/use-notifications'
+import { useQueryClient } from '@tanstack/react-query'
+import { clearAuthData } from '@/hooks/useAuth'
 
 const STORAGE_BASE_URL = process.env.NEXT_PUBLIC_MAIN_STORAGE_URL || ''
 
@@ -38,6 +40,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   const isTeacher = useMemo(() => {
     return user?.roles?.some(role => role.name === 'teacher') || false
@@ -66,9 +69,8 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
     return unread
   }, [notificationsData, latestNotificationData])
   const handleLogout = () => {
-    // Clear user data from localStorage
-    localStorage.removeItem('user')
-    localStorage.removeItem('token')
+    // Clear auth data and React Query cache
+    clearAuthData(queryClient)
     // Redirect to signin page
     router.push('/signin')
   }

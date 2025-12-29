@@ -150,7 +150,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       icon: FolderOpen,
       href: '/dashboard/subject',
       items: [],
-      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
+      allowedRoles: ['admin'] // Admin and Teacher only
     },
     {
       title: 'Skills',
