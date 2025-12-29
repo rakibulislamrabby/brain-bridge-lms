@@ -1,5 +1,7 @@
+'use client'
+
 import React from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Card } from '../ui/card'
 import { Layers, Video, Calendar as CalendarIcon, BookOpen, DollarSign, Star } from 'lucide-react'
@@ -9,6 +11,7 @@ const FALLBACK_COURSE_IMAGE = `${MEDIA_BASE_URL}storage/thumbnails/1762758606_69
 
 interface CourseCardProps {
   course: Record<string, any>
+  onClick?: (course: Record<string, any>) => void
 }
 
 const formatStudents = (value?: number | string | null) => {
@@ -48,12 +51,17 @@ const resolveMediaUrl = (path?: string | null, fallback?: string) => {
     return path
   }
 
+  if (!MEDIA_BASE_URL) {
+    return fallback
+  }
+
   const base = MEDIA_BASE_URL.endsWith('/') ? MEDIA_BASE_URL : `${MEDIA_BASE_URL}/`
   const cleanedPath = path.replace(/^\/?storage\//, '').replace(/^\/+/, '')
   return `${base}storage/${cleanedPath}`
 }
 
-export default function CourseCard({ course }: CourseCardProps) {
+export default function CourseCard({ course, onClick }: CourseCardProps) {
+  const router = useRouter()
   const courseTitle = course.title || course.course_title || 'Untitled Course'
   const subjectName = course.subject?.name || course.subject_name || 'General'
   const teacherName = course.teacher?.name || course.teacher_name || 'Unknown Instructor'
@@ -79,9 +87,20 @@ export default function CourseCard({ course }: CourseCardProps) {
   const priceValue = Number(course.price ?? 0)
   const oldPriceValue = Number(course.old_price ?? course.original_price ?? 0)
 
+  const handleClick = () => {
+    if (onClick) {
+      onClick(course)
+    } else {
+      // Fallback: navigate to course page if no onClick handler provided
+      router.push(`/courses/${course.id}`)
+    }
+  }
+
   return (
-    <Link href={`/courses/${course.id}`}>
-      <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer bg-gray-800 border-gray-700">
+    <Card 
+      onClick={handleClick}
+      className="overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer bg-gray-800 border-gray-700"
+    >
         {/* Course Image */}
         <div className="relative">
           <div className="w-full h-48 bg-gray-700 relative overflow-hidden">
@@ -162,6 +181,5 @@ export default function CourseCard({ course }: CourseCardProps) {
           </div>
         </div>
       </Card>
-    </Link>
   )
 }
