@@ -22,6 +22,7 @@ export default function DashboardPage() {
     }
     setUser(storedUser)
     setLoading(false)
+    // Note: userProfile will be refetched automatically due to refetchOnMount in useMe hook
   }, [router])
 
   // Determine user role
