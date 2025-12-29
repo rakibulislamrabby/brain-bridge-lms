@@ -57,6 +57,46 @@ const getDeliveryMethod = (course: any): 'video_course' | 'live_session' | 'all'
 }
 
 const getIconForCategory = (category: string) => {
+  // Handle "All Categories" case
+  if (category === 'All Categories') {
+    return <Grid3X3 className="w-4 h-4" />
+  }
+  
+  const categoryLower = category?.toLowerCase() || ''
+  
+  // Use case-insensitive matching for better flexibility
+  if (categoryLower.includes('design') || categoryLower.includes('art') || categoryLower.includes('creative')) {
+    return <Palette className="w-4 h-4" />
+  }
+  if (categoryLower.includes('programming') || categoryLower.includes('code') || categoryLower.includes('tech') || categoryLower.includes('future skills')) {
+    return <Code className="w-4 h-4" />
+  }
+  if (categoryLower.includes('web') || categoryLower.includes('development')) {
+    return <Globe className="w-4 h-4" />
+  }
+  if (categoryLower.includes('marketing') || categoryLower.includes('trend')) {
+    return <TrendingUp className="w-4 h-4" />
+  }
+  if (categoryLower.includes('business') || categoryLower.includes('career')) {
+    return <Briefcase className="w-4 h-4" />
+  }
+  if (categoryLower.includes('academic') || categoryLower.includes('school') || categoryLower.includes('math')) {
+    return <Calculator className="w-4 h-4" />
+  }
+  if (categoryLower.includes('fitness') || categoryLower.includes('sport') || categoryLower.includes('physical')) {
+    return <Dumbbell className="w-4 h-4" />
+  }
+  if (categoryLower.includes('music')) {
+    return <Music className="w-4 h-4" />
+  }
+  if (categoryLower.includes('cooking') || categoryLower.includes('culinary') || categoryLower.includes('chef')) {
+    return <ChefHat className="w-4 h-4" />
+  }
+  if (categoryLower.includes('photography')) {
+    return <Palette className="w-4 h-4" />
+  }
+  
+  // Fallback for exact matches (backward compatibility)
   switch (category) {
     case 'Design': return <Palette className="w-4 h-4" />
     case 'Programming': return <Code className="w-4 h-4" />
