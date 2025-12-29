@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Sparkles, Minus } from 'lucide-react'
 import { SERVICE_FEE } from '@/lib/constants'
+import LiveSessionChat, { ChatButton } from '@/components/live-session/LiveSessionChat'
 
 const toDateOnlyKey = (date: Date | string | null | undefined) => {
   if (!date) {
@@ -114,6 +115,8 @@ export default function LiveSessionDetailPage() {
   const { addToast } = useToast()
   const { data: userData } = useMe()
   const [pointsToUse, setPointsToUse] = useState<number>(0)
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
   
   // Fetch student's booked slots to disable already reserved dates
   const { data: bookedSlotsData } = useStudentBookedSlots(1)
@@ -326,7 +329,7 @@ export default function LiveSessionDetailPage() {
       return
     }
 
-    if (data.available_seats === 0) {
+    if (data.available_seats !== undefined && data.available_seats === 0) {
       addToast({
         type: 'error',
         title: 'Slot Full',
@@ -385,10 +388,13 @@ export default function LiveSessionDetailPage() {
     }
   }
 
+  // Check if user is logged in
+  const isLoggedIn = !!userData
+
   return (
     <div>
       <AppHeader />
-      <main className="bg-gray-900 min-h-screen py-14">
+      <main className="bg-gray-900 min-h-screen py-14 relative">
         <div className="max-w-5xl mx-auto px-4">
           <Button
             variant="ghost"
@@ -549,7 +555,7 @@ export default function LiveSessionDetailPage() {
                               <Clock className="w-4 h-4 text-purple-400" />
                               <div className="flex flex-col">
                                 <span>{data.start_time && data.end_time ? formatTimeRange(data.start_time, data.end_time) : 'Time TBD'}</span>
-                                {data.available_seats > 0 && (
+                                {data.available_seats !== undefined && data.available_seats > 0 && (
                                   <span className="text-xs text-gray-400">
                                     {data.available_seats} {data.available_seats === 1 ? 'seat' : 'seats'} available
                                   </span>
@@ -639,7 +645,7 @@ export default function LiveSessionDetailPage() {
 
                           <Button 
                             className="w-full bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
-                            disabled={data.available_seats === 0 || bookingIntentMutation.isPending}
+                            disabled={(data.available_seats !== undefined && data.available_seats === 0) || bookingIntentMutation.isPending}
                             onClick={handleReserveSlot}
                           >
                             {bookingIntentMutation.isPending ? (
@@ -647,7 +653,7 @@ export default function LiveSessionDetailPage() {
                                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                 Reserving...
                               </>
-                            ) : data.available_seats === 0 ? (
+                            ) : (data.available_seats !== undefined && data.available_seats === 0) ? (
                               'Full'
                             ) : (
                               `Reserve Slot${pointsToUse > 0 ? ` - Pay $${newPaymentAmount.toFixed(2)}` : ''}`
@@ -721,8 +727,51 @@ export default function LiveSessionDetailPage() {
             </div>
           )}
         </div>
+        
+        {/* Chat Button and Chat Window */}
+        {isLoggedIn && data?.teacher && (
+          <>
+            <ChatButton 
+              onClick={() => setIsChatOpen(!isChatOpen)} 
+              unreadCount={unreadCount}
+              isOpen={isChatOpen}
+            />
+            {isChatOpen && (
+              <LiveSessionChat
+                teacher={{
+                  id: data.teacher.id,
+                  name: data.teacher.name || 'Master',
+                  email: data.teacher.email,
+                }}
+                currentUser={{
+                  id: userData.id,
+                  name: userData.name || 'User',
+                }}
+                isOpen={isChatOpen}
+                onClose={() => setIsChatOpen(false)}
+                onUnreadCountChange={setUnreadCount}
+              />
+            )}
+          </>
+        )}
       </main>
       <Footer />
+      
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #374151;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #4b5563;
+        }
+      `}</style>
     </div>
   )
 }
