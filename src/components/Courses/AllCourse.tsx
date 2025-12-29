@@ -2,11 +2,12 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePublicCourses } from '@/hooks/course/public/use-public-courses'
+import { usePublicCourses, usePublicCourse } from '@/hooks/course/public/use-public-courses'
 import { useLiveSessions } from '@/hooks/live-session/use-live-session'
 import { useMe } from '@/hooks/use-me'
 import { useCourseRequest } from '@/hooks/course/use-course-request'
 import CourseCard from './CourseCard'
+import CoursePreviewModal from '@/components/shared/CoursePreviewModal'
 import {
   Palette,
   Code,
@@ -127,6 +128,8 @@ export default function AllCourse() {
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false)
+  const [previewModalOpen, setPreviewModalOpen] = useState(false)
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null)
   const [requestFormData, setRequestFormData] = useState({
     course_name: '',
     course_description: '',
@@ -295,6 +298,22 @@ export default function AllCourse() {
     setRequestFormErrors({})
   }
 
+  // Fetch full course data when a course is selected for preview
+  const { data: selectedCourse, isLoading: isLoadingCourse } = usePublicCourse(selectedCourseId || 0)
+
+  const handleCourseCardClick = (course: any) => {
+    setSelectedCourseId(course.id)
+    setPreviewModalOpen(true)
+  }
+
+  const handleClosePreviewModal = () => {
+    setPreviewModalOpen(false)
+    // Keep selectedCourseId so the query doesn't reset, but clear it after a delay
+    setTimeout(() => {
+      setSelectedCourseId(null)
+    }, 300)
+  }
+
   return (
     <section className=" bg-gray-900">
       <div className="max-w-7xl mx-auto px-4">
@@ -367,7 +386,11 @@ export default function AllCourse() {
           filteredCourses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredCourses.map((course) => (
-                <CourseCard key={course.id} course={course as any} />
+                <CourseCard 
+                  key={course.id} 
+                  course={course as any} 
+                  onClick={handleCourseCardClick}
+                />
               ))}
             </div>
           ) : (
@@ -522,6 +545,15 @@ export default function AllCourse() {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Course Preview Modal */}
+        {selectedCourseId && selectedCourse && (
+          <CoursePreviewModal
+            open={previewModalOpen}
+            onOpenChange={handleClosePreviewModal}
+            course={selectedCourse}
+          />
+        )}
       </div>
     </section>
   )

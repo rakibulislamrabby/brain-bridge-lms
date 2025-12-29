@@ -34,10 +34,10 @@ export default function HeroNew({ variant = 'default' }: HeroProps) {
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/50 z-10 pointer-events-none"></div>
           
           {/* Text Overlay - "Learn Anything. From Anyone. Anywhere." */}
-          <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none ">
             <div className="text-center px-4 sm:px-6 md:px-8">
               <h1 
-                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-tight tracking-tight"
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-tight tracking-tight py-5"
                 style={{
                   textShadow: '3px 3px 12px rgba(0,0,0,0.9), 0 0 30px rgba(0,0,0,0.7), 6px 6px 16px rgba(0,0,0,0.6)',
                   letterSpacing: '-0.02em',
@@ -46,10 +46,7 @@ export default function HeroNew({ variant = 'default' }: HeroProps) {
                 Learn Anything.
                 <br className="hidden sm:block" />
                 <span className="sm:hidden"> </span>
-                From Anyone.
-                <br className="hidden sm:block" />
-                <span className="sm:hidden"> </span>
-                Anywhere.
+                Teach What <br /> You Know.
               </h1>
 
               {/* CTA Buttons */}
