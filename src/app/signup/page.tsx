@@ -44,13 +44,43 @@ function SignUpContent() {
     password: "",
     confirmPassword: "",
     title: "", // For master/teacher
-    referral_code: "" // For student registration
+    referral_code: "", // For student registration
+    address: "", // For both
+    date_of_birth: "", // For both
+    profile_picture: null as File | null // For master only
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null)
 
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
+    const { name, value, files } = e.target
+    
+    // Handle file input for profile_picture
+    if (name === 'profile_picture' && files && files[0]) {
+      const file = files[0]
+      setFormData(prev => ({
+        ...prev,
+        profile_picture: file
+      }))
+      
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProfilePicturePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+      
+      // Clear error
+      if (errors[name]) {
+        setErrors(prev => ({
+          ...prev,
+          [name]: ""
+        }))
+      }
+      return
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -115,14 +145,26 @@ function SignUpContent() {
       let result
       
       if (activeTab === 'master') {
-        // Register as teacher - only send required fields with actual values
-        const teacherData = {
+        // Register as teacher - include all fields
+        const teacherData: any = {
           name: formData.name.trim(),
           email: formData.email.trim(),
           password: formData.password,
           title: formData.title.trim()
         }
-        console.log('Sending teacher data:', teacherData)
+        
+        // Add optional fields if provided
+        if (formData.address && formData.address.trim()) {
+          teacherData.address = formData.address.trim()
+        }
+        if (formData.date_of_birth) {
+          teacherData.date_of_birth = formData.date_of_birth
+        }
+        if (formData.profile_picture) {
+          teacherData.profile_picture = formData.profile_picture
+        }
+        
+        console.log('Sending teacher data:', { ...teacherData, profile_picture: teacherData.profile_picture ? 'File' : 'none' })
         result = await registerTeacherMutation.mutateAsync(teacherData)
         addToast({
           type: "success",
@@ -131,7 +173,7 @@ function SignUpContent() {
           duration: 3000
         });
       } else {
-        // Register as student - only send required fields with actual values
+        // Register as student - include all fields
         const studentData: any = {
           name: formData.name.trim(),
           email: formData.email.trim(),
@@ -140,6 +182,14 @@ function SignUpContent() {
         // Add referral_code if provided
         if (formData.referral_code && formData.referral_code.trim()) {
           studentData.referral_code = formData.referral_code.trim()
+        }
+        // Add address if provided
+        if (formData.address && formData.address.trim()) {
+          studentData.address = formData.address.trim()
+        }
+        // Add date_of_birth if provided
+        if (formData.date_of_birth) {
+          studentData.date_of_birth = formData.date_of_birth
         }
         console.log('Sending student data:', studentData)
         result = await registerStudentMutation.mutateAsync(studentData)
@@ -186,7 +236,7 @@ function SignUpContent() {
         <AppHeader />
         
         <div className="container py-14 flex justify-center">
-          <Card className="w-full max-w-md bg-gray-800 border-gray-700 shadow-2xl">
+          <Card className="w-full max-w-4xl bg-gray-800 border-gray-700 shadow-2xl">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold text-white pt-7">Create Account</CardTitle>
               <CardDescription className="text-gray-300">
@@ -194,13 +244,14 @@ function SignUpContent() {
               </CardDescription>
               
               {/* Tabs */}
-              <div className="flex gap-2 mt-4 border-b border-gray-700">
+              <div className="flex gap-2 mt-6 border-b border-gray-700 max-w-md mx-auto">
                 <button
                   type="button"
                   onClick={() => {
                     setActiveTab('student')
-                    setFormData({ name: "", email: "", password: "", confirmPassword: "", title: "", referral_code: "" })
+                    setFormData({ name: "", email: "", password: "", confirmPassword: "", title: "", referral_code: "", address: "", date_of_birth: "", profile_picture: null })
                     setErrors({})
+                    setProfilePicturePreview(null)
                   }}
                   className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
                     activeTab === 'student'
@@ -217,8 +268,9 @@ function SignUpContent() {
                   type="button"
                   onClick={() => {
                     setActiveTab('master')
-                    setFormData({ name: "", email: "", password: "", confirmPassword: "", title: "", referral_code: "" })
+                    setFormData({ name: "", email: "", password: "", confirmPassword: "", title: "", referral_code: "", address: "", date_of_birth: "", profile_picture: null })
                     setErrors({})
+                    setProfilePicturePreview(null)
                   }}
                   className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
                     activeTab === 'master'
@@ -233,113 +285,185 @@ function SignUpContent() {
                 </button>
               </div>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-gray-300">Full Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    type="text"
-                    placeholder="Enter your full name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.name ? "border-red-500" : ""}`}
-                  />
-                  {errors.name && (
-                    <p className="text-sm text-red-500">{errors.name}</p>
-                  )}
-                </div>
-
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-gray-300">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.email ? "border-red-500" : ""}`}
-                  />
-                  {errors.email && (
-                    <p className="text-sm text-red-500">{errors.email}</p>
-                  )}
-                </div>
-                {/* Title field for Master/Teacher */}
-                {activeTab === 'master' && (
+            <CardContent className="px-6 pb-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Name and Email - Two columns */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="title" className="text-gray-300">
-                      Title <span className="text-red-400">*</span>
-                    </Label>
+                    <Label htmlFor="name" className="text-gray-300">Full Name</Label>
                     <Input
-                      id="title"
-                      name="title"
+                      id="name"
+                      name="name"
                       type="text"
-                      placeholder="e.g., Math Teacher"
-                      value={formData.title}
+                      placeholder="Enter your full name"
+                      value={formData.name}
                       onChange={handleInputChange}
-                      className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.title ? "border-red-500" : ""}`}
+                      className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.name ? "border-red-500" : ""}`}
                     />
-                    {errors.title && (
-                      <p className="text-sm text-red-500">{errors.title}</p>
+                    {errors.name && (
+                      <p className="text-sm text-red-500">{errors.name}</p>
                     )}
                   </div>
-                )}  
 
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-gray-300">Password</Label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="Create a password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.password ? "border-red-500" : ""}`}
-                  />
-                  {errors.password && (
-                    <p className="text-sm text-red-500">{errors.password}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-gray-300">Confirm Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    placeholder="Confirm your password"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.confirmPassword ? "border-red-500" : ""}`}
-                  />
-                  {errors.confirmPassword && (
-                    <p className="text-sm text-red-500">{errors.confirmPassword}</p>
-                  )}
-                </div>
-
-                {/* Referral Code field - only for student registration */}
-                {activeTab === 'student' && (
                   <div className="space-y-2">
-                    <Label htmlFor="referral_code" className="text-gray-300">
-                      Referral Code <span className="text-gray-500 text-xs">(Optional)</span>
-                    </Label>
+                    <Label htmlFor="email" className="text-gray-300">Email</Label>
                     <Input
-                      id="referral_code"
-                      name="referral_code"
-                      type="text"
-                      placeholder="Enter referral code if you have one"
-                      value={formData.referral_code}
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={formData.email}
                       onChange={handleInputChange}
-                      className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.referral_code ? "border-red-500" : ""}`}
+                      className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.email ? "border-red-500" : ""}`}
                     />
-                    {errors.referral_code && (
-                      <p className="text-sm text-red-500">{errors.referral_code}</p>
+                    {errors.email && (
+                      <p className="text-sm text-red-500">{errors.email}</p>
                     )}
                   </div>
-                )}
+                </div>
+
+                {/* Title (Master only) and Address - Two columns */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {activeTab === 'master' ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="title" className="text-gray-300">
+                        Title <span className="text-red-400">*</span>
+                      </Label>
+                      <Input
+                        id="title"
+                        name="title"
+                        type="text"
+                        placeholder="e.g., Math Teacher"
+                        value={formData.title}
+                        onChange={handleInputChange}
+                        className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.title ? "border-red-500" : ""}`}
+                      />
+                      {errors.title && (
+                        <p className="text-sm text-red-500">{errors.title}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor="referral_code" className="text-gray-300">
+                        Referral Code <span className="text-gray-500 text-xs">(Optional)</span>
+                      </Label>
+                      <Input
+                        id="referral_code"
+                        name="referral_code"
+                        type="text"
+                        placeholder="Enter referral code if you have one"
+                        value={formData.referral_code}
+                        onChange={handleInputChange}
+                        className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.referral_code ? "border-red-500" : ""}`}
+                      />
+                      {errors.referral_code && (
+                        <p className="text-sm text-red-500">{errors.referral_code}</p>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="address" className="text-gray-300">
+                      Address <span className="text-gray-500 text-xs">(Optional)</span>
+                    </Label>
+                    <Input
+                      id="address"
+                      name="address"
+                      type="text"
+                      placeholder="Enter your address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.address ? "border-red-500" : ""}`}
+                    />
+                    {errors.address && (
+                      <p className="text-sm text-red-500">{errors.address}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Date of Birth and Profile Picture (Master) / Date of Birth (Student) - Two columns */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="date_of_birth" className="text-gray-300">
+                      Date of Birth <span className="text-gray-500 text-xs">(Optional)</span>
+                    </Label>
+                    <Input
+                      id="date_of_birth"
+                      name="date_of_birth"
+                      type="date"
+                      value={formData.date_of_birth}
+                      onChange={handleInputChange}
+                      className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.date_of_birth ? "border-red-500" : ""}`}
+                    />
+                    {errors.date_of_birth && (
+                      <p className="text-sm text-red-500">{errors.date_of_birth}</p>
+                    )}
+                  </div>
+
+                  {/* Profile Picture field - Master only */}
+                  {activeTab === 'master' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="profile_picture" className="text-gray-300">
+                        Profile Picture <span className="text-gray-500 text-xs">(Optional)</span>
+                      </Label>
+                      <Input
+                        id="profile_picture"
+                        name="profile_picture"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleInputChange}
+                        className={`bg-gray-700 border-gray-600 text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-600 file:text-white hover:file:bg-orange-700 cursor-pointer ${errors.profile_picture ? "border-red-500" : ""}`}
+                      />
+                      {profilePicturePreview && (
+                        <div className="mt-2">
+                          <img
+                            src={profilePicturePreview}
+                            alt="Profile preview"
+                            className="w-20 h-20 rounded-full object-cover border-2 border-orange-500"
+                          />
+                        </div>
+                      )}
+                      {errors.profile_picture && (
+                        <p className="text-sm text-red-500">{errors.profile_picture}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Password fields - Two columns */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-gray-300">Password</Label>
+                    <Input
+                      id="password"
+                      name="password"
+                      type="password"
+                      placeholder="Create a password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.password ? "border-red-500" : ""}`}
+                    />
+                    {errors.password && (
+                      <p className="text-sm text-red-500">{errors.password}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword" className="text-gray-300">Confirm Password</Label>
+                    <Input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type="password"
+                      placeholder="Confirm your password"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 ${errors.confirmPassword ? "border-red-500" : ""}`}
+                    />
+                    {errors.confirmPassword && (
+                      <p className="text-sm text-red-500">{errors.confirmPassword}</p>
+                    )}
+                  </div>
+                </div>
 
                 <Button 
                   type="submit" 
