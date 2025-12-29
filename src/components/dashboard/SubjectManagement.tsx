@@ -28,15 +28,17 @@ import { useCreateSubject, useSubjects, useDeleteSubject, useUpdateSubject } fro
 export default function SubjectManagement() {
   const [formData, setFormData] = useState({
     name: '',
-    parent_id: ''
+    parent_id: '',
+    base_pay: ''
   })
   const [editFormData, setEditFormData] = useState({
-    name: ''
+    name: '',
+    base_pay: ''
   })
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [subjectToDelete, setSubjectToDelete] = useState<{ id: number; name: string } | null>(null)
-  const [subjectToEdit, setSubjectToEdit] = useState<{ id: number; name: string; parent_id: number | null } | null>(null)
+  const [subjectToEdit, setSubjectToEdit] = useState<{ id: number; name: string; parent_id: number | null; base_pay?: number | null } | null>(null)
   const { addToast } = useToast()
 
   // React Query hooks
@@ -74,7 +76,8 @@ export default function SubjectManagement() {
     try {
       const payload = {
         name: formData.name,
-        parent_id: formData.parent_id ? parseInt(formData.parent_id) : null
+        parent_id: formData.parent_id ? parseInt(formData.parent_id) : null,
+        base_pay: formData.base_pay ? parseInt(formData.base_pay) : null
       }
 
       await createSubjectMutation.mutateAsync(payload)
@@ -86,7 +89,7 @@ export default function SubjectManagement() {
         duration: 3000
       })
       
-      setFormData({ name: '', parent_id: '' })
+      setFormData({ name: '', parent_id: '', base_pay: '' })
     } catch (err) {
       const errorMessage = err instanceof Error 
         ? err.message 
@@ -100,10 +103,11 @@ export default function SubjectManagement() {
     }
   }
 
-  const handleEditClick = (subject: { id: number; name: string; parent_id: number | null }) => {
+  const handleEditClick = (subject: { id: number; name: string; parent_id: number | null; base_pay?: number | null }) => {
     setSubjectToEdit(subject)
     setEditFormData({
-      name: subject.name
+      name: subject.name,
+      base_pay: subject.base_pay?.toString() || ''
     })
     setEditDialogOpen(true)
   }
@@ -123,7 +127,8 @@ export default function SubjectManagement() {
     try {
       const payload = {
         name: editFormData.name.trim(),
-        parent_id: subjectToEdit.parent_id // Keep existing parent_id
+        parent_id: subjectToEdit.parent_id, // Keep existing parent_id
+        base_pay: editFormData.base_pay ? parseInt(editFormData.base_pay) : null
       }
 
       await updateSubjectMutation.mutateAsync({
@@ -140,7 +145,7 @@ export default function SubjectManagement() {
       
       setEditDialogOpen(false)
       setSubjectToEdit(null)
-      setEditFormData({ name: '' })
+      setEditFormData({ name: '', base_pay: '' })
     } catch (err) {
       const errorMessage = err instanceof Error 
         ? err.message 
@@ -209,36 +214,53 @@ export default function SubjectManagement() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
-            <div className="flex gap-3 items-end">
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium text-gray-300">
-                  Subject Name <span className="text-red-400">*</span>
-                </Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="e.g., Mathematics"
-                  required
-                  className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500"
-                />
+            <div className="space-y-4">
+              <div className="flex gap-3 items-end">
+                <div className="flex-1 space-y-2">
+                  <Label htmlFor="name" className="text-sm font-medium text-gray-300">
+                    Subject Name <span className="text-red-400">*</span>
+                  </Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Mathematics"
+                    required
+                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500"
+                  />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <Label htmlFor="base_pay" className="text-sm font-medium text-gray-300">
+                    Base Pay
+                  </Label>
+                  <Input
+                    id="base_pay"
+                    name="base_pay"
+                    type="number"
+                    value={formData.base_pay}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 50"
+                    min="0"
+                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={createSubjectMutation.isPending || !formData.name.trim()}
+                  className="bg-orange-600 hover:bg-orange-700 text-white h-10 cursor-pointer"
+                  size="sm"
+                >
+                  {createSubjectMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add
+                    </>
+                  )}
+                </Button>
               </div>
-              <Button
-                type="submit"
-                disabled={createSubjectMutation.isPending || !formData.name.trim()}
-                className="bg-orange-600 hover:bg-orange-700 text-white h-10 cursor-pointer"
-                size="sm"
-              >
-                {createSubjectMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add
-                  </>
-                )}
-              </Button>
             </div>
           </form>
         </CardContent>
@@ -277,7 +299,7 @@ export default function SubjectManagement() {
                   <tr className="border-b border-gray-700">
                     <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">ID</th>
                     <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Subject Name</th>
-                   
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Base Pay</th>
                     {subjects.some(s => s.created_at) && (
                       <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Created At</th>
                     )}
@@ -303,7 +325,11 @@ export default function SubjectManagement() {
                             <span className="font-medium text-white">{subject.name}</span>
                           </div>
                         </td>
-                        
+                        <td className="py-3 px-4 text-sm text-gray-300">
+                          {subject.base_pay !== null && subject.base_pay !== undefined 
+                            ? `$${subject.base_pay}` 
+                            : '—'}
+                        </td>
                         {subjects.some(s => s.created_at) && (
                           <td className="py-3 px-4 text-sm text-gray-400">
                             {subject.created_at
@@ -383,6 +409,21 @@ export default function SubjectManagement() {
                   className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-base_pay" className="text-sm font-medium text-gray-300">
+                  Base Pay
+                </Label>
+                <Input
+                  id="edit-base_pay"
+                  name="base_pay"
+                  type="number"
+                  value={editFormData.base_pay}
+                  onChange={handleEditInputChange}
+                  placeholder="e.g., 50"
+                  min="0"
+                  className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500"
+                />
+              </div>
             </div>
             <DialogFooter className="gap-5 space-x-4 sm:gap-0">
               <Button
@@ -391,7 +432,7 @@ export default function SubjectManagement() {
                 onClick={() => {
                   setEditDialogOpen(false)
                   setSubjectToEdit(null)
-                  setEditFormData({ name: '' })
+                  setEditFormData({ name: '', base_pay: '' })
                 }}
                 className="border-gray-600 text-gray-300 hover:bg-gray-700 cursor-pointer"
                 disabled={updateSubjectMutation.isPending}

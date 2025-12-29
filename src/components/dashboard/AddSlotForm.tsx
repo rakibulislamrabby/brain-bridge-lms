@@ -61,7 +61,7 @@ export default function AddSlotForm({ slotId, initialData }: AddSlotFormProps = 
 
   // Initialize form with slot data if in edit mode
   useEffect(() => {
-    if (isEditMode && initialData) {
+    if (isEditMode && initialData && subjects.length > 0) {
       // Format date from ISO string to YYYY-MM-DD
       const formatDateForInput = (dateString?: string): string => {
         if (!dateString) return ''
@@ -80,13 +80,19 @@ export default function AddSlotForm({ slotId, initialData }: AddSlotFormProps = 
         return timeString
       }
 
+      // Find the subject to check if it has base_pay
+      const selectedSubject = subjects.find((s) => s.id === initialData.subject_id)
+      const priceValue = selectedSubject?.base_pay !== null && selectedSubject?.base_pay !== undefined
+        ? selectedSubject.base_pay.toString()
+        : (initialData.price || '')
+
       setFormData({
         subject_id: initialData.subject_id.toString(),
         title: initialData.title || '',
         from_date: formatDateForInput(initialData.from_date),
         to_date: formatDateForInput(initialData.to_date),
         type: initialData.type || 'one_to_one',
-        price: initialData.price || '',
+        price: priceValue,
         max_students: initialData.max_students?.toString() || '1',
         description: initialData.description || '',
       })
@@ -99,15 +105,34 @@ export default function AddSlotForm({ slotId, initialData }: AddSlotFormProps = 
         },
       ])
     }
-  }, [isEditMode, initialData])
+  }, [isEditMode, initialData, subjects])
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        [name]: value,
+      }
+      
+      // Auto-populate price from subject's base_pay when subject is selected
+      if (name === 'subject_id' && value) {
+        const selectedSubject = subjects.find((s) => s.id.toString() === value)
+        if (selectedSubject?.base_pay !== null && selectedSubject?.base_pay !== undefined) {
+          updated.price = selectedSubject.base_pay.toString()
+        }
+      }
+      
+      return updated
+    })
   }
+
+  // Check if price should be disabled (when subject has base_pay)
+  const isPriceDisabled = useMemo(() => {
+    if (!formData.subject_id) return false
+    const selectedSubject = subjects.find((s) => s.id.toString() === formData.subject_id)
+    return selectedSubject?.base_pay !== null && selectedSubject?.base_pay !== undefined
+  }, [formData.subject_id, subjects])
 
   const handleSlotChange = (index: number, field: keyof SlotTimeForm, value: string) => {
     setSlotTimes((prev) => {
@@ -378,15 +403,19 @@ export default function AddSlotForm({ slotId, initialData }: AddSlotFormProps = 
               <div>
                 <Label className="text-sm font-medium text-gray-300">
                   Price <span className="text-red-400">*</span>
+                  {isPriceDisabled && (
+                    <span className="text-xs text-gray-400 ml-2">(from subject base pay)</span>
+                  )}
                 </Label>
-                <div className="mt-2 flex items-center gap-2 bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white">
+                <div className={`mt-2 flex items-center gap-2 bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white ${isPriceDisabled ? 'opacity-75' : ''}`}>
                   <DollarSign className="h-4 w-4 text-green-400" />
                   <Input
                     name="price"
                     value={formData.price}
                     onChange={handleInputChange}
                     placeholder="150"
-                    className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    disabled={isPriceDisabled}
+                    className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
