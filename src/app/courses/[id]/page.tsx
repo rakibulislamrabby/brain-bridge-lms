@@ -28,12 +28,13 @@ import { usePublicCourse, usePublicCourses } from '@/hooks/course/public/use-pub
 import { useCoursePaymentIntent } from '@/hooks/course/use-course-payment-intent'
 import { Loader2, XCircle } from 'lucide-react'
 import CourseReviewModal from '@/components/shared/reviews/CourseReviewModal'
+import CoursePreviewModal from '@/components/shared/CoursePreviewModal'
 import { useEnrolledCourses } from '@/hooks/student/use-enrolled-courses'
 import { getStoredUser } from '@/hooks/useAuth'
 import { useMe } from '@/hooks/use-me'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Sparkles, Minus } from 'lucide-react'
+import { Sparkles, Minus, Eye } from 'lucide-react'
 import { SERVICE_FEE } from '@/lib/constants'
 
 const fallbackImage = 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80'
@@ -133,6 +134,7 @@ export default function CourseDetailPage() {
 
   const [expandedSections, setExpandedSections] = useState<Array<number | string>>([])
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
+  const [previewModalOpen, setPreviewModalOpen] = useState(false)
   const [reviewedCourses, setReviewedCourses] = useState<Set<number>>(new Set())
   const [user, setUser] = useState<{ id: number; name: string; email: string; role?: string } | null>(null)
   const [pointsToUse, setPointsToUse] = useState<number>(0)
@@ -474,6 +476,18 @@ export default function CourseDetailPage() {
                   <p className="text-gray-300 text-lg mb-6">
                     {course.description || 'No description provided for this course.'}
                   </p>
+
+                  {/* Preview Course Button */}
+                  <div className="mb-6">
+                    <Button
+                      onClick={() => setPreviewModalOpen(true)}
+                      variant="outline"
+                      className="border-orange-600 text-orange-400 hover:bg-orange-900/30 cursor-pointer"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Preview Course
+                    </Button>
+                  </div>
 
                   {/* Course Stats */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -935,6 +949,15 @@ export default function CourseDetailPage() {
           onOpenChange={setReviewModalOpen}
           courseId={course.id}
           courseTitle={course.title}
+        />
+      )}
+
+      {/* Course Preview Modal */}
+      {course && (
+        <CoursePreviewModal
+          open={previewModalOpen}
+          onOpenChange={setPreviewModalOpen}
+          course={course}
         />
       )}
     </>

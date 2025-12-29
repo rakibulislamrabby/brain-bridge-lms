@@ -144,9 +144,9 @@ export default function EnrolledCourseViewerPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col h-full bg-gray-900 -m-6"> {/* Negative margin to bleed into dashboard layout if needed */}
+      <div className="flex flex-col h-[calc(100vh-120px)] bg-gray-900 -m-6 overflow-hidden"> {/* Fixed height to prevent page scroll */}
         {/* Course Header */}
-        <div className="bg-gray-800 border-b border-gray-700 p-4 sticky top-0 z-10">
+        <div className="flex-shrink-0 bg-gray-800 border-b border-gray-700 p-4 z-10">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button 
@@ -193,9 +193,9 @@ export default function EnrolledCourseViewerPage() {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+        <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
           {/* Main Content: Video Player */}
-          <div className="flex-1 overflow-y-auto p-4 lg:p-6 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-4 lg:p-6 custom-scrollbar min-h-0">
             <div className="max-w-5xl mx-auto space-y-6">
               {/* Video Player Wrapper */}
               <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-gray-800 relative group">
@@ -238,8 +238,8 @@ export default function EnrolledCourseViewerPage() {
           </div>
 
           {/* Sidebar: Course Content & Chat */}
-          <div className="w-full lg:w-96 bg-gray-800/50 border-l border-gray-700 overflow-hidden flex flex-col">
-            <div className="flex border-b border-gray-700 bg-gray-800">
+          <div className="w-full lg:w-96 bg-gray-800/50 border-l border-gray-700 overflow-hidden flex flex-col min-h-0">
+            <div className="flex-shrink-0 flex border-b border-gray-700 bg-gray-800">
               <button
                 onClick={() => setActiveTab('content')}
                 className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-all ${
@@ -264,7 +264,7 @@ export default function EnrolledCourseViewerPage() {
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto custom-scrollbar bg-gray-900/10">
+            <div className={`flex-1 ${activeTab === 'content' ? 'overflow-y-auto' : 'overflow-hidden'} custom-scrollbar bg-gray-900/10 min-h-0`}>
               {activeTab === 'content' ? (
                 <div className="divide-y divide-gray-700/50">
                   {modules.map((module: any, index: number) => {
@@ -346,18 +346,20 @@ export default function EnrolledCourseViewerPage() {
                 </div>
               ) : (
                 user && course.teacher && (
-                  <CourseChat 
-                    courseId={course.id} 
-                    master={{
-                      id: course.teacher.id,
-                      name: course.teacher.name,
-                      avatar: course.teacher.avatar_url
-                    }}
-                    currentUser={{
-                      id: user.id,
-                      name: user.name
-                    }}
-                  />
+                  <div className="h-full flex flex-col min-h-0">
+                    <CourseChat 
+                      courseId={course.id} 
+                      master={{
+                        id: course.teacher.id,
+                        name: course.teacher.name,
+                        avatar: course.teacher.avatar_url
+                      }}
+                      currentUser={{
+                        id: user.id,
+                        name: user.name
+                      }}
+                    />
+                  </div>
                 )
               )}
             </div>

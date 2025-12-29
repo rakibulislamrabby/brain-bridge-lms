@@ -120,9 +120,9 @@ export default function CourseChat({ courseId, master, currentUser }: CourseChat
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-900">
+    <div className="flex flex-col h-full bg-gray-900 min-h-0">
       {/* Chat Header */}
-      <div className="p-4 border-b border-gray-700 bg-gray-800/50 flex items-center gap-3">
+      <div className="flex-shrink-0 p-4 border-b border-gray-700 bg-gray-800/50 flex items-center gap-3">
         <div className="relative">
           <div className="h-10 w-10 rounded-full border border-gray-600 overflow-hidden bg-gray-700 flex items-center justify-center">
             {(() => {
@@ -153,7 +153,7 @@ export default function CourseChat({ courseId, master, currentUser }: CourseChat
 
       {/* Messages Area */}
       <div 
-        className="flex-1 p-4 overflow-y-auto custom-scrollbar h-[calc(100vh-350px)]" 
+        className="flex-1 p-4 overflow-y-auto custom-scrollbar min-h-0" 
         ref={scrollRef}
       >
         {isLoadingMessages ? (
@@ -190,7 +190,7 @@ export default function CourseChat({ courseId, master, currentUser }: CourseChat
       </div>
 
       {/* Chat Input */}
-      <div className="p-4 bg-gray-800/50 border-t border-gray-700">
+      <div className="flex-shrink-0 p-4 bg-gray-800/50 border-t border-gray-700">
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <Input
             value={newMessage}

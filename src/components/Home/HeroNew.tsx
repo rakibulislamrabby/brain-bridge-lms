@@ -2,26 +2,26 @@ import React from 'react'
 import { Button } from '../ui/button'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Star, ArrowRight } from 'lucide-react'
+import { Star, ArrowRight, Zap, Search } from 'lucide-react'
 
 interface HeroProps {
   variant?: 'default' | 'landing'
 }
 
-export default function Hero({ variant = 'default' }: HeroProps) {
+export default function HeroNew({ variant = 'default' }: HeroProps) {
   const isLanding = variant === 'landing'
   
   if (isLanding) {
     return (
       <section className="relative w-full bg-gray-900 overflow-hidden">
-        {/* Hero Background Image - Responsive with proper aspect ratio */}
-        <div className="relative w-full h-[500px] sm:h-[600px] md:h-[700px] lg:h-auto">
+        {/* Hero Background Image - Shorter height */}
+        <div className="relative w-full h-[400px] sm:h-[450px] md:h-[500px] lg:h-[550px]">
           <Image
             src="/images/hero/hero-3.png"
             alt="Learning collage"
             width={1920}
             height={1080}
-            className="w-full h-full object-cover object-center brightness-[1.15] contrast-[1.15] saturate-[1.2]"
+            className="w-full h-full object-cover object-center"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1920px"
             priority
             quality={95}
@@ -30,43 +30,42 @@ export default function Hero({ variant = 'default' }: HeroProps) {
             }}
           />
           
-          {/* Subtle overlay for better text readability without dulling colors */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/20 z-10 pointer-events-none"></div>
+          {/* Dark overlay for better text readability - subtle gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/50 z-10 pointer-events-none"></div>
           
-          {/* Vibrant color enhancement overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-blue-600/10 z-20 mix-blend-soft-light pointer-events-none"></div>
-        </div>
+          {/* Text Overlay - "Learn Anything. From Anyone. Anywhere." */}
+          <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none ">
+            <div className="text-center px-4 sm:px-6 md:px-8">
+              <h1 
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-tight tracking-tight py-5"
+                style={{
+                  textShadow: '3px 3px 12px rgba(0,0,0,0.9), 0 0 30px rgba(0,0,0,0.7), 6px 6px 16px rgba(0,0,0,0.6)',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Learn Anything.
+                <br className="hidden sm:block" />
+                <span className="sm:hidden"> </span>
+                Teach What <br /> You Know.
+              </h1>
 
-        {/* Hero Content - Absolute positioned over image */}
-        <div className="absolute inset-0 z-30 flex items-center justify-center py-20 md:py-24 lg:py-0">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-8 w-full">
-            <div className="text-center space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12">
-            {/* Main Headline */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-tight px-2 sm:px-0">
-              Learn Anything.
-              <br className="hidden sm:block" />
-              <span className="sm:hidden"> </span>
-              From Anyone.
-              <br className="hidden sm:block" />
-              <span className="sm:hidden"> </span>
-              Anywhere.
-            </h1>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-5 lg:gap-6 px-4 sm:px-0">
-              <Button asChild className="bg-purple-800 hover:bg-purple-900 text-white px-6 sm:px-8 md:px-10 lg:px-12 py-3 sm:py-4 md:py-5 lg:py-6 text-base sm:text-lg md:text-xl font-medium w-full sm:w-auto">
-                <Link href="/courses" className="flex items-center justify-center gap-2">
-                  Start Learning
-                  <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="border-2 border-white/20 text-black bg-white/60 hover:text-gray-900 hover:bg-white/80 px-6 sm:px-8 md:px-10 lg:px-12 py-3 sm:py-4 md:py-5 lg:py-6 text-base sm:text-lg md:text-xl font-medium w-full sm:w-auto">
-                <Link href="/signup?role=master">Become a Master</Link>
-              </Button>
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-5 lg:gap-6 px-4 sm:px-0 pointer-events-auto">
+                <Button asChild className="bg-purple-800 hover:bg-purple-900 text-white px-6 sm:px-8 md:px-10 lg:px-12 py-3 sm:py-4 md:py-5 lg:py-6 text-base sm:text-lg md:text-xl font-medium w-full sm:w-auto">
+                  <Link href="/courses" className="flex items-center justify-center gap-2">
+                    Start Learning
+                    <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="border-2 border-white/20 text-black bg-white/60 hover:text-gray-900 hover:bg-white/80 px-6 sm:px-8 md:px-10 lg:px-12 py-3 sm:py-4 md:py-5 lg:py-6 text-base sm:text-lg md:text-xl font-medium w-full sm:w-auto">
+                  <Link href="/signup?role=master">Become a Master</Link>
+                </Button>
+              </div>
             </div>
           </div>
-          </div>
         </div>
+
+        
       </section>
     )
   }
