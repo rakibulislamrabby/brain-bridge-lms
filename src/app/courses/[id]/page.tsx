@@ -255,6 +255,18 @@ export default function CourseDetailPage() {
   }
 
   const handleEnroll = async () => {
+    // Check if user is logged in
+    if (!userData?.id) {
+      addToast({
+        type: 'error',
+        title: 'Login Required',
+        description: 'Please login first to enroll in this course.',
+        duration: 5000,
+      })
+      router.push('/signin')
+      return
+    }
+
     if (!course) {
       addToast({
         type: 'error',
