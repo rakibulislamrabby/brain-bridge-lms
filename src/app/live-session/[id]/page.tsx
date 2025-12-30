@@ -319,6 +319,18 @@ export default function LiveSessionDetailPage() {
   }
 
   const handleReserveSlot = async () => {
+    // Check if user is logged in
+    if (!userData?.id) {
+      addToast({
+        type: 'error',
+        title: 'Login Required',
+        description: 'Please login first to book this slot.',
+        duration: 5000,
+      })
+      router.push('/signin')
+      return
+    }
+
     if (!data || !selectedDate) {
       addToast({
         type: 'error',
