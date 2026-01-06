@@ -262,7 +262,7 @@ export default function LiveSessions({
             ) : (
               <Users className="h-12 w-12 text-purple-400" />
             )}
-            <h3 className="text-xl font-semibold text-white">No live sessions available</h3>
+            <h3 className="text-xl font-semibold text-white">No video call available</h3>
             <p className="text-gray-400 max-w-md">
               Check back soon—mentors constantly add new live sessions to the schedule.
             </p>

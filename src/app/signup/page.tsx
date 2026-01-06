@@ -94,49 +94,143 @@ function SignUpContent() {
     }
   }
 
-  const validateForm = () => {
+  const validateForm = (): { isValid: boolean; errors: Record<string, string> } => {
     const newErrors: Record<string, string> = {}
 
+    // Name validation
     if (!formData.name.trim()) {
-      newErrors.name = "Name is required"
+      newErrors.name = "Please enter your full name"
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = "Name must be at least 2 characters long"
+    } else if (formData.name.trim().length > 100) {
+      newErrors.name = "Name must be less than 100 characters"
     }
 
+    // Email validation
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required"
+      newErrors.email = "Please enter your email address"
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address"
+      newErrors.email = "Please enter a valid email address (e.g., example@email.com)"
     }
 
+    // Password validation
     if (!formData.password) {
-      newErrors.password = "Password is required"
+      newErrors.password = "Please create a password"
     } else if (formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters long"
+    } else if (formData.password.length > 128) {
+      newErrors.password = "Password must be less than 128 characters"
     }
 
+    // Confirm password validation
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password"
+      newErrors.confirmPassword = "Please confirm your password by entering it again"
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match"
+      newErrors.confirmPassword = "Passwords do not match. Please make sure both passwords are identical"
     }
 
     // Validate title for master/teacher
     if (activeTab === 'master' && !formData.title.trim()) {
-      newErrors.title = "Title is required"
+      newErrors.title = "Please enter your professional title (e.g., Math Teacher, Science Instructor)"
+    } else if (activeTab === 'master' && formData.title.trim().length < 3) {
+      newErrors.title = "Title must be at least 3 characters long"
+    }
+
+    // Validate date_of_birth for master/teacher
+    if (activeTab === 'master' && !formData.date_of_birth) {
+      newErrors.date_of_birth = "Please select your date of birth"
+    } else if (activeTab === 'master' && formData.date_of_birth) {
+      const birthDate = new Date(formData.date_of_birth)
+      const today = new Date()
+      const age = today.getFullYear() - birthDate.getFullYear()
+      const monthDiff = today.getMonth() - birthDate.getMonth()
+      
+      if (birthDate > today) {
+        newErrors.date_of_birth = "Date of birth cannot be in the future"
+      } else if (age < 18 || (age === 18 && monthDiff < 0)) {
+        newErrors.date_of_birth = "You must be at least 18 years old to register as a master"
+      } else if (age > 120) {
+        newErrors.date_of_birth = "Please enter a valid date of birth"
+      }
+    }
+
+    // Validate profile_picture for master/teacher
+    if (activeTab === 'master' && !formData.profile_picture) {
+      newErrors.profile_picture = "Please upload your profile picture"
+    } else if (activeTab === 'master' && formData.profile_picture) {
+      const file = formData.profile_picture
+      const maxSize = 5 * 1024 * 1024 // 5MB
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+      
+      if (!allowedTypes.includes(file.type)) {
+        newErrors.profile_picture = "Please upload an image file (JPG, PNG, or WEBP format)"
+      } else if (file.size > maxSize) {
+        newErrors.profile_picture = "Image size must be less than 5MB. Please compress or choose a smaller image"
+      }
     }
 
     setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    return { isValid: Object.keys(newErrors).length === 0, errors: newErrors }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!validateForm()) {
+    const validation = validateForm()
+    if (!validation.isValid) {
+      // Convert field names to user-friendly labels
+      const fieldLabels: Record<string, string> = {
+        name: 'Full Name',
+        email: 'Email',
+        password: 'Password',
+        confirmPassword: 'Confirm Password',
+        title: 'Title',
+        date_of_birth: 'Date of Birth',
+        profile_picture: 'Profile Picture',
+        address: 'Address',
+        referral_code: 'Referral Code'
+      }
+      
+      // Separate required fields (empty) from validation errors
+      const requiredFields: string[] = []
+      const validationErrors: string[] = []
+      
+      Object.keys(validation.errors).forEach(key => {
+        if (!validation.errors[key]) return
+        
+        const fieldLabel = fieldLabels[key] || key
+        const errorMsg = validation.errors[key].toLowerCase()
+        
+        // Check if it's a required field error
+        if (errorMsg.includes('required') || 
+            errorMsg.includes('please enter') || 
+            errorMsg.includes('please select') ||
+            errorMsg.includes('please upload')) {
+          requiredFields.push(fieldLabel)
+        } else {
+          // It's a validation error with specific message
+          validationErrors.push(`${fieldLabel}: ${validation.errors[key]}`)
+        }
+      })
+      
+      // Build the error message
+      let description = ''
+      if (requiredFields.length > 0) {
+        description = `Please fill up the following required field${requiredFields.length > 1 ? 's' : ''}: ${requiredFields.join(', ')}`
+        if (validationErrors.length > 0) {
+          description += `. Also fix: ${validationErrors.join('; ')}`
+        }
+      } else if (validationErrors.length > 0) {
+        description = validationErrors.join('; ')
+      } else {
+        description = 'Please check all fields and fix the errors'
+      }
+      
       addToast({
         type: "error",
-        title: "Validation Error",
-        description: "Please fill in all required fields correctly.",
-        duration: 3000
+        title: "Form Validation Failed",
+        description: description,
+        duration: 7000
       });
       return
     }
@@ -150,18 +244,14 @@ function SignUpContent() {
           name: formData.name.trim(),
           email: formData.email.trim(),
           password: formData.password,
-          title: formData.title.trim()
+          title: formData.title.trim(),
+          date_of_birth: formData.date_of_birth, // Required for master
+          profile_picture: formData.profile_picture // Required for master
         }
         
         // Add optional fields if provided
         if (formData.address && formData.address.trim()) {
           teacherData.address = formData.address.trim()
-        }
-        if (formData.date_of_birth) {
-          teacherData.date_of_birth = formData.date_of_birth
-        }
-        if (formData.profile_picture) {
-          teacherData.profile_picture = formData.profile_picture
         }
         
         console.log('Sending teacher data:', { ...teacherData, profile_picture: teacherData.profile_picture ? 'File' : 'none' })
@@ -217,15 +307,45 @@ function SignUpContent() {
       
     } catch (error) {
       console.error("Sign up error:", error)
-      const errorMessage = error instanceof Error ? error.message : "An error occurred. Please try again."
+      let errorMessage = "An unexpected error occurred. Please try again."
+      let errorTitle = "Registration Failed"
+      
+      if (error instanceof Error) {
+        const errorText = error.message.toLowerCase()
+        
+        // Check for common error patterns and provide meaningful messages
+        if (errorText.includes('email') && (errorText.includes('already') || errorText.includes('exists') || errorText.includes('taken'))) {
+          errorMessage = "This email address is already registered. Please use a different email or try signing in instead."
+          errorTitle = "Email Already Exists"
+        } else if (errorText.includes('password') && errorText.includes('weak')) {
+          errorMessage = "Password is too weak. Please use a stronger password with a mix of letters, numbers, and special characters."
+          errorTitle = "Weak Password"
+        } else if (errorText.includes('network') || errorText.includes('fetch') || errorText.includes('connection')) {
+          errorMessage = "Unable to connect to the server. Please check your internet connection and try again."
+          errorTitle = "Connection Error"
+        } else if (errorText.includes('timeout')) {
+          errorMessage = "Request timed out. Please try again."
+          errorTitle = "Request Timeout"
+        } else if (errorText.includes('validation') || errorText.includes('invalid')) {
+          errorMessage = "Some information provided is invalid. Please check all fields and try again."
+          errorTitle = "Invalid Information"
+        } else if (errorText.includes('server') || errorText.includes('500')) {
+          errorMessage = "Server error occurred. Please try again in a few moments."
+          errorTitle = "Server Error"
+        } else {
+          // Use the original error message if it's meaningful, otherwise use generic
+          errorMessage = error.message || errorMessage
+        }
+      }
+      
       setErrors({ 
         general: errorMessage
       })
       addToast({
         type: "error",
-        title: "Registration Failed",
+        title: errorTitle,
         description: errorMessage,
-        duration: 5000
+        duration: 6000
       });
     }
   }
@@ -385,7 +505,8 @@ function SignUpContent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="date_of_birth" className="text-gray-300">
-                      Date of Birth <span className="text-gray-500 text-xs">(Optional)</span>
+                      Date of Birth {activeTab === 'master' && <span className="text-red-400">*</span>}
+                      {activeTab === 'student' && <span className="text-gray-500 text-xs">(Optional)</span>}
                     </Label>
                     <Input
                       id="date_of_birth"
@@ -404,7 +525,7 @@ function SignUpContent() {
                   {activeTab === 'master' && (
                     <div className="space-y-2">
                       <Label htmlFor="profile_picture" className="text-gray-300">
-                        Profile Picture <span className="text-gray-500 text-xs">(Optional)</span>
+                        Profile Picture <span className="text-red-400">*</span>
                       </Label>
                       <Input
                         id="profile_picture"
