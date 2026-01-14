@@ -70,6 +70,9 @@ export const useDeleteSlot = () => {
   return useMutation({
     mutationFn: deleteSlot,
     onSuccess: () => {
+      // Invalidate teacher-slots queries (all pages)
+      queryClient.invalidateQueries({ queryKey: ['teacher-slots'] })
+      // Also invalidate generic slots queries for backward compatibility
       queryClient.invalidateQueries({ queryKey: ['slots'] })
     },
   })

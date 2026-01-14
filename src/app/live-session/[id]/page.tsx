@@ -462,11 +462,11 @@ export default function LiveSessionDetailPage() {
         <div className="max-w-5xl mx-auto px-4">
           <Button
             variant="ghost"
-            className="text-gray-300 hover:text-white hover:bg-gray-800/70 mb-6 cursor-pointer"
+            className="text-gray-400 hover:text-white hover:bg-gray-800/70 mb-8 cursor-pointer transition-all duration-300 group"
             onClick={() => router.back()}
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to live sessions
+            <ArrowLeft className="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition-transform" />
+            <span className="font-medium">Back to live sessions</span>
           </Button>
 
           {isLoading ? (
@@ -547,10 +547,9 @@ export default function LiveSessionDetailPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                       {/* Left: Calendar and Slot Selection */}
                       <div className="lg:col-span-2 space-y-8">
-                        <div>
-                          <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                              <CalendarIcon className="w-5 h-5 text-purple-500" />
+                          <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                              <CalendarIcon className="w-6 h-6 text-purple-500" />
                               Select Date
                             </h2>
                             <div className="flex items-center gap-3 text-sm text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-lg border border-gray-700">
@@ -616,17 +615,16 @@ export default function LiveSessionDetailPage() {
                               })}
                             </div>
                           </div>
-                        </div>
 
                         {/* Available Slots for Selected Date */}
                         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                          <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                              <Clock className="w-5 h-5 text-purple-500" />
+                          <div className="flex items-center justify-between mt-4">
+                            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                              <Clock className="w-6 h-6 text-purple-500" />
                               Available Slots
                               {selectedDate && (
-                                <span className="text-sm font-normal text-gray-400">
-                                  for {selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                                <span className="text-sm font-normal text-gray-500 bg-gray-800/50 px-3 py-1 rounded-full border border-gray-700/50 ml-2">
+                                  {selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
                                 </span>
                               )}
                             </h2>
@@ -669,39 +667,116 @@ export default function LiveSessionDetailPage() {
                           )}
                         </div>
 
-                        {/* About the Master (Expanded Section) */}
-                        <div className="pt-10 border-t border-gray-700/30">
-                          <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                            <Award className="w-5 h-5 text-purple-500" />
-                            Meet your Master
-                          </h2>
-                          <div className="bg-gray-800/20 rounded-2xl border border-gray-700/50 p-6 flex flex-col md:flex-row gap-8 items-start">
-                            <div className="relative">
-                              <div className="h-24 w-24 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-800 flex items-center justify-center text-4xl text-white font-black shadow-2xl">
-                                {data.teacher?.name?.[0] || 'M'}
-                              </div>
-                              <div className="absolute -bottom-2 -right-2 bg-green-500 h-5 w-5 rounded-full border-4 border-gray-900 shadow-lg" title="Online" />
-                            </div>
-                            <div className="space-y-4 flex-1">
-                              <div>
-                                <h3 className="text-2xl font-bold text-white tracking-tight">{data.teacher?.name}</h3>
-                                <p className="text-purple-400 font-semibold tracking-wide uppercase text-xs mt-1">
-                                  {teacherDetails?.title || 'Expert Live Session Mentor'}
-                                </p>
-                              </div>
-                              <p className="text-gray-400 text-sm leading-relaxed max-w-2xl">
-                                {data.teacher?.name} is a verified Brain Bridge Master specializing in {data.subject?.name}. 
-                                With a focus on interactive learning and personalized feedback, this session is designed to help you 
-                                master professional concepts through direct dialogue.
-                              </p>
-                              <div className="flex flex-wrap gap-4 pt-2">
-                                <div className="flex items-center gap-2 text-xs text-gray-300">
-                                  <CheckCircle2 className="w-4 h-4 text-green-500" />
-                                  <span>Verified Professional</span>
+                        {/* Meet your Master - Enhanced Professional Section */}
+                        <div className="pt-12 border-t border-gray-700/50">
+                          <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                              <Award className="w-6 h-6 text-purple-500" />
+                              Meet your Master
+                            </h2>
+                            <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 px-3 py-1">
+                              Expert Mentor
+                            </Badge>
+                          </div>
+                          
+                          <div className="relative group">
+                            {/* Decorative Background Element */}
+                            <div className="absolute -inset-0.5 bg-purple-600/10 rounded-3xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+                            
+                            <div className="relative bg-gray-800/40 backdrop-blur-xl rounded-2xl border border-gray-700/50 p-6 md:p-8 overflow-hidden">
+                              <div className="flex flex-col md:grid md:grid-cols-12 gap-8 relative z-10">
+                                
+                                {/* Avatar and Identity - MD: Col 4 */}
+                                <div className="md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left">
+                                  <div className="relative mb-6">
+                                    <div className="h-28 w-28 md:h-32 md:w-32 rounded-3xl bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 flex items-center justify-center text-4xl md:text-5xl text-white font-black shadow-2xl transform transition-transform group-hover:scale-105 duration-500">
+                                      {data.teacher?.name?.[0] || 'M'}
+                                    </div>
+                                    <div className="absolute -bottom-2 -right-2 bg-green-500 h-6 w-6 rounded-full border-4 border-gray-800 shadow-xl" title="Online" />
+                                    {/* Subtle ring animation */}
+                                    <div className="absolute -inset-2 border border-purple-500/20 rounded-[2rem] animate-pulse" />
+                                  </div>
+                                  
+                                  <h3 className="text-2xl font-bold text-white tracking-tight mb-1">{data.teacher?.name}</h3>
+                                  <p className="text-purple-400 font-medium text-sm mb-4">
+                                    {teacherDetails?.title || 'Expert Live Session Mentor'}
+                                  </p>
+                                  
+                                  <div className="flex items-center gap-4">
+                                    <div className="flex flex-col">
+                                      <span className="text-xl font-bold text-white">{teacherDetails?.average_rating || '5.0'}</span>
+                                      <div className="flex text-yellow-500">
+                                        {[...Array(5)].map((_, i) => (
+                                          <Star key={i} className={`w-3 h-3 ${i < Math.floor(teacherDetails?.average_rating || 5) ? 'fill-current' : 'opacity-30'}`} />
+                                        ))}
+                                      </div>
+                                    </div>
+                                    <div className="h-8 w-px bg-gray-700" />
+                                    <div className="flex flex-col">
+                                      <span className="text-xl font-bold text-white">{teacherDetails?.total_sessions || '0'}</span>
+                                      <span className="text-[10px] text-gray-500 uppercase font-bold">Sessions</span>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-gray-300">
-                                  <Users className="w-4 h-4 text-blue-400" />
-                                  <span>Top Rated Mentor</span>
+
+                                {/* Body Content - MD: Col 8 */}
+                                <div className="md:col-span-8 flex flex-col justify-between">
+                                  <div className="space-y-6">
+                                    <div>
+                                      <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                        <Info className="w-4 h-4 text-purple-400" />
+                                        About the Mentor
+                                      </h4>
+                                      <p className="text-gray-300 text-base leading-relaxed">
+                                        {data.teacher?.name} is a verified Brain Bridge Master specializing in <span className="text-purple-300 font-semibold">{data.subject?.name}</span>. 
+                                        Approaching education with a focus on interactive learning and personalized feedback, {data.teacher?.name} is dedicated to helping students 
+                                        master professional concepts through direct dialogue and real-world application.
+                                      </p>
+                                    </div>
+
+                                    <div>
+                                      <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Top Expertise</h4>
+                                      <div className="flex flex-wrap gap-2">
+                                        {teacherDetails?.skills && teacherDetails.skills.length > 0 ? (
+                                          teacherDetails.skills.slice(0, 4).map((skill) => (
+                                            <div 
+                                              key={skill.id} 
+                                              className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/5 border border-purple-500/20 rounded-xl text-xs text-purple-200 font-medium hover:bg-purple-500/10 transition-colors"
+                                            >
+                                              <CheckCircle2 className="w-3.5 h-3.5 text-purple-500" />
+                                              {skill.name}
+                                            </div>
+                                          ))
+                                        ) : (
+                                          <div className="text-gray-500 text-sm italic">General {data.subject?.name} Expertise</div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-8 pt-8 border-t border-gray-700/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div className="flex flex-wrap gap-3">
+                                      <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full text-[11px] text-green-400 font-semibold">
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                        VERIFIED MASTER
+                                      </div>
+                                      <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-[11px] text-blue-400 font-semibold">
+                                        <Users className="w-3.5 h-3.5" />
+                                        TOP 1% MENTOR
+                                      </div>
+                                    </div>
+                                    
+                                    <Button 
+                                      asChild 
+                                      variant="ghost" 
+                                      className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 group/btn"
+                                    >
+                                      <Link href={`/masters/${data.teacher?.id}`} className="flex items-center">
+                                        View Professional Portfolio
+                                        <ChevronRight className="w-4 h-4 ml-1 transform group-hover/btn:translate-x-1 transition-transform" />
+                                      </Link>
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -713,7 +788,7 @@ export default function LiveSessionDetailPage() {
                       <div className="space-y-6">
                         <div className="rounded-xl border border-gray-700 bg-gray-900/50 p-6 space-y-6 sticky top-28">
                           <div>
-                            <h3 className="text-white font-semibold mb-4 text-center tracking-wide uppercase text-xs text-gray-400">Booking Summary</h3>
+                            <h3 className="text-gray-400 font-semibold mb-4 text-center tracking-wide uppercase text-xs">Booking Summary</h3>
                             {selectedSlot ? (
                               <div className="space-y-4 bg-purple-600/10 border border-purple-500/20 rounded-xl p-5 animate-in fade-in zoom-in-95 duration-200">
                                 <div className="flex items-start gap-3">
@@ -749,7 +824,7 @@ export default function LiveSessionDetailPage() {
                             <div className="pt-4 border-t border-gray-700/50">
                               <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                  <Label className="text-white flex items-center gap-2 text-[10px] uppercase font-bold text-gray-400">
+                                  <Label className="text-white flex items-center gap-2 text-[10px] uppercase font-bold">
                                     <Sparkles className="w-3 h-3 text-yellow-400" />
                                     Use Points (1 pt = $1)
                                   </Label>
@@ -816,73 +891,6 @@ export default function LiveSessionDetailPage() {
                               $7.95 flat service fee applies to all bookings
                             </p>
                           )}
-
-                          {/* Master Info (Detailed in Sidebar) */}
-                          <div className="pt-6 border-t border-gray-700/50 space-y-5">
-                            <div className="flex items-start justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-black border border-purple-400/30 shadow-lg shadow-purple-500/20">
-                                  {data.teacher?.name?.[0] || 'M'}
-                                </div>
-                                <div>
-                                  <p className="text-white font-bold text-sm tracking-tight">{data.teacher?.name}</p>
-                                  <p className="text-purple-400/80 text-[10px] font-bold uppercase tracking-wider">
-                                    {teacherDetails?.title || 'Master Mentor'}
-                                  </p>
-                                </div>
-                              </div>
-                              <Button asChild variant="ghost" className="text-purple-400 h-auto p-1.5 hover:bg-purple-500/10 rounded-lg" size="sm">
-                                <Link href={`/masters/${data.teacher?.id}`}>
-                                  <Award className="w-4 h-4" />
-                                </Link>
-                              </Button>
-                            </div>
-
-                            {/* Stats Grid */}
-                            <div className="grid grid-cols-2 gap-2">
-                              <div className="bg-gray-800/40 border border-gray-700/30 rounded-xl p-3 flex flex-col items-center justify-center gap-1">
-                                <span className="text-yellow-500 font-bold text-sm flex items-center gap-1">
-                                  <Star className="w-3 h-3 fill-yellow-500" />
-                                  {teacherDetails?.average_rating || '5.0'}
-                                </span>
-                                <span className="text-[9px] text-gray-500 uppercase font-black">Rating</span>
-                              </div>
-                              <div className="bg-gray-800/40 border border-gray-700/30 rounded-xl p-3 flex flex-col items-center justify-center gap-1">
-                                <span className="text-purple-400 font-bold text-sm flex items-center gap-1">
-                                  <BookOpen className="w-3 h-3" />
-                                  {teacherDetails?.total_sessions || '0'}
-                                </span>
-                                <span className="text-[9px] text-gray-500 uppercase font-black">Sessions</span>
-                              </div>
-                            </div>
-
-                            {/* Expertise/Skills */}
-                            {teacherDetails?.skills && teacherDetails.skills.length > 0 && (
-                              <div className="space-y-2">
-                                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest pl-1">Top Expertise</p>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {teacherDetails.skills.slice(0, 3).map((skill) => (
-                                    <div 
-                                      key={skill.id} 
-                                      className="flex items-center gap-1 px-2 py-1 bg-purple-500/5 border border-purple-500/20 rounded-md text-[10px] text-purple-200 font-medium"
-                                    >
-                                      <CheckCircle2 className="w-2.5 h-2.5 text-purple-500" />
-                                      {skill.name}
-                                    </div>
-                                  ))}
-                                  {teacherDetails.skills.length > 3 && (
-                                    <div className="px-2 py-1 bg-gray-800/50 border border-gray-700 rounded-md text-[10px] text-gray-400">
-                                      +{teacherDetails.skills.length - 3} more
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
-                            <Button asChild variant="link" className="w-full text-purple-400 h-auto p-0 text-[10px] uppercase font-black tracking-widest hover:text-purple-300" size="sm">
-                              <Link href={`/masters/${data.teacher?.id}`}>View Full Profile & Reviews</Link>
-                            </Button>
-                          </div>
                         </div>
                       </div>
                     </div>

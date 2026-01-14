@@ -67,10 +67,10 @@ function CoursesPageContent() {
         <AppHeader />
         
         {/* Header Section */}
-        <section className="py-12 md:py-16 border-b border-gray-800">
+        <section className="py-8 md:py-10 border-b border-gray-800">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            <div className="text-center mb-6">
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
                 Choose Your Learning Style
               </h1>
               <p className="text-xl text-gray-300 max-w-2xl mx-auto">
@@ -79,7 +79,7 @@ function CoursesPageContent() {
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex flex-wrap justify-center gap-3 md:gap-4 mb-8">
+            <div className="flex flex-wrap justify-center gap-3 md:gap-4 mb-4">
               {TABS.map((tab) => {
                 const Icon = tab.icon
                 const isActive = activeTab === tab.id
@@ -89,7 +89,7 @@ function CoursesPageContent() {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`
-                      group relative flex flex-col items-center gap-2 px-6 py-4 rounded-xl 
+                      group relative flex flex-col items-center gap-2 px-6 py-3 rounded-xl 
                       transition-all duration-300 min-w-[140px] md:min-w-[160px] cursor-pointer
                       ${isActive
                         ? tab.id === 'in-person'
@@ -123,7 +123,7 @@ function CoursesPageContent() {
         </section>
 
         {/* Tab Content */}
-        <section className="py-8 md:py-12">
+        <section className="py-6 md:py-8">
           {activeTab === 'in-person' && (
             <InPersonSessions 
               showPagination={true}
