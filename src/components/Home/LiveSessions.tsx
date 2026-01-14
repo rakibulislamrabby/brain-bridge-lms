@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Users, Calendar, Clock, DollarSign, Loader2, XCircle, ArrowRight, GraduationCap, Search } from 'lucide-react'
+import { Users, Calendar, Clock, DollarSign, Loader2, XCircle, ArrowRight, GraduationCap, Search, Video } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -356,20 +356,28 @@ export default function LiveSessions({
                       )}
                     </div>
                     
-                    {/* <div className="flex items-center justify-between pt-2 border-t border-gray-700/50">
-                      {session.available_seats !== undefined && (
-                        <div className="flex items-center gap-2 text-sm text-gray-400">
-                          <Users className="w-4 h-4 text-purple-400" />
-                          <span>{session.available_seats} seat{session.available_seats === 1 ? '' : 's'} available</span>
-                        </div>
-                      )}
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-700/50">
+                      <div className="flex flex-col gap-1">
+                        {session.available_seats !== undefined && (
+                          <div className="flex items-center gap-2 text-xs text-gray-400">
+                            <Users className="w-3.5 h-3.5 text-purple-400" />
+                            <span>{session.available_seats} seat{session.available_seats === 1 ? '' : 's'} available</span>
+                          </div>
+                        )}
+                        {session.video && (
+                          <div className="flex items-center gap-2 text-[10px] text-orange-400 font-bold uppercase tracking-wider">
+                            <Video className="w-3 h-3" />
+                            <span>Intro Video</span>
+                          </div>
+                        )}
+                      </div>
                       {session.price && (
-                        <div className="flex items-center gap-2 text-sm font-semibold text-green-400">
+                        <div className="flex items-center gap-1.5 text-base font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded-lg border border-green-400/20">
                           <DollarSign className="w-4 h-4" />
                           <span>${Number(session.price).toFixed(2)}</span>
                         </div>
                       )}
-                    </div> */}
+                    </div>
                   </Link>
                 )
               })}

@@ -73,21 +73,37 @@ const createSlot = async (payload: CreateSlotRequest): Promise<CreateSlotRespons
 
   let body: any
   if (hasVideo) {
-    body = new FormData()
-    Object.entries(payload).forEach(([key, value]) => {
-      if (key === 'slots' && Array.isArray(value)) {
-        (value as DaySlot[]).forEach((day: DaySlot, index: number) => {
-          body.append(`slots[${index}][slot_day]`, day.slot_day)
-          day.times.forEach((time: SlotTimeRange, tIndex: number) => {
-            body.append(`slots[${index}][times][${tIndex}][start_time]`, time.start_time)
-            body.append(`slots[${index}][times][${tIndex}][end_time]`, time.end_time)
-            body.append(`slots[${index}][times][${tIndex}][meeting_link]`, time.meeting_link || '')
-          })
-        })
-      } else if (value !== null && value !== undefined) {
-        body.append(key, value as any)
-      }
+    const formData = new FormData()
+    
+    // Explicitly add each field to the root of FormData
+    formData.append('subject_id', payload.subject_id.toString())
+    formData.append('title', payload.title)
+    formData.append('from_date', payload.from_date)
+    formData.append('to_date', payload.to_date)
+    formData.append('type', payload.type)
+    formData.append('price', payload.price.toString())
+    formData.append('max_students', payload.max_students.toString())
+    formData.append('description', payload.description)
+    
+    // Only append video if it's a File
+    if (payload.video instanceof File) {
+      formData.append('video', payload.video)
+    }
+
+    // Handle nested slots
+    payload.slots.forEach((day: DaySlot, index: number) => {
+      formData.append(`slots[${index}][slot_day]`, day.slot_day)
+      // Fallback: some backends might expect 'day'
+      formData.append(`slots[${index}][day]`, day.slot_day)
+      
+      day.times.forEach((time: SlotTimeRange, tIndex: number) => {
+        formData.append(`slots[${index}][times][${tIndex}][start_time]`, time.start_time)
+        formData.append(`slots[${index}][times][${tIndex}][end_time]`, time.end_time)
+        formData.append(`slots[${index}][times][${tIndex}][meeting_link]`, time.meeting_link || '')
+      })
     })
+    
+    body = formData
   } else {
     body = JSON.stringify(payload)
   }
@@ -124,23 +140,35 @@ const updateSlot = async (id: number, payload: CreateSlotRequest): Promise<Creat
 
   let body: any
   if (hasVideo) {
-    body = new FormData()
+    const formData = new FormData()
     // Laravel usually needs _method=PUT for FormData on PUT/PATCH requests
-    body.append('_method', 'PUT')
-    Object.entries(payload).forEach(([key, value]) => {
-      if (key === 'slots' && Array.isArray(value)) {
-        (value as DaySlot[]).forEach((day: DaySlot, index: number) => {
-          body.append(`slots[${index}][slot_day]`, day.slot_day)
-          day.times.forEach((time: SlotTimeRange, tIndex: number) => {
-            body.append(`slots[${index}][times][${tIndex}][start_time]`, time.start_time)
-            body.append(`slots[${index}][times][${tIndex}][end_time]`, time.end_time)
-            body.append(`slots[${index}][times][${tIndex}][meeting_link]`, time.meeting_link || '')
-          })
-        })
-      } else if (value !== null && value !== undefined) {
-        body.append(key, value as any)
-      }
+    formData.append('_method', 'PUT')
+    
+    formData.append('subject_id', payload.subject_id.toString())
+    formData.append('title', payload.title)
+    formData.append('from_date', payload.from_date)
+    formData.append('to_date', payload.to_date)
+    formData.append('type', payload.type)
+    formData.append('price', payload.price.toString())
+    formData.append('max_students', payload.max_students.toString())
+    formData.append('description', payload.description)
+    
+    if (payload.video instanceof File) {
+      formData.append('video', payload.video)
+    }
+
+    payload.slots.forEach((day: DaySlot, index: number) => {
+      formData.append(`slots[${index}][slot_day]`, day.slot_day)
+      formData.append(`slots[${index}][day]`, day.slot_day)
+      
+      day.times.forEach((time: SlotTimeRange, tIndex: number) => {
+        formData.append(`slots[${index}][times][${tIndex}][start_time]`, time.start_time)
+        formData.append(`slots[${index}][times][${tIndex}][end_time]`, time.end_time)
+        formData.append(`slots[${index}][times][${tIndex}][meeting_link]`, time.meeting_link || '')
+      })
     })
+    
+    body = formData
   } else {
     body = JSON.stringify(payload)
   }

@@ -66,6 +66,7 @@ export interface LiveSessionSlot {
   type?: string
   price?: string
   description?: string
+  video?: string | null
   slots?: DaySlot[]
 }
 

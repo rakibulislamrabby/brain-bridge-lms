@@ -315,7 +315,7 @@ export default function AddSlotForm({ slotId, initialData }: AddSlotFormProps = 
       return date
     }
 
-    const payload = {
+    const payload: any = {
       subject_id: Number(formData.subject_id),
       title: formData.title,
       from_date: formatDate(formData.from_date),
@@ -324,15 +324,18 @@ export default function AddSlotForm({ slotId, initialData }: AddSlotFormProps = 
       price: Number(formData.price),
       max_students: Number(formData.max_students),
       description: formData.description,
-      video: videoFile || videoPreview, // Send the new file, or the existing URL if no new file is selected
       slots: daySlots.map((day) => ({
-        slot_day: day.slot_day,
+        slot_day: (day.slot_day || 'Sunday').trim(),
         times: day.times.map(slot => ({
           start_time: formatTime(slot.start_time),
           end_time: formatTime(slot.end_time),
           meeting_link: slot.meeting_link || '',
         }))
       })),
+    }
+
+    if (videoFile instanceof File) {
+      payload.video = videoFile
     }
 
     try {
