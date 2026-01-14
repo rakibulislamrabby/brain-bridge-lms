@@ -101,7 +101,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     {
-      title: 'Booked Slots',
+      title: 'Booked Video Call',
       icon: Calendar,
       href: '/dashboard/teacher-booked-slots',
       items: [],
@@ -126,12 +126,12 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     {
-      title: 'Live Session',
+      title: 'Video Call',
       icon: Video,
       href: '/dashboard/one-to-one-session',
       items: [
-        { title: 'All Slots', href: '/dashboard/one-to-one-session', icon: Video },
-        { title: 'Add Slot', href: '/dashboard/one-to-one-session/add-slot', icon: FileText },
+        { title: 'All Video Call', href: '/dashboard/one-to-one-session', icon: Video },
+        { title: 'Add Video Call', href: '/dashboard/one-to-one-session/add-slot', icon: FileText },
       ],
       allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },

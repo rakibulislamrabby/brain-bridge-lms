@@ -20,10 +20,13 @@ const getAuthToken = (): string | null => {
   return null
 }
 
-const getAuthHeaders = (): Record<string, string> => {
+const getAuthHeaders = (isFormData: boolean = false): Record<string, string> => {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     Accept: 'application/json',
+  }
+
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json'
   }
 
   const token = getAuthToken()
@@ -40,16 +43,22 @@ export interface SlotTimeRange {
   meeting_link: string
 }
 
+export interface DaySlot {
+  slot_day: string
+  times: SlotTimeRange[]
+}
+
 export interface CreateSlotRequest {
   subject_id: number
   title: string
   from_date: string
   to_date: string
-  slots: SlotTimeRange[]
+  slots: DaySlot[]
   type: string
   price: number
   max_students: number
   description: string
+  video?: File | string | null
 }
 
 export interface CreateSlotResponse {
@@ -59,13 +68,35 @@ export interface CreateSlotResponse {
 
 const createSlot = async (payload: CreateSlotRequest): Promise<CreateSlotResponse> => {
   const url = joinUrl('teacher/slots')
-  const headers = getAuthHeaders()
+  const hasVideo = payload.video instanceof File
+  const headers = getAuthHeaders(hasVideo)
+
+  let body: any
+  if (hasVideo) {
+    body = new FormData()
+    Object.entries(payload).forEach(([key, value]) => {
+      if (key === 'slots' && Array.isArray(value)) {
+        (value as DaySlot[]).forEach((day: DaySlot, index: number) => {
+          body.append(`slots[${index}][slot_day]`, day.slot_day)
+          day.times.forEach((time: SlotTimeRange, tIndex: number) => {
+            body.append(`slots[${index}][times][${tIndex}][start_time]`, time.start_time)
+            body.append(`slots[${index}][times][${tIndex}][end_time]`, time.end_time)
+            body.append(`slots[${index}][times][${tIndex}][meeting_link]`, time.meeting_link || '')
+          })
+        })
+      } else if (value !== null && value !== undefined) {
+        body.append(key, value as any)
+      }
+    })
+  } else {
+    body = JSON.stringify(payload)
+  }
 
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify(payload),
+      body,
     })
 
     const text = await response.text()
@@ -88,13 +119,37 @@ const createSlot = async (payload: CreateSlotRequest): Promise<CreateSlotRespons
 
 const updateSlot = async (id: number, payload: CreateSlotRequest): Promise<CreateSlotResponse> => {
   const url = joinUrl(`teacher/slots/${id}`)
-  const headers = getAuthHeaders()
+  const hasVideo = payload.video instanceof File
+  const headers = getAuthHeaders(hasVideo)
+
+  let body: any
+  if (hasVideo) {
+    body = new FormData()
+    // Laravel usually needs _method=PUT for FormData on PUT/PATCH requests
+    body.append('_method', 'PUT')
+    Object.entries(payload).forEach(([key, value]) => {
+      if (key === 'slots' && Array.isArray(value)) {
+        (value as DaySlot[]).forEach((day: DaySlot, index: number) => {
+          body.append(`slots[${index}][slot_day]`, day.slot_day)
+          day.times.forEach((time: SlotTimeRange, tIndex: number) => {
+            body.append(`slots[${index}][times][${tIndex}][start_time]`, time.start_time)
+            body.append(`slots[${index}][times][${tIndex}][end_time]`, time.end_time)
+            body.append(`slots[${index}][times][${tIndex}][meeting_link]`, time.meeting_link || '')
+          })
+        })
+      } else if (value !== null && value !== undefined) {
+        body.append(key, value as any)
+      }
+    })
+  } else {
+    body = JSON.stringify(payload)
+  }
 
   try {
     const response = await fetch(url, {
-      method: 'PUT',
+      method: hasVideo ? 'POST' : 'PUT', // Use POST with _method=PUT for FormData
       headers,
-      body: JSON.stringify(payload),
+      body,
     })
 
     const text = await response.text()

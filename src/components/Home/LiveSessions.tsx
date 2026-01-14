@@ -24,12 +24,37 @@ interface LiveSessionsProps {
   showShowMore?: boolean
 }
 
-const formatDateTime = (dateString?: string, timeString?: string, fromDate?: string, toDate?: string, startTime?: string, endTime?: string) => {
+const formatDateTime = (
+  dateString?: string, 
+  timeString?: string, 
+  fromDate?: string, 
+  toDate?: string, 
+  startTime?: string, 
+  endTime?: string,
+  slots?: any[]
+) => {
   let dateLabel = 'Date TBD'
   let timeLabel = 'Time TBD'
 
-  // Format time from start_time and end_time if available
-  if (startTime && endTime) {
+  // Format time from slots if available
+  if (slots && slots.length > 0) {
+    const days = slots.map(s => s.slot_day.substring(0, 3)).join(', ')
+    const firstTime = slots[0].times?.[0]
+    if (firstTime) {
+      try {
+        const start = new Date(`1970-01-01T${firstTime.start_time}`)
+        const startFormatted = start.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+        })
+        timeLabel = `${days} • ${startFormatted}+`
+      } catch (e) {
+        timeLabel = days
+      }
+    } else {
+      timeLabel = days
+    }
+  } else if (startTime && endTime) {
     try {
       const start = new Date(`1970-01-01T${startTime}`)
       const end = new Date(`1970-01-01T${endTime}`)
@@ -277,7 +302,8 @@ export default function LiveSessions({
                   session.from_date, 
                   session.to_date,
                   (session as any).start_time,
-                  (session as any).end_time
+                  (session as any).end_time,
+                  session.slots
                 )
                 
                 return (

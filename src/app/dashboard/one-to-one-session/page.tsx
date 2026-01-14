@@ -221,9 +221,25 @@ export default function OneToOneSessionPage() {
                           ) : slot.from_date ? formatDate(slot.from_date) : '—'}
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-300">
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-orange-400" />
-                            {formatTime(slot.start_time)} – {formatTime(slot.end_time)}
+                          <div className="flex flex-col gap-1">
+                            {slot.slots && slot.slots.length > 0 ? (
+                              slot.slots.map((daySlot, idx) => (
+                                <div key={idx} className="flex items-center gap-2 text-xs">
+                                  <Badge variant="outline" className="text-[10px] px-1 py-0 border-orange-500/50 text-orange-400">
+                                    {daySlot.slot_day.substring(0, 3)}
+                                  </Badge>
+                                  <div className="flex flex-col">
+                                    {daySlot.times.map((time, tIdx) => (
+                                      <span key={tIdx}>
+                                        {formatTime(time.start_time)} - {formatTime(time.end_time)}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <span className="text-gray-500 italic">No schedule set</span>
+                            )}
                           </div>
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-300">
