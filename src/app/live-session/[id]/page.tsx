@@ -404,19 +404,50 @@ export default function LiveSessionDetailPage() {
     }
 
     try {
+      // Calculate the correct payment amount before sending to API
+      // If slot price is 0, only service fee should be charged
+      // Ensure newPaymentAmount is never negative
+      const safeNewPaymentAmount = Math.max(0, newPaymentAmount)
+      const calculatedFinalAmount = safeNewPaymentAmount > 0 ? safeNewPaymentAmount + SERVICE_FEE : SERVICE_FEE
+      
+      // Log calculation for debugging
+      console.log('💰 Booking Intent - Amount Calculation:', {
+        slotPrice,
+        pointsToUse,
+        pointsDiscount,
+        newPaymentAmount: safeNewPaymentAmount,
+        serviceFee: SERVICE_FEE,
+        calculatedFinalAmount,
+      })
+      
       const result = await bookingIntentMutation.mutateAsync({
-        slot_id: selectedSlot.id,
+        slot_id: sessionId,
         scheduled_date: new Date(selectedDateKeyForBooking),
         points_to_use: pointsToUse > 0 ? pointsToUse : undefined,
-        new_payment_amount: newPaymentAmount,
+        new_payment_amount: safeNewPaymentAmount,
       })
 
       // Check if payment is required
       if (result?.requires_payment && result?.client_secret) {
+        // Use our calculated amount instead of API response amount
+        // The API might return incorrect amount, so we use our calculation
+        const finalAmount = calculatedFinalAmount
+        
+        // Log for debugging
+        console.log('💰 Payment Amount Calculation:', {
+          slotPrice,
+          pointsToUse,
+          pointsDiscount,
+          newPaymentAmount,
+          serviceFee: SERVICE_FEE,
+          calculatedFinalAmount: finalAmount,
+          apiReturnedAmount: result.amount,
+        })
+        
         // Build URL with payment data as query parameters
         const paymentParams = new URLSearchParams({
           client_secret: result.client_secret,
-          amount: String(result.amount),
+          amount: String(finalAmount),
           payment_intent: result.payment_intent_id || '',
         })
         
@@ -632,14 +663,16 @@ export default function LiveSessionDetailPage() {
 
                           {!selectedDateKey ? (
                             <div className="py-12 border-2 border-dashed border-gray-800 rounded-xl text-center text-gray-500">
-                              Pick a date on the calendar to view available times
+                              <Clock className="w-12 h-12 mx-auto mb-3 text-gray-600" />
+                              <p className="text-gray-400">Pick a date on the calendar to view available times</p>
                             </div>
                           ) : !selectedDateSchedule || selectedDateSchedule.slots.length === 0 ? (
                             <div className="py-12 bg-gray-800/30 rounded-xl text-center text-gray-400 border border-gray-700/50">
-                              No slots available for the selected date.
+                              <Clock className="w-12 h-12 mx-auto mb-3 text-gray-600" />
+                              <p>No slots available for the selected date.</p>
                             </div>
                           ) : (
-                            <div className="flex flex-wrap gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                               {selectedDateSchedule.slots.map((slot) => {
                                 const isSelected = selectedSlot?.id === slot.id && selectedDateKeyForBooking === selectedDateKey
                                 
@@ -650,16 +683,64 @@ export default function LiveSessionDetailPage() {
                                       setSelectedSlot(slot)
                                       setSelectedDateKeyForBooking(selectedDateKey!)
                                     }}
-                                    className={`px-6 py-3 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                                    className={`group relative px-5 py-4 rounded-xl border transition-all duration-200 text-left ${
                                       isSelected
-                                        ? 'border-purple-500 bg-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.4)] scale-105'
-                                        : 'border-gray-700 bg-gray-800/50 text-gray-300 hover:border-purple-500/50 hover:bg-gray-800'
+                                        ? 'border-purple-500 bg-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.4)] scale-[1.02]'
+                                        : 'border-gray-700 bg-gray-800/50 text-gray-300 hover:border-purple-500/50 hover:bg-gray-800 hover:scale-[1.01]'
                                     }`}
                                   >
-                                    {new Date(`1970-01-01T${slot.start_time}`).toLocaleTimeString(undefined, {
-                                      hour: 'numeric',
-                                      minute: '2-digit',
-                                    })}
+                                    <div className="flex items-center gap-3">
+                                      <div className={`p-2 rounded-lg ${
+                                        isSelected 
+                                          ? 'bg-white/20' 
+                                          : 'bg-purple-500/10 group-hover:bg-purple-500/20'
+                                      }`}>
+                                        <Clock className={`w-4 h-4 ${
+                                          isSelected ? 'text-white' : 'text-purple-400'
+                                        }`} />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className={`font-semibold text-sm mb-1 ${
+                                          isSelected ? 'text-white' : 'text-white'
+                                        }`}>
+                                          {formatTimeRange(slot.start_time, slot.end_time)}
+                                        </div>
+                                        <div className={`text-xs ${
+                                          isSelected ? 'text-purple-100' : 'text-gray-400'
+                                        }`}>
+                                          {(() => {
+                                            const start = new Date(`1970-01-01T${slot.start_time}`)
+                                            const end = new Date(`1970-01-01T${slot.end_time}`)
+                                            const diffMs = end.getTime() - start.getTime()
+                                            const diffMins = Math.round(diffMs / 60000)
+                                            const hours = Math.floor(diffMins / 60)
+                                            const mins = diffMins % 60
+                                            return hours > 0 
+                                              ? `${hours}h ${mins > 0 ? `${mins}m` : ''}`.trim()
+                                              : `${diffMins}m`
+                                          })()} session
+                                        </div>
+                                      </div>
+                                      {isSelected && (
+                                        <div className="flex-shrink-0">
+                                          <CheckCircle2 className="w-5 h-5 text-white" />
+                                        </div>
+                                      )}
+                                    </div>
+                                    {slot.meeting_link && (
+                                      <div className={`mt-2 pt-2 border-t ${
+                                        isSelected ? 'border-white/20' : 'border-gray-700'
+                                      }`}>
+                                        <div className="flex items-center gap-1.5 text-xs">
+                                          <div className={`w-1.5 h-1.5 rounded-full ${
+                                            isSelected ? 'bg-green-300' : 'bg-green-500'
+                                          }`} />
+                                          <span className={isSelected ? 'text-purple-100' : 'text-gray-400'}>
+                                            Meeting link available
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )}
                                   </button>
                                 )
                               })}

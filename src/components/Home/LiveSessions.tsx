@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useLiveSessions } from '@/hooks/live-session/use-live-session'
+import LiveSessionPreviewModal from '@/components/shared/LiveSessionPreviewModal'
 import {
   Pagination,
   PaginationContent,
@@ -123,6 +124,8 @@ export default function LiveSessions({
   const [currentPage, setCurrentPage] = useState(1)
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+  const [previewModalOpen, setPreviewModalOpen] = useState(false)
+  const [selectedSession, setSelectedSession] = useState<any>(null)
   const { data: paginatedData, isLoading, error } = useLiveSessions(currentPage)
 
   // Debounce search input
@@ -206,6 +209,19 @@ export default function LiveSessions({
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleSessionClick = (session: any) => {
+    setSelectedSession(session)
+    setPreviewModalOpen(true)
+  }
+
+  const handleClosePreviewModal = () => {
+    setPreviewModalOpen(false)
+    // Keep selectedSession so the query doesn't reset, but clear it after a delay
+    setTimeout(() => {
+      setSelectedSession(null)
+    }, 300)
   }
 
   return (
@@ -307,10 +323,10 @@ export default function LiveSessions({
                 )
                 
                 return (
-                  <Link
+                  <div
                     key={session.id}
-                    href={`/live-session/${session.id}`}
-                    className="group relative block border border-gray-700 bg-gray-800/80 rounded-xl p-5 space-y-4 transition-all duration-300 ease-out hover:border-purple-500/70 hover:bg-gray-800 hover:-translate-y-1 hover:shadow-lg hover:shadow-purple-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+                    onClick={() => handleSessionClick(session)}
+                    className="group relative block border border-gray-700 bg-gray-800/80 rounded-xl p-5 space-y-4 transition-all duration-300 ease-out hover:border-purple-500/70 hover:bg-gray-800 hover:-translate-y-1 hover:shadow-lg hover:shadow-purple-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 cursor-pointer"
                   >
                     <span className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-purple-500/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                     
@@ -378,10 +394,26 @@ export default function LiveSessions({
                         </div>
                       )}
                     </div>
-                  </Link>
+                  </div>
                 )
               })}
             </div>
+
+            {/* Live Session Preview Modal */}
+            {selectedSession && (
+              <LiveSessionPreviewModal
+                open={previewModalOpen}
+                onOpenChange={(open) => {
+                  setPreviewModalOpen(open)
+                  if (!open) {
+                    setTimeout(() => {
+                      setSelectedSession(null)
+                    }, 300)
+                  }
+                }}
+                session={selectedSession}
+              />
+            )}
             
             {hasMoreSlots && showShowMore && (
               <div className="text-center">
