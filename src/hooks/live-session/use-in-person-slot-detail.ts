@@ -38,6 +38,25 @@ export interface BookedSlot {
   scheduled_end_time: string
 }
 
+export interface InPersonSlotTime {
+  id: number
+  in_person_slot_day_id: number
+  start_time: string
+  end_time: string
+  is_booked: number
+  created_at: string
+  updated_at: string
+}
+
+export interface InPersonSlotDay {
+  id: number
+  in_person_slot_id: number
+  day: string
+  created_at: string
+  updated_at: string
+  times: InPersonSlotTime[]
+}
+
 export interface InPersonSlotDetailResponse {
   id: number
   title: string
@@ -46,12 +65,18 @@ export interface InPersonSlotDetailResponse {
   subject_id: number
   from_date: string
   to_date: string
-  start_time: string
-  end_time: string
+  start_time?: string
+  end_time?: string
   price: string
   description: string
-  daily_available_seats: Record<string, DailyBookedSeats> // Key is date string (YYYY-MM-DD), only has "booked"
-  booked_slots: BookedSlot[]
+  video?: string | null
+  country?: string
+  state?: string
+  city?: string
+  area?: string
+  daily_available_seats?: Record<string, DailyBookedSeats> // Key is date string (YYYY-MM-DD), only has "booked"
+  booked_slots?: BookedSlot[]
+  days?: InPersonSlotDay[]
 }
 
 const fetchInPersonSlotDetail = async (id: number): Promise<InPersonSlotDetailResponse> => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -12,12 +12,21 @@ import { useSubjects } from '@/hooks/subject/use-subject'
 import { useCreateInPersonSlot, type InPersonSlotData } from '@/hooks/slots/use-create-in-person-slot'
 import { useUpdateInPersonSlot } from '@/hooks/slots/use-update-in-person-slot'
 import type { InPersonSlot } from '@/hooks/slots/use-in-person-slots'
-import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Clock, DollarSign, ClipboardList, MapPin, CheckCircle2 } from 'lucide-react'
+import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Clock, DollarSign, ClipboardList, MapPin, CheckCircle2, Video, FileVideo } from 'lucide-react'
 
 interface SlotTimeForm {
   start_time: string
   end_time: string
 }
+
+interface DaySlotForm {
+  slot_day: string
+  times: SlotTimeForm[]
+}
+
+const DAYS_OF_WEEK = [
+  'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
+]
 
 interface AddInPersonSlotFormProps {
   slotId?: number
@@ -52,9 +61,31 @@ export default function AddInPersonSlotForm({ slotId, initialData }: AddInPerson
     area: '',
   })
 
-  const [slotTimes, setSlotTimes] = useState<SlotTimeForm[]>([
-    { start_time: '', end_time: '' },
+  const [daySlots, setDaySlots] = useState<DaySlotForm[]>([
+    { slot_day: 'Sunday', times: [{ start_time: '', end_time: '' }] },
   ])
+
+  const [videoFile, setVideoFile] = useState<File | null>(null)
+  const [videoPreview, setVideoPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleRemoveVideo = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setVideoFile(null)
+    setVideoPreview(initialData?.video || null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null
+    setVideoFile(file)
+    if (file) {
+      const url = URL.createObjectURL(file)
+      setVideoPreview(url)
+    }
+  }
 
   // Initialize form with slot data if in edit mode
   useEffect(() => {
@@ -96,12 +127,28 @@ export default function AddInPersonSlotForm({ slotId, initialData }: AddInPerson
         area: initialData.area || '',
       })
 
-      setSlotTimes([
-        {
-          start_time: formatTimeForInput(initialData.start_time),
-          end_time: formatTimeForInput(initialData.end_time),
-        },
-      ])
+      if (initialData.days && initialData.days.length > 0) {
+        setDaySlots(initialData.days.map(day => ({
+          slot_day: day.day,
+          times: day.times.map(t => ({
+            start_time: formatTimeForInput(t.start_time),
+            end_time: formatTimeForInput(t.end_time),
+          }))
+        })))
+      } else if (initialData.start_time && initialData.end_time) {
+        // Fallback for old structure
+        setDaySlots([{
+          slot_day: 'Sunday',
+          times: [{
+            start_time: formatTimeForInput(initialData.start_time),
+            end_time: formatTimeForInput(initialData.end_time),
+          }]
+        }])
+      }
+
+      if (initialData.video) {
+        setVideoPreview(initialData.video)
+      }
     }
   }, [isEditMode, initialData, subjects])
 
@@ -132,23 +179,54 @@ export default function AddInPersonSlotForm({ slotId, initialData }: AddInPerson
     return selectedSubject?.base_pay !== null && selectedSubject?.base_pay !== undefined
   }, [formData.subject_id, subjects])
 
-  const handleSlotChange = (index: number, field: keyof SlotTimeForm, value: string) => {
-    setSlotTimes((prev) => {
+  const handleDayChange = (dayIndex: number, value: string) => {
+    setDaySlots((prev) => {
       const updated = [...prev]
-      updated[index] = {
-        ...updated[index],
-        [field]: value,
+      updated[dayIndex] = { ...updated[dayIndex], slot_day: value }
+      return updated
+    })
+  }
+
+  const handleTimeChange = (dayIndex: number, timeIndex: number, field: keyof SlotTimeForm, value: string) => {
+    setDaySlots((prev) => {
+      const updated = [...prev]
+      const updatedDay = { ...updated[dayIndex] }
+      const updatedTimes = [...updatedDay.times]
+      updatedTimes[timeIndex] = { ...updatedTimes[timeIndex], [field]: value }
+      updatedDay.times = updatedTimes
+      updated[dayIndex] = updatedDay
+      return updated
+    })
+  }
+
+  const addDaySlot = () => {
+    setDaySlots((prev) => [...prev, { slot_day: 'Sunday', times: [{ start_time: '', end_time: '' }] }])
+  }
+
+  const removeDaySlot = (index: number) => {
+    setDaySlots((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const addTimeSlot = (dayIndex: number) => {
+    setDaySlots((prev) => {
+      const updated = [...prev]
+      updated[dayIndex] = {
+        ...updated[dayIndex],
+        times: [...updated[dayIndex].times, { start_time: '', end_time: '' }]
       }
       return updated
     })
   }
 
-  const addTimeRange = () => {
-    setSlotTimes((prev) => [...prev, { start_time: '', end_time: '' }])
-  }
-
-  const removeTimeRange = (index: number) => {
-    setSlotTimes((prev) => prev.filter((_, i) => i !== index))
+  const removeTimeSlot = (dayIndex: number, timeIndex: number) => {
+    setDaySlots((prev) => {
+      const updated = [...prev]
+      updated[dayIndex] = {
+        ...updated[dayIndex],
+        times: updated[dayIndex].times.filter((_, i) => i !== timeIndex)
+      }
+      return updated
+    })
   }
 
   const resetForm = () => {
@@ -164,7 +242,9 @@ export default function AddInPersonSlotForm({ slotId, initialData }: AddInPerson
       city: '',
       area: '',
     })
-    setSlotTimes([{ start_time: '', end_time: '' }])
+    setDaySlots([{ slot_day: 'Sunday', times: [{ start_time: '', end_time: '' }] }])
+    setVideoFile(null)
+    setVideoPreview(null)
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -180,8 +260,21 @@ export default function AddInPersonSlotForm({ slotId, initialData }: AddInPerson
       return
     }
 
-    const invalidSlot = slotTimes.some((slot) => !slot.start_time || !slot.end_time)
-    if (invalidSlot) {
+    const hasInvalidDay = daySlots.some(day => !day.slot_day || day.times.length === 0)
+    if (hasInvalidDay) {
+      addToast({
+        type: 'error',
+        title: 'Invalid Schedule',
+        description: 'Each day must have a selected day and at least one time slot.',
+        duration: 5000,
+      })
+      return
+    }
+
+    const hasInvalidTime = daySlots.some(day => 
+      day.times.some(time => !time.start_time || !time.end_time)
+    )
+    if (hasInvalidTime) {
       addToast({
         type: 'error',
         title: 'Missing Slot Times',
@@ -191,15 +284,15 @@ export default function AddInPersonSlotForm({ slotId, initialData }: AddInPerson
       return
     }
 
-    // Validate that end_time is after start_time for each slot
-    const invalidTimeRange = slotTimes.some((slot) => {
-      if (!slot.start_time || !slot.end_time) return false
-      const start = new Date(`1970-01-01T${slot.start_time}`)
-      const end = new Date(`1970-01-01T${slot.end_time}`)
-      return end <= start
-    })
+    const hasInvalidTimeRange = daySlots.some(day => 
+      day.times.some(time => {
+        const start = new Date(`1970-01-01T${time.start_time}`)
+        const end = new Date(`1970-01-01T${time.end_time}`)
+        return end <= start
+      })
+    )
     
-    if (invalidTimeRange) {
+    if (hasInvalidTimeRange) {
       addToast({
         type: 'error',
         title: 'Invalid Time Range',
@@ -231,14 +324,17 @@ export default function AddInPersonSlotForm({ slotId, initialData }: AddInPerson
       return date
     }
 
-    const payload = {
+    const payload: any = {
       title: formData.title,
       subject_id: Number(formData.subject_id),
       from_date: formatDate(formData.from_date),
       to_date: formatDate(formData.to_date),
-      slots: slotTimes.map((slot) => ({
-        start_time: formatTime(slot.start_time),
-        end_time: formatTime(slot.end_time),
+      slots: daySlots.map((day) => ({
+        slot_day: (day.slot_day || 'Sunday').trim(),
+        times: day.times.map(slot => ({
+          start_time: formatTime(slot.start_time),
+          end_time: formatTime(slot.end_time),
+        }))
       })),
       price: Number(formData.price),
       description: formData.description,
@@ -246,6 +342,10 @@ export default function AddInPersonSlotForm({ slotId, initialData }: AddInPerson
       ...(formData.state && { state: formData.state }),
       ...(formData.city && { city: formData.city }),
       ...(formData.area && { area: formData.area }),
+    }
+
+    if (videoFile instanceof File) {
+      payload.video = videoFile
     }
 
     try {
@@ -263,14 +363,11 @@ export default function AddInPersonSlotForm({ slotId, initialData }: AddInPerson
         router.push('/dashboard/in-person-session')
       } else {
         const result = await createSlotMutation.mutateAsync(payload)
-        const slotsCount = result?.data?.length || 0
-        const slotsText = slotsCount === 1 ? 'slot' : 'slots'
-        
         addToast({
           type: 'success',
-          title: 'In-Person Slots Created',
-          description: `${result?.message || 'Success!'} ${slotsCount} ${slotsText} created.`,
-          duration: 6000,
+          title: 'In-Person Slot Created',
+          description: result?.message || 'In-person slot created successfully!',
+          duration: 5000,
         })
         resetForm()
       }
@@ -501,6 +598,66 @@ export default function AddInPersonSlotForm({ slotId, initialData }: AddInPerson
                 />
               </div>
             </div>
+
+            <div className="pt-4 border-t border-gray-700/50">
+              <Label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                <Video className="h-4 w-4 text-orange-400" />
+                Intro Video
+              </Label>
+              <div className="mt-3 flex flex-col md:flex-row gap-6">
+                <div className="flex-1">
+                  <div 
+                    className="relative group border-2 border-dashed border-gray-600 rounded-xl p-8 transition-all hover:border-orange-500/50 hover:bg-gray-700/30 text-center cursor-pointer"
+                    onClick={() => document.getElementById('video-upload')?.click()}
+                  >
+                    <input
+                      id="video-upload"
+                      ref={fileInputRef}
+                      type="file"
+                      accept="video/*"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <div className="flex flex-col items-center">
+                      <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                        <FileVideo className="h-6 w-6 text-gray-400 group-hover:text-orange-400" />
+                      </div>
+                      <p className="text-sm text-gray-300 font-medium">Click to upload intro video</p>
+                      <p className="text-xs text-gray-500 mt-1">MP4, WebM or Ogg (Max 50MB)</p>
+                    </div>
+                  </div>
+                </div>
+
+                {videoPreview && (
+                  <div className="w-full md:w-64 space-y-2">
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Preview</p>
+                    <div className="relative aspect-video bg-black rounded-lg overflow-hidden border border-gray-600">
+                      <video 
+                        src={videoPreview} 
+                        className="w-full h-full object-cover"
+                        controls
+                      />
+                      {videoFile && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6 bg-black/50 hover:bg-red-600 text-white rounded-full p-1"
+                          onClick={handleRemoveVideo}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    {videoFile && (
+                      <p className="text-[10px] text-orange-400 truncate font-medium">
+                        {videoFile.name}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -512,67 +669,94 @@ export default function AddInPersonSlotForm({ slotId, initialData }: AddInPerson
               Time Slots
             </CardTitle>
             <CardDescription className="text-gray-400">
-              Add one or more time slots for the selected date range.
+              Add one or more sessions for the selected date. Each day can have multiple time slots.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {slotTimes.map((slot, index) => (
-              <div key={index} className="border border-gray-700 rounded-lg p-4 bg-gray-900/40 space-y-4">
+            {daySlots.map((daySlot, dayIndex) => (
+              <div key={dayIndex} className="border border-gray-700 rounded-lg p-6 bg-gray-900/40 space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <ClipboardList className="h-4 w-4 text-orange-400" />
-                    Slot {index + 1}
+                  <div className="flex-1 max-w-[200px]">
+                    <Label className="text-sm font-medium text-gray-300">
+                      Day of Week <span className="text-red-400">*</span>
+                    </Label>
+                    <select
+                      value={daySlot.slot_day}
+                      onChange={(e) => handleDayChange(dayIndex, e.target.value)}
+                      className="mt-2 w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent h-10"
+                    >
+                      {DAYS_OF_WEEK.map(day => (
+                        <option key={day} value={day}>{day}</option>
+                      ))}
+                    </select>
                   </div>
-                  {slotTimes.length > 1 && (
+                  {daySlots.length > 1 && (
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => removeTimeRange(index)}
-                      className="border-red-700 text-red-400 hover:bg-red-900/30 cursor-pointer"
+                      onClick={() => removeDaySlot(dayIndex)}
+                      className="border-red-700 text-red-400 hover:bg-red-900/30 cursor-pointer mt-6"
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
-                      Remove
+                      Remove Day
                     </Button>
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-300">
-                      Start Time <span className="text-red-400">*</span>
-                    </Label>
-                    <Input
-                      type="time"
-                      value={slot.start_time}
-                      onChange={(event) => handleSlotChange(index, 'start_time', event.target.value)}
-                      required
-                      className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-300">
-                      End Time <span className="text-red-400">*</span>
-                    </Label>
-                    <Input
-                      type="time"
-                      value={slot.end_time}
-                      onChange={(event) => handleSlotChange(index, 'end_time', event.target.value)}
-                      required
-                      min={slot.start_time || undefined}
-                      className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
-                    />
-                    {slot.start_time && slot.end_time && (
-                      (() => {
-                        const start = new Date(`1970-01-01T${slot.start_time}`)
-                        const end = new Date(`1970-01-01T${slot.end_time}`)
-                        const isValid = end > start
-                        return !isValid ? (
-                          <p className="text-xs text-red-400 mt-1">End time must be after start time</p>
-                        ) : null
-                      })()
-                    )}
-                  </div>
+                <div className="space-y-4 pt-2">
+                  <Label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Time Slots for {daySlot.slot_day}
+                  </Label>
+                  
+                  {daySlot.times.map((timeSlot, timeIndex) => (
+                    <div key={timeIndex} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-gray-800/50 p-4 rounded-md border border-gray-700/50">
+                      <div className="md:col-span-5">
+                        <Label className="text-xs font-medium text-gray-400">Start Time</Label>
+                        <Input
+                          type="time"
+                          value={timeSlot.start_time}
+                          onChange={(e) => handleTimeChange(dayIndex, timeIndex, 'start_time', e.target.value)}
+                          required
+                          className="mt-1 bg-gray-700 border-gray-600 text-white focus:border-orange-500 h-9"
+                        />
+                      </div>
+                      <div className="md:col-span-5">
+                        <Label className="text-xs font-medium text-gray-400">End Time</Label>
+                        <Input
+                          type="time"
+                          value={timeSlot.end_time}
+                          onChange={(e) => handleTimeChange(dayIndex, timeIndex, 'end_time', e.target.value)}
+                          required
+                          className="mt-1 bg-gray-700 border-gray-600 text-white focus:border-orange-500 h-9"
+                        />
+                      </div>
+                      <div className="md:col-span-2 pt-6">
+                        {daySlot.times.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeTimeSlot(dayIndex, timeIndex)}
+                            className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-9 w-9"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => addTimeSlot(dayIndex)}
+                    className="text-orange-400 hover:text-orange-300 hover:bg-orange-900/20"
+                  >
+                    <Plus className="h-3 w-3 mr-1" /> Add Time Slot
+                  </Button>
                 </div>
               </div>
             ))}
@@ -580,10 +764,10 @@ export default function AddInPersonSlotForm({ slotId, initialData }: AddInPerson
             <Button
               type="button"
               variant="outline"
-              onClick={addTimeRange}
-              className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white cursor-pointer"
+              onClick={addDaySlot}
+              className="w-full border-dashed border-gray-600 text-gray-400 hover:border-orange-500 hover:text-orange-400 hover:bg-orange-950/10 py-6"
             >
-              <Plus className="h-4 w-4 mr-2" /> Add Another Time Slot
+              <Plus className="h-4 w-4 mr-2" /> Add Another Day to Schedule
             </Button>
           </CardContent>
         </Card>

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { usePublicInPersonSlots } from '@/hooks/live-session/use-public-in-person-slots'
+import InPersonSessionPreviewModal from '@/components/shared/InPersonSessionPreviewModal'
 import {
   Pagination,
   PaginationContent,
@@ -66,6 +67,8 @@ export default function InPersonSessions({
   const [currentPage, setCurrentPage] = useState(1)
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+  const [previewModalOpen, setPreviewModalOpen] = useState(false)
+  const [selectedSession, setSelectedSession] = useState<any>(null)
   const { data: paginatedData, isLoading, error } = usePublicInPersonSlots(currentPage)
 
   // Debounce search input
@@ -244,10 +247,13 @@ export default function InPersonSessions({
                 )
                 
                 return (
-                  <Link
+                  <div
                     key={session.id}
-                    href={`/in-person-session/${session.id}`}
-                    className="group relative block border border-gray-700 bg-gray-800/80 rounded-xl p-5 space-y-4 transition-all duration-300 ease-out hover:border-orange-500/70 hover:bg-gray-800 hover:-translate-y-1 hover:shadow-lg hover:shadow-orange-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                    onClick={() => {
+                      setSelectedSession(session)
+                      setPreviewModalOpen(true)
+                    }}
+                    className="group relative block border border-gray-700 bg-gray-800/80 rounded-xl p-5 space-y-4 transition-all duration-300 ease-out hover:border-orange-500/70 hover:bg-gray-800 hover:-translate-y-1 hover:shadow-lg hover:shadow-orange-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 cursor-pointer"
                   >
                     <span className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-orange-500/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                     
@@ -320,10 +326,26 @@ export default function InPersonSessions({
                         </div>
                       )}
                     </div>
-                  </Link>
+                  </div>
                 )
               })}
             </div>
+
+            {/* In-Person Session Preview Modal */}
+            {selectedSession && (
+              <InPersonSessionPreviewModal
+                open={previewModalOpen}
+                onOpenChange={(open) => {
+                  setPreviewModalOpen(open)
+                  if (!open) {
+                    setTimeout(() => {
+                      setSelectedSession(null)
+                    }, 300)
+                  }
+                }}
+                session={selectedSession}
+              />
+            )}
             
             {hasMoreSlots && showShowMore && (
               <div className="text-center">

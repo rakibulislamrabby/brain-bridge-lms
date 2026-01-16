@@ -3,20 +3,49 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Clock, Users, DollarSign, Info, ChevronLeft, ChevronRight, Loader2, MapPin } from 'lucide-react'
+import { ArrowLeft, Calendar as CalendarIcon, Clock, Users, DollarSign, Info, ChevronLeft, ChevronRight, Loader2, MapPin, CheckCircle2, Play, Video as VideoIcon, X, Star, Award, ChevronRight as ChevronRightIcon } from 'lucide-react'
 import { AppHeader } from '@/components/app-header'
 import Footer from '@/components/shared/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useInPersonSlotDetail } from '@/hooks/live-session/use-in-person-slot-detail'
+import { useInPersonSchedule } from '@/hooks/live-session/use-in-person-schedule'
 import { useInPersonBookingIntent } from '@/hooks/slots/use-in-person-booking-intent'
+import { useTeacherDetails } from '@/hooks/teacher/use-teacher-details'
 import { useToast } from '@/components/ui/toast'
 import { useMe } from '@/hooks/use-me'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Sparkles, Minus } from 'lucide-react'
 import { SERVICE_FEE } from '@/lib/constants'
+
+const MEDIA_BASE_URL = process.env.NEXT_PUBLIC_MEDIA_BASE_URL
+
+const resolveMediaUrl = (path?: string | null) => {
+  if (!path) {
+    return null
+  }
+
+  if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+
+  if (!MEDIA_BASE_URL) {
+    return null
+  }
+
+  const base = MEDIA_BASE_URL.endsWith('/') ? MEDIA_BASE_URL : `${MEDIA_BASE_URL}/`
+  
+  if (path.startsWith('videos/') || path.startsWith('/videos/')) {
+    const cleanedPath = path.replace(/^\/?videos\//, '').replace(/^\/+/, '')
+    return `${base}storage/videos/${cleanedPath}`
+  }
+  
+  const cleanedPath = path.replace(/^\/?storage\//, '').replace(/^\/+/, '')
+  return `${base}storage/${cleanedPath}`
+}
 
 const toDateOnlyKey = (date: Date | string | null | undefined) => {
   if (!date) {
@@ -109,69 +138,53 @@ export default function InPersonSessionDetailPage() {
   }, [params])
 
   const { data, isLoading, error } = useInPersonSlotDetail(sessionId)
+  const { data: scheduleData, isLoading: isScheduleLoading } = useInPersonSchedule(sessionId)
+  const { data: teacherDetailsData } = useTeacherDetails(data?.teacher?.id)
+  const teacherDetails = teacherDetailsData?.teacher
   const bookingIntentMutation = useInPersonBookingIntent()
   const { addToast } = useToast()
   const { data: userData } = useMe()
   const [pointsToUse, setPointsToUse] = useState<number>(0)
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<any>(null)
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false)
 
-  // Calculate available dates based on daily_available_seats
+  // Calculate available dates from schedule data (dates that have slots)
   const availableDates = useMemo(() => {
-    if (!data || !data.from_date || !data.to_date) {
-      return [] as Date[]
-    }
-    
-    // Parse dates and normalize to local midnight to avoid timezone issues
-    const parseDate = (dateString: string): Date | null => {
-      try {
-        const date = new Date(dateString)
-        if (Number.isNaN(date.getTime())) {
-          return null
-        }
-        // Create a new date using local date components to avoid timezone shifts
-        return new Date(date.getFullYear(), date.getMonth(), date.getDate())
-      } catch {
-        return null
-      }
-    }
-    
-    const fromDate = parseDate(data.from_date)
-    const toDate = parseDate(data.to_date)
-    
-    if (!fromDate || !toDate) {
+    if (!scheduleData || !Array.isArray(scheduleData) || scheduleData.length === 0) {
       return [] as Date[]
     }
     
     const dates: Date[] = []
-    
-    // Get today's date at midnight (local time)
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     
-    // Start from the later of: fromDate or today (to include today if it's in range)
-    const startDate = fromDate < today ? new Date(today) : new Date(fromDate)
-    const endDate = new Date(toDate)
-    
-    // Only proceed if start date is not after end date
-    if (startDate <= endDate) {
-      const current = new Date(startDate)
-      while (current <= endDate) {
-        // Only include dates that are today or in the future
-        const dateToCheck = new Date(current)
-        dateToCheck.setHours(0, 0, 0, 0)
-        
-        if (dateToCheck >= today) {
-          const dateKey = toDateOnlyKey(current)
-          if (dateKey && data.daily_available_seats[dateKey]) {
-            // Include date if it has availability data
-            dates.push(new Date(current))
+    scheduleData.forEach((scheduleDay) => {
+      // Only include dates that have available slots (not booked)
+      const hasAvailableSlots = scheduleDay.slots && scheduleDay.slots.some(slot => slot.is_booked === 0)
+      
+      if (hasAvailableSlots && scheduleDay.date) {
+        try {
+          const date = new Date(scheduleDay.date)
+          if (!Number.isNaN(date.getTime())) {
+            const dateToCheck = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+            dateToCheck.setHours(0, 0, 0, 0)
+            
+            // Only include today or future dates
+            if (dateToCheck >= today) {
+              dates.push(date)
+            }
           }
+        } catch {
+          // Skip invalid dates
         }
-        current.setDate(current.getDate() + 1)
       }
-    }
+    })
+    
+    // Sort dates chronologically
+    dates.sort((a, b) => a.getTime() - b.getTime())
     
     return dates
-  }, [data])
+  }, [scheduleData])
 
   const [currentMonth, setCurrentMonth] = useState(() => {
     return availableDates[0] ? new Date(availableDates[0].getFullYear(), availableDates[0].getMonth(), 1) : new Date()
@@ -193,24 +206,15 @@ export default function InPersonSessionDetailPage() {
 
   const availableDateKeys = useMemo(() => {
     const keys = new Set<string>()
-    if (data?.daily_available_seats) {
-      Object.keys(data.daily_available_seats).forEach(key => {
-        // Exclude dates that are in booked_slots
-        const isBooked = data.booked_slots?.some(booked => {
-          const bookedDateKey = toDateOnlyKey(booked.scheduled_date)
-          return bookedDateKey === key
-        })
-        if (!isBooked) {
-          keys.add(key)
-        }
-      })
-    }
+    availableDates.forEach((date) => {
+      const key = toDateOnlyKey(date)
+      if (key) keys.add(key)
+    })
     return keys
-  }, [data])
+  }, [availableDates])
 
   useEffect(() => {
     if (availableDates.length > 0) {
-      // Find the first future date (availableDates is already filtered to exclude past dates)
       const firstFutureDate = availableDates[0]
       const firstKey = toDateOnlyKey(firstFutureDate)
       if (firstKey && availableDateKeys.has(firstKey)) {
@@ -218,7 +222,6 @@ export default function InPersonSessionDetailPage() {
         setCurrentMonth(new Date(firstFutureDate.getFullYear(), firstFutureDate.getMonth(), 1))
       }
     } else {
-      // If no available dates, set current month to today
       const today = new Date()
       setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1))
     }
@@ -231,39 +234,32 @@ export default function InPersonSessionDetailPage() {
     return new Date(selectedDateKey)
   }, [selectedDateKey])
 
-  // Check if a date is full (booked) - must be after selectedDateKey is initialized
-  const isDateFull = useMemo(() => {
-    if (!data || !selectedDateKey) return true
-    const dayData = data.daily_available_seats[selectedDateKey]
-    if (!dayData) return true // If no data, consider it full
+  // Get time slots for selected date from schedule data
+  const selectedDateTimeSlots = useMemo(() => {
+    if (!selectedDateKey || !scheduleData || !Array.isArray(scheduleData)) return []
     
-    // Check if this date is in booked_slots
-    const isBooked = data.booked_slots?.some(booked => {
-      const bookedDateKey = toDateOnlyKey(booked.scheduled_date)
-      return bookedDateKey === selectedDateKey
-    }) || false
+    // Find the schedule day that matches the selected date
+    const scheduleDay = scheduleData.find(day => {
+      const dayKey = toDateOnlyKey(day.date)
+      return dayKey === selectedDateKey
+    })
     
-    return isBooked
-  }, [data, selectedDateKey])
+    if (!scheduleDay || !scheduleDay.slots) return []
+    
+    // Return available time slots (not booked)
+    return scheduleDay.slots.filter(slot => slot.is_booked === 0)
+  }, [selectedDateKey, scheduleData])
 
   const calendarCells = useMemo(() => buildCalendarGrid(currentMonth), [currentMonth])
 
   const showTimeSlot = useMemo(() => {
-    if (!data || !selectedDateKey) {
+    if (!selectedDateKey || !scheduleData) {
       return false
     }
     
-    // Check if selected date is within the date range
-    if (data.from_date && data.to_date) {
-      const fromKey = toDateOnlyKey(data.from_date)
-      const toKey = toDateOnlyKey(data.to_date)
-      if (fromKey && toKey) {
-        return selectedDateKey >= fromKey && selectedDateKey <= toKey && availableDateKeys.has(selectedDateKey)
-      }
-    }
-    
-    return false
-  }, [data, selectedDateKey, availableDateKeys])
+    const hasTimeSlots = selectedDateTimeSlots.length > 0
+    return availableDateKeys.has(selectedDateKey) && hasTimeSlots
+  }, [selectedDateKey, availableDateKeys, scheduleData, selectedDateTimeSlots])
 
   // Points system calculations
   const availablePoints = userData?.points || 0
@@ -311,6 +307,8 @@ export default function InPersonSessionDetailPage() {
       return
     }
     setSelectedDateKey(key)
+    // Reset selected time slot when date changes
+    setSelectedTimeSlot(null)
   }
 
   const handleReserveSlot = async () => {
@@ -336,30 +334,68 @@ export default function InPersonSessionDetailPage() {
       return
     }
 
-    if (isDateFull) {
+    if (!selectedTimeSlot) {
       addToast({
         type: 'error',
-        title: 'Reservation Failed',
-        description: 'This slot is already full. Please select another date.',
+        title: 'Missing Selection',
+        description: 'Please select a time slot to reserve.',
         duration: 5000,
       })
       return
     }
 
     try {
+      // Calculate the payment amount without service fee (service fee will be added on payment page)
+      const safeNewPaymentAmount = Math.max(0, newPaymentAmount)
+      
+      // Use sessionId directly (from URL params) to ensure we have the correct ID
+      // This should match data.id, but using sessionId is more reliable
+      const slotIdToSend = sessionId
+      
+      // Log calculation for debugging
+      console.log('💰 In-Person Booking Intent - Request Data:', {
+        slot_id: slotIdToSend,
+        data_id: data?.id,
+        sessionId: sessionId,
+        scheduled_date: selectedDate,
+        selectedTimeSlotId: selectedTimeSlot?.id,
+        slotPrice,
+        pointsToUse,
+        pointsDiscount,
+        newPaymentAmount: safeNewPaymentAmount,
+      })
+      
+      if (!slotIdToSend || !Number.isFinite(slotIdToSend)) {
+        throw new Error('Invalid slot ID. Please refresh the page and try again.')
+      }
+      
       const result = await bookingIntentMutation.mutateAsync({
-        slot_id: data.id,
+        slot_id: slotIdToSend, // Use sessionId directly from URL params
         scheduled_date: selectedDate,
         points_to_use: pointsToUse > 0 ? pointsToUse : undefined,
-        new_payment_amount: newPaymentAmount,
+        new_payment_amount: safeNewPaymentAmount,
       })
 
       // Check if payment is required
       if (result?.requires_payment && result?.client_secret) {
+        // Pass amount without service fee - payment page will add it
+        // The API should have created payment intent with the correct amount including service fee
+        const amountWithoutServiceFee = safeNewPaymentAmount
+        
+        // Log for debugging
+        console.log('💰 In-Person Payment Amount:', {
+          slotPrice,
+          pointsToUse,
+          pointsDiscount,
+          newPaymentAmount: safeNewPaymentAmount,
+          amountPassedToPaymentPage: amountWithoutServiceFee,
+          apiReturnedAmount: result.amount,
+        })
+        
         // Build URL with payment data as query parameters
         const paymentParams = new URLSearchParams({
           client_secret: result.client_secret,
-          amount: String(result.amount),
+          amount: String(amountWithoutServiceFee), // Amount without service fee
           payment_intent: result.payment_intent_id || '',
         })
         
@@ -405,17 +441,17 @@ export default function InPersonSessionDetailPage() {
         <div className="max-w-5xl mx-auto px-4">
           <Button
             variant="ghost"
-            className="text-gray-300 hover:text-white hover:bg-gray-800/70 mb-6 cursor-pointer"
+            className="text-gray-400 hover:text-white hover:bg-gray-800/70 mb-8 cursor-pointer transition-all duration-300 group"
             onClick={() => router.back()}
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to in-person sessions
+            <ArrowLeft className="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition-transform" />
+            <span className="font-medium">Back to in-person sessions</span>
           </Button>
 
           {isLoading ? (
             <Card className="bg-gray-800/80 border border-gray-700">
               <CardContent className="py-16 flex justify-center">
-                <Calendar className="h-10 w-10 text-orange-500 animate-pulse" />
+                <CalendarIcon className="h-10 w-10 text-orange-500 animate-pulse" />
               </CardContent>
             </Card>
           ) : error ? (
@@ -456,116 +492,361 @@ export default function InPersonSessionDetailPage() {
                         {data.description || 'Join the mentor for an in-person learning experience with hands-on guidance and personalized feedback.'}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <div className="text-3xl font-bold text-white">
-                        {data.price ? `$${Number(data.price).toFixed(2)}` : 'Free'}
+                    <div className="flex flex-col items-end gap-3">
+                      <div className="text-right">
+                        <div className="text-3xl font-bold text-white">
+                          {data.price ? `$${Number(data.price).toFixed(2)}` : 'Free'}
+                        </div>
+                        <div className="text-sm text-gray-400">per session</div>
                       </div>
-                      <div className="text-sm text-gray-400">per session</div>
+                      {data?.video && (
+                        <div 
+                          className="w-48 aspect-video rounded-lg overflow-hidden border border-gray-700 bg-black shadow-lg cursor-pointer group relative"
+                          onClick={() => setIsVideoModalOpen(true)}
+                        >
+                          <video 
+                            src={resolveMediaUrl(data.video) || data.video} 
+                            className="w-full h-full object-cover"
+                            preload="metadata"
+                          />
+                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                            <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                              <Play className="w-6 h-6 text-white ml-1" fill="white" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-semibold text-white">Select a date</h2>
-                      <div className="flex items-center gap-2 text-sm text-gray-400">
-                        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white" onClick={handlePrevMonth}>
-                          <ChevronLeft className="w-4 h-4" />
-                        </Button>
-                        <span>{new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(currentMonth)}</span>
-                        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white" onClick={handleNextMonth}>
-                          <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      </div>
+                <CardContent className="pt-6">
+                  {isScheduleLoading ? (
+                    <div className="py-20 flex flex-col items-center justify-center space-y-4">
+                      <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
+                      <p className="text-gray-400">Loading availability...</p>
                     </div>
-                    <div className="grid grid-cols-7 gap-1 text-center text-sm text-gray-400 mb-1">
-                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                        <div key={day} className="py-2">
-                          {day}
+                  ) : !scheduleData || scheduleData.length === 0 ? (
+                    <div className="py-20 text-center space-y-3">
+                      <CalendarIcon className="h-12 w-12 text-gray-600 mx-auto" />
+                      <p className="text-gray-400">No available slots found for this session.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                      {/* Left: Calendar and Slot Selection */}
+                      <div className="lg:col-span-2 space-y-8">
+                          <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                              <CalendarIcon className="w-6 h-6 text-orange-500" />
+                              Select Date
+                            </h2>
+                            <div className="flex items-center gap-3 text-sm text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-lg border border-gray-700">
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-white" onClick={handlePrevMonth}>
+                                <ChevronLeft className="w-4 h-4" />
+                              </Button>
+                              <span className="font-medium min-w-[120px] text-center">
+                                {new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(currentMonth)}
+                              </span>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-white" onClick={handleNextMonth}>
+                                <ChevronRight className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Calendar Grid */}
+                          <div className="bg-gray-800/40 rounded-xl border border-gray-700/50 p-4">
+                            <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+                              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                                <div key={day} className="py-2">{day}</div>
+                              ))}
+                            </div>
+                            <div className="grid grid-cols-7 gap-1">
+                              {calendarCells.map(({ date, isCurrentMonth }) => {
+                                const key = toDateOnlyKey(date)
+                                const isAvailable = key ? availableDateKeys.has(key) : false
+                                const isSelected = key === selectedDateKey
+                                
+                                const today = new Date()
+                                today.setHours(0, 0, 0, 0)
+                                const dateToCheck = new Date(date)
+                                dateToCheck.setHours(0, 0, 0, 0)
+                                const isPastDate = dateToCheck < today
+                                const isDisabled = !isAvailable || isPastDate
+
+                                return (
+                                  <button
+                                    key={`${date.toISOString()}-${isCurrentMonth}`}
+                                    onClick={() => handleDateSelect(date)}
+                                    className={`relative flex h-14 items-center justify-center rounded-lg border text-sm transition-all duration-200 ${
+                                      isSelected
+                                        ? 'border-orange-600 bg-orange-600 text-white shadow-[0_0_15px_rgba(249,115,22,0.3)] z-10'
+                                        : isAvailable && !isPastDate
+                                        ? 'border-orange-500/30 bg-orange-500/5 text-orange-200 hover:border-orange-500 hover:bg-orange-500/10'
+                                        : isCurrentMonth
+                                        ? 'border-gray-800 bg-gray-900/50 text-gray-600 cursor-not-allowed'
+                                        : 'border-transparent text-gray-700 cursor-not-allowed opacity-20'
+                                    }`}
+                                    disabled={isDisabled}
+                                  >
+                                    <span className="font-semibold">{date.getDate()}</span>
+                                    {isAvailable && !isSelected && !isPastDate && (
+                                      <span className="absolute bottom-2 h-1 w-1 rounded-full bg-orange-500" />
+                                    )}
+                                    {isSelected && (
+                                      <span className="absolute bottom-2 h-1 w-4 rounded-full bg-white/50" />
+                                    )}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+
+                        {/* Available Slots for Selected Date */}
+                        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                          <div className="flex items-center justify-between mt-4">
+                            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                              <Clock className="w-6 h-6 text-orange-500" />
+                              Available Slots
+                              {selectedDate && (
+                                <span className="text-sm font-normal text-gray-500 bg-gray-800/50 px-3 py-1 rounded-full border border-gray-700/50 ml-2">
+                                  {selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                                </span>
+                              )}
+                            </h2>
+                          </div>
+
+                          {!selectedDateKey ? (
+                            <div className="py-12 border-2 border-dashed border-gray-800 rounded-xl text-center text-gray-500">
+                              <Clock className="w-12 h-12 mx-auto mb-3 text-gray-600" />
+                              <p className="text-gray-400">Pick a date on the calendar to view available times</p>
+                            </div>
+                          ) : !selectedDateTimeSlots || selectedDateTimeSlots.length === 0 ? (
+                            <div className="py-12 bg-gray-800/30 rounded-xl text-center text-gray-400 border border-gray-700/50">
+                              <Clock className="w-12 h-12 mx-auto mb-3 text-gray-600" />
+                              <p>No slots available for the selected date.</p>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {selectedDateTimeSlots.map((slot) => {
+                                const isSelected = selectedTimeSlot?.id === slot.id
+                                
+                                return (
+                                  <button
+                                    key={slot.id}
+                                    onClick={() => setSelectedTimeSlot(slot)}
+                                    className={`group relative px-5 py-4 rounded-xl border transition-all duration-200 text-left ${
+                                      isSelected
+                                        ? 'border-orange-500 bg-orange-600 text-white shadow-[0_0_20px_rgba(249,115,22,0.4)] scale-[1.02]'
+                                        : 'border-gray-700 bg-gray-800/50 text-gray-300 hover:border-orange-500/50 hover:bg-gray-800 hover:scale-[1.01]'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div className={`p-2 rounded-lg ${
+                                        isSelected 
+                                          ? 'bg-white/20' 
+                                          : 'bg-orange-500/10 group-hover:bg-orange-500/20'
+                                      }`}>
+                                        <Clock className={`w-4 h-4 ${
+                                          isSelected ? 'text-white' : 'text-orange-400'
+                                        }`} />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className={`font-semibold text-sm mb-1 ${
+                                          isSelected ? 'text-white' : 'text-white'
+                                        }`}>
+                                          {formatTimeRange(slot.start_time, slot.end_time)}
+                                        </div>
+                                        <div className={`text-xs ${
+                                          isSelected ? 'text-orange-100' : 'text-gray-400'
+                                        }`}>
+                                          {(() => {
+                                            const start = new Date(`1970-01-01T${slot.start_time}`)
+                                            const end = new Date(`1970-01-01T${slot.end_time}`)
+                                            const diffMs = end.getTime() - start.getTime()
+                                            const diffMins = Math.round(diffMs / 60000)
+                                            const hours = Math.floor(diffMins / 60)
+                                            const mins = diffMins % 60
+                                            return hours > 0 
+                                              ? `${hours}h ${mins > 0 ? `${mins}m` : ''}`.trim()
+                                              : `${diffMins}m`
+                                          })()} session
+                                        </div>
+                                      </div>
+                                      {isSelected && (
+                                        <div className="flex-shrink-0">
+                                          <CheckCircle2 className="w-5 h-5 text-white" />
+                                        </div>
+                                      )}
+                                    </div>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-7 gap-1">
-                      {calendarCells.map(({ date, isCurrentMonth }) => {
-                        const key = toDateOnlyKey(date)
-                        const isAvailable = key ? availableDateKeys.has(key) : false
-                        const isSelected = key === selectedDateKey
-                        
-                        // Check if date is in the past (today is allowed)
-                        const today = new Date()
-                        today.setHours(0, 0, 0, 0)
-                        const dateToCheck = new Date(date)
-                        dateToCheck.setHours(0, 0, 0, 0)
-                        // Only block dates that are strictly before today (today >= today, so today is allowed)
-                        const isPastDate = dateToCheck < today
-                        const isDisabled = !isAvailable || isPastDate
 
-                        return (
-                          <button
-                            key={`${date.toISOString()}-${isCurrentMonth}`}
-                            onClick={() => handleDateSelect(date)}
-                            className={`relative flex h-12 items-center justify-center rounded-md border text-sm transition-colors ${
-                              isSelected
-                                ? 'border-orange-500 bg-orange-600/20 text-white shadow-inner'
-                                : isAvailable && !isPastDate
-                                ? 'border-orange-500/40 bg-orange-500/10 text-orange-200 hover:bg-orange-500/20'
-                                : isCurrentMonth
-                                ? 'border-gray-700 bg-gray-800 text-gray-400 cursor-not-allowed opacity-50'
-                                : 'border-gray-800 bg-gray-900 text-gray-700 cursor-not-allowed opacity-50'
-                            }`}
-                            disabled={isDisabled}
-                            title={isPastDate ? 'Past dates cannot be selected' : undefined}
-                          >
-                            {date.getDate()}
-                            {isAvailable && !isSelected && !isPastDate && (
-                              <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-orange-400" />
-                            )}
-                          </button>
-                        )
-                      })}
-                    </div>
-                    <div className="mt-4 text-sm text-gray-400 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="inline-block h-3 w-3 rounded-full bg-orange-500"></span>
-                        <span>Available date</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="inline-block h-3 w-3 rounded-full bg-gray-500"></span>
-                        <span>Unavailable</span>
-                      </div>
-                    </div>
-                  </div>
+                        {/* Meet your Master - Enhanced Professional Section */}
+                        <div className="pt-12 border-t border-gray-700/50">
+                          <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                              <Award className="w-6 h-6 text-orange-500" />
+                              Meet your Master
+                            </h2>
+                            <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/20 px-3 py-1">
+                              Expert Mentor
+                            </Badge>
+                          </div>
+                          
+                          <div className="relative group">
+                            {/* Decorative Background Element */}
+                            <div className="absolute -inset-0.5 bg-orange-600/10 rounded-3xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+                            
+                            <div className="relative bg-gray-800/40 backdrop-blur-xl rounded-2xl border border-gray-700/50 p-6 md:p-8 overflow-hidden">
+                              <div className="flex flex-col md:grid md:grid-cols-12 gap-8 relative z-10">
+                                
+                                {/* Avatar and Identity - MD: Col 4 */}
+                                <div className="md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left">
+                                  <div className="relative mb-6">
+                                    <div className="h-28 w-28 md:h-32 md:w-32 rounded-3xl bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 flex items-center justify-center text-4xl md:text-5xl text-white font-black shadow-2xl transform transition-transform group-hover:scale-105 duration-500">
+                                      {data.teacher?.name?.[0] || 'M'}
+                                    </div>
+                                    <div className="absolute -bottom-2 -right-2 bg-green-500 h-6 w-6 rounded-full border-4 border-gray-800 shadow-xl" title="Online" />
+                                    {/* Subtle ring animation */}
+                                    <div className="absolute -inset-2 border border-orange-500/20 rounded-[2rem] animate-pulse" />
+                                  </div>
+                                  
+                                  <h3 className="text-2xl font-bold text-white tracking-tight mb-1">{data.teacher?.name}</h3>
+                                  <p className="text-orange-400 font-medium text-sm mb-4">
+                                    {teacherDetails?.title || 'Expert In-Person Session Mentor'}
+                                  </p>
+                                  
+                                  <div className="flex items-center gap-4">
+                                    <div className="flex flex-col">
+                                      <span className="text-xl font-bold text-white">{teacherDetails?.average_rating || '5.0'}</span>
+                                      <div className="flex text-yellow-500">
+                                        {[...Array(5)].map((_, i) => (
+                                          <Star key={i} className={`w-3 h-3 ${i < Math.floor(teacherDetails?.average_rating || 5) ? 'fill-current' : 'opacity-30'}`} />
+                                        ))}
+                                      </div>
+                                    </div>
+                                    <div className="h-8 w-px bg-gray-700" />
+                                    <div className="flex flex-col">
+                                      <span className="text-xl font-bold text-white">{teacherDetails?.total_sessions || '0'}</span>
+                                      <span className="text-[10px] text-gray-500 uppercase font-bold">Sessions</span>
+                                    </div>
+                                  </div>
+                                </div>
 
-                  <div className="space-y-5">
-                    <div>
-                      <h2 className="text-lg font-semibold text-white mb-3">Time slot</h2>
-                      {selectedDate && showTimeSlot ? (
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900/50 px-4 py-3">
-                            <div className="flex items-center gap-3 text-white">
-                              <Clock className="w-4 h-4 text-orange-400" />
-                              <div className="flex flex-col">
-                                <span>{data.start_time && data.end_time ? formatTimeRange(data.start_time, data.end_time) : 'Time TBD'}</span>
-                                {!isDateFull && (
-                                  <span className="text-xs text-gray-400">
-                                    Available
-                                  </span>
-                                )}
+                                {/* Body Content - MD: Col 8 */}
+                                <div className="md:col-span-8 flex flex-col justify-between">
+                                  <div className="space-y-6">
+                                    <div>
+                                      <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                        <Info className="w-4 h-4 text-orange-400" />
+                                        About the Mentor
+                                      </h4>
+                                      <p className="text-gray-300 text-base leading-relaxed">
+                                        {data.teacher?.name} is a verified Brain Bridge Master specializing in <span className="text-orange-300 font-semibold">{data.subject?.name}</span>. 
+                                        Approaching education with a focus on hands-on learning and personalized feedback, {data.teacher?.name} is dedicated to helping students 
+                                        master professional concepts through direct interaction and real-world application.
+                                      </p>
+                                    </div>
+
+                                    <div>
+                                      <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Top Expertise</h4>
+                                      <div className="flex flex-wrap gap-2">
+                                        {teacherDetails?.skills && teacherDetails.skills.length > 0 ? (
+                                          teacherDetails.skills.slice(0, 4).map((skill) => (
+                                            <div 
+                                              key={skill.id} 
+                                              className="flex items-center gap-2 px-3 py-1.5 bg-orange-500/5 border border-orange-500/20 rounded-xl text-xs text-orange-200 font-medium hover:bg-orange-500/10 transition-colors"
+                                            >
+                                              <CheckCircle2 className="w-3.5 h-3.5 text-orange-500" />
+                                              {skill.name}
+                                            </div>
+                                          ))
+                                        ) : (
+                                          <div className="text-gray-500 text-sm italic">General {data.subject?.name} Expertise</div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-8 pt-8 border-t border-gray-700/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div className="flex flex-wrap gap-3">
+                                      <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full text-[11px] text-green-400 font-semibold">
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                        VERIFIED MASTER
+                                      </div>
+                                      <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-[11px] text-blue-400 font-semibold">
+                                        <Users className="w-3.5 h-3.5" />
+                                        TOP 1% MENTOR
+                                      </div>
+                                    </div>
+                                    
+                                    <Button 
+                                      asChild 
+                                      variant="ghost" 
+                                      className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 group/btn"
+                                    >
+                                      <Link href={`/masters/${data.teacher?.id}`} className="flex items-center">
+                                        View Professional Portfolio
+                                        <ChevronRightIcon className="w-4 h-4 ml-1 transform group-hover/btn:translate-x-1 transition-transform" />
+                                      </Link>
+                                    </Button>
+                                  </div>
+                                </div>
                               </div>
                             </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Booking Summary & Details */}
+                      <div className="space-y-6">
+                        <div className="rounded-xl border border-gray-700 bg-gray-900/50 p-6 space-y-6 sticky top-28">
+                          <div>
+                            <h3 className="text-gray-400 font-semibold mb-4 text-center tracking-wide uppercase text-xs">Booking Summary</h3>
+                            {selectedTimeSlot ? (
+                              <div className="space-y-4 bg-orange-600/10 border border-orange-500/20 rounded-xl p-5 animate-in fade-in zoom-in-95 duration-200">
+                                <div className="flex items-start gap-3">
+                                  <div className="p-2 bg-orange-600/20 rounded-lg text-orange-400">
+                                    <CalendarIcon className="w-5 h-5" />
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-[10px] text-gray-500 uppercase font-black">Confirmed Date</span>
+                                    <span className="text-sm font-bold text-white">
+                                      {selectedDate?.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                  <div className="p-2 bg-orange-600/20 rounded-lg text-orange-400">
+                                    <Clock className="w-5 h-5" />
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-[10px] text-gray-500 uppercase font-black">Time Range</span>
+                                    <span className="text-sm font-bold text-white">{formatTimeRange(selectedTimeSlot.start_time, selectedTimeSlot.end_time)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-center py-10 px-4 rounded-xl bg-gray-800/50 border border-dashed border-gray-700">
+                                <p className="text-xs text-gray-500 italic">Select your preferred date and time slot to confirm booking</p>
+                              </div>
+                            )}
                           </div>
 
                           {/* Points Usage Section */}
                           {availablePoints > 0 && slotPrice > 0 && (
-                            <div className="mb-4 pb-4 border-b border-gray-700">
+                            <div className="pt-4 border-t border-gray-700/50">
                               <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                  <Label className="text-white flex items-center gap-2 text-sm">
-                                    <Sparkles className="w-4 h-4 text-yellow-400" />
-                                    Use Points (1 point = $1 discount)
+                                  <Label className="text-white flex items-center gap-2 text-[10px] uppercase font-bold">
+                                    <Sparkles className="w-3 h-3 text-yellow-400" />
+                                    Use Points (1 pt = $1)
                                   </Label>
                                   <span className="text-xs text-gray-400">
-                                    Available: <span className="text-yellow-400 font-semibold">{availablePoints}</span> points
+                                    <span className="text-yellow-400 font-semibold">{availablePoints}</span> pts
                                   </span>
                                 </div>
                                 
@@ -577,56 +858,29 @@ export default function InPersonSessionDetailPage() {
                                     value={pointsToUse || ''}
                                     onChange={(e) => handlePointsChange(e.target.value)}
                                     placeholder="0"
-                                    className="bg-gray-700 border-gray-600 text-white flex-1 py-"
+                                    className="bg-gray-800 border-gray-700 text-white flex-1"
                                     disabled={bookingIntentMutation.isPending}
                                   />
                                   <Button
                                     type="button"
                                     variant="outline"
                                     onClick={handleMaxPoints}
-                                    className="border-yellow-600 text-yellow-400 hover:bg-yellow-900/30 whitespace-nowrap text-xs px-3"
+                                    className="border-yellow-600/50 text-yellow-400 hover:bg-yellow-900/30 text-[10px] px-3 font-bold"
                                     disabled={bookingIntentMutation.isPending || availablePoints === 0}
                                   >
-                                    Use Max
+                                    MAX
                                   </Button>
                                 </div>
                                 
                                 {pointsToUse > 0 && (
-                                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                                    <div className="space-y-1 text-sm">
-                                      <div className="flex items-center justify-between text-gray-300">
-                                        <span>Session Price:</span>
-                                        <span>${slotPrice.toFixed(2)}</span>
-                                      </div>
-                                      <div className="flex items-center justify-between text-yellow-400">
-                                        <span className="flex items-center gap-1">
-                                          <Minus className="w-3 h-3" />
-                                          Points Discount ({pointsToUse} pts):
-                                        </span>
-                                        <span>-${pointsDiscount.toFixed(2)}</span>
-                                      </div>
-                                      <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-yellow-500/20">
-                                        <span>New Payment Amount:</span>
-                                        <span>${newPaymentAmount.toFixed(2)}</span>
-                                      </div>
-                                      <div className="flex items-center justify-between text-gray-400 text-xs pt-1">
-                                        <span>Service Fee:</span>
-                                        <span>${SERVICE_FEE.toFixed(2)} (flat)</span>
-                                      </div>
+                                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-xs space-y-1">
+                                    <div className="flex justify-between text-yellow-400">
+                                      <span>Points Discount:</span>
+                                      <span>-${pointsDiscount.toFixed(2)}</span>
                                     </div>
-                                  </div>
-                                )}
-                                {pointsToUse === 0 && (
-                                  <div className="p-3 bg-gray-700/50 border border-gray-600 rounded-lg">
-                                    <div className="space-y-1 text-sm">
-                                      <div className="flex items-center justify-between text-gray-300">
-                                        <span>Session Price:</span>
-                                        <span>${slotPrice.toFixed(2)}</span>
-                                      </div>
-                                      <div className="flex items-center justify-between text-gray-400 text-xs pt-1">
-                                        <span>Service Fee:</span>
-                                        <span>${SERVICE_FEE.toFixed(2)} (flat)</span>
-                                      </div>
+                                    <div className="flex justify-between text-white font-bold pt-1 border-t border-yellow-500/20 mt-1">
+                                      <span>Final Amount:</span>
+                                      <span>${newPaymentAmount.toFixed(2)}</span>
                                     </div>
                                   </div>
                                 )}
@@ -635,80 +889,27 @@ export default function InPersonSessionDetailPage() {
                           )}
 
                           <Button 
-                            className="w-full bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
-                            disabled={isDateFull || bookingIntentMutation.isPending}
+                            className="w-full bg-orange-600 hover:bg-orange-700 text-white cursor-pointer py-7 text-base font-bold shadow-xl shadow-orange-600/20 active:scale-95 transition-transform"
+                            disabled={!selectedTimeSlot || bookingIntentMutation.isPending}
                             onClick={handleReserveSlot}
                           >
                             {bookingIntentMutation.isPending ? (
                               <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                <Loader2 className="w-5 h-5 mr-3 animate-spin" />
                                 Reserving...
                               </>
-                            ) : isDateFull ? (
-                              'Full'
                             ) : (
-                              `Reserve Slot${pointsToUse > 0 ? ` - Pay $${newPaymentAmount.toFixed(2)}` : ''}`
+                              `Book This Slot • $${(newPaymentAmount > 0 ? newPaymentAmount : 0).toFixed(2)}`
                             )}
                           </Button>
-                          {slotPrice > 0 && (
-                            <p className="text-xs text-gray-400 text-center mt-2">
-                              $7.95 flat service fee applies to all purchases
-                            </p>
-                          )}
+                          
+                          <p className="text-[10px] text-gray-600 text-center font-medium">
+                            $7.95 flat service fee will be added on payment page
+                          </p>
                         </div>
-                      ) : (
-                        <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-6 text-center text-gray-400">
-                          Pick an available date to view the time slot.
-                        </div>
-                      )}
+                      </div>
                     </div>
-
-                    <div className="rounded-lg border border-gray-700 bg-gray-900/50 p-5 space-y-3 text-sm text-gray-300">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-white">
-                          <Users className="w-4 h-4 text-orange-400" />
-                          <span>Master</span>
-                        </div>
-                        {data.teacher?.id && (
-                          <Button
-                            asChild
-                            variant="outline"
-                            size="sm"
-                            className="border-orange-600 text-orange-400 hover:bg-orange-900/30 cursor-pointer"
-                          >
-                            <Link href={`/masters/${data.teacher.id}`}>
-                              Show Master Details
-                            </Link>
-                          </Button>
-                        )}
-                      </div>
-                      <div className="pl-6">
-                        <p className="font-medium text-white">{data.teacher?.name ?? 'Unknown'}</p>
-                        {data.teacher?.email && <p className="text-gray-400">{data.teacher.email}</p>}
-                      </div>
-                      {data.subject && (
-                        <>
-                          <div className="flex items-center gap-2 text-white pt-2">
-                            <Info className="w-4 h-4 text-blue-400" />
-                            <span>Subject</span>
-                          </div>
-                          <div className="pl-6 text-gray-200">{data.subject.name}</div>
-                        </>
-                      )}
-                      <div className="flex items-center gap-2 text-white pt-2">
-                        <DollarSign className="w-4 h-4 text-green-400" />
-                        <span>Price</span>
-                      </div>
-                      <div className="pl-6 text-gray-200">
-                        {data.price ? `$${Number(data.price).toFixed(2)}` : 'Free'}
-                      </div>
-                      <div className="flex items-center gap-2 text-white pt-2">
-                        <MapPin className="w-4 h-4 text-orange-400" />
-                        <span>Session Type</span>
-                      </div>
-                      <div className="pl-6 text-gray-200">In-Person</div>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -716,6 +917,53 @@ export default function InPersonSessionDetailPage() {
         </div>
       </main>
       <Footer />
+
+      {/* Video Modal */}
+      {data?.video && (
+        <Dialog open={isVideoModalOpen} onOpenChange={setIsVideoModalOpen}>
+          <DialogContent className="max-w-4xl w-full bg-gray-900 border-gray-700 p-0">
+            <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-700">
+              <div className="flex items-center justify-between">
+                <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
+                  <VideoIcon className="w-5 h-5 text-orange-500" />
+                  {data.title || 'Session Introduction Video'}
+                </DialogTitle>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsVideoModalOpen(false)}
+                  className="text-gray-400 hover:text-white hover:bg-gray-800"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+            </DialogHeader>
+            <div className="p-6">
+              <div className="relative w-full rounded-lg overflow-hidden border border-gray-700 bg-black shadow-2xl">
+                <div
+                  className="relative w-full"
+                  style={{ paddingBottom: '56.25%' }} // 16:9 aspect ratio
+                >
+                  <video
+                    src={resolveMediaUrl(data.video) || data.video}
+                    controls
+                    autoPlay
+                    className="absolute inset-0 w-full h-full object-cover"
+                    preload="metadata"
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+              </div>
+              {data.description && (
+                <div className="mt-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                  <p className="text-sm text-gray-300 leading-relaxed">{data.description}</p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

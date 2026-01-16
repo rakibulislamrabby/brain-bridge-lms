@@ -18,10 +18,14 @@ const getAuthToken = (): string | null => {
   return null
 }
 
-const getAuthHeaders = (): Record<string, string> => {
+const getAuthHeaders = (isFormData: boolean = false): Record<string, string> => {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     Accept: 'application/json',
+  }
+
+  // Only set Content-Type for JSON, let browser set it for FormData
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json'
   }
 
   const token = getAuthToken()
@@ -37,18 +41,43 @@ export interface InPersonSlotTimeRange {
   end_time: string
 }
 
+export interface InPersonDaySlot {
+  slot_day: string
+  times: InPersonSlotTimeRange[]
+}
+
 export interface CreateInPersonSlotRequest {
   title: string
   subject_id: number
   from_date: string
   to_date: string
-  slots: InPersonSlotTimeRange[]
+  slots: InPersonDaySlot[]
   price: number
   description: string
   country?: string
   state?: string
   city?: string
   area?: string
+  video?: File | string | null
+}
+
+export interface InPersonSlotTime {
+  id: number
+  in_person_slot_day_id: number
+  start_time: string
+  end_time: string
+  is_booked: number
+  created_at: string
+  updated_at: string
+}
+
+export interface InPersonSlotDay {
+  id: number
+  in_person_slot_id: number
+  day: string
+  created_at: string
+  updated_at: string
+  times: InPersonSlotTime[]
 }
 
 export interface InPersonSlotData {
@@ -59,32 +88,72 @@ export interface InPersonSlotData {
   area: string
   title: string
   teacher_id: number
-  subject_id: number
+  subject_id: number | string
   from_date: string
   to_date: string
-  start_time: string
-  end_time: string
   price: number
-  description: string
+  description: string | null
+  video: string | null
   created_at: string
   updated_at: string
+  days: InPersonSlotDay[]
 }
 
 export interface CreateInPersonSlotResponse {
   success: boolean
   message: string
-  data: InPersonSlotData[]
+  data: InPersonSlotData
 }
 
 const createInPersonSlot = async (payload: CreateInPersonSlotRequest): Promise<CreateInPersonSlotResponse> => {
   const url = joinUrl('teacher/in-person-slots')
-  const headers = getAuthHeaders()
+  const hasVideo = payload.video instanceof File
+  const headers = getAuthHeaders(hasVideo)
+
+  let body: any
+  if (hasVideo) {
+    const formData = new FormData()
+    
+    // Add all fields to FormData
+    formData.append('title', payload.title)
+    formData.append('subject_id', payload.subject_id.toString())
+    formData.append('from_date', payload.from_date)
+    formData.append('to_date', payload.to_date)
+    formData.append('price', payload.price.toString())
+    formData.append('description', payload.description || '')
+    
+    if (payload.country) formData.append('country', payload.country)
+    if (payload.state) formData.append('state', payload.state)
+    if (payload.city) formData.append('city', payload.city)
+    if (payload.area) formData.append('area', payload.area)
+    
+    // Only append video if it's a File
+    if (payload.video instanceof File) {
+      formData.append('video', payload.video)
+    }
+
+    // Handle nested slots structure (similar to video call slots)
+    payload.slots.forEach((day: InPersonDaySlot, index: number) => {
+      formData.append(`slots[${index}][slot_day]`, day.slot_day)
+      // Fallback: some backends might expect 'day'
+      formData.append(`slots[${index}][day]`, day.slot_day)
+      
+      day.times.forEach((time: InPersonSlotTimeRange, tIndex: number) => {
+        formData.append(`slots[${index}][times][${tIndex}][start_time]`, time.start_time)
+        formData.append(`slots[${index}][times][${tIndex}][end_time]`, time.end_time)
+      })
+    })
+    
+    body = formData
+  } else {
+    body = JSON.stringify(payload)
+  }
 
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify(payload),
+      body,
     })
 
     const text = await response.text()
@@ -118,10 +187,9 @@ const createInPersonSlot = async (payload: CreateInPersonSlotRequest): Promise<C
       throw new Error(result?.message || 'Slot creation failed')
     }
 
-    if (!Array.isArray(result.data)) {
-      throw new Error('Invalid response: expected array of slots')
-    } 
-    
+    if (!result.data || typeof result.data !== 'object') {
+      throw new Error('Invalid response: expected slot data object')
+    }
 
     return result as CreateInPersonSlotResponse
   } catch (error) {
