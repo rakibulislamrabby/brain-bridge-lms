@@ -356,8 +356,8 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-white">Add New Course</h1>
-        <p className="text-gray-400 mt-2">Create a new course with modules and videos</p>
+        <h1 className="text-3xl font-bold text-white">Add New Recorded Lesson</h1>
+        <p className="text-gray-400 mt-2">Create a new recorded lesson with modules and videos</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

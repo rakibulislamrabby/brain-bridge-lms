@@ -115,13 +115,13 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     {
-      title: 'Course',
+      title: 'Recorded Lesson',
       icon: BookOpen,
       href: '/dashboard/course',
       items: [
-        { title: 'All Courses', href: '/dashboard/course', icon: BookOpen },
-        { title: 'Add Course', href: '/dashboard/course/add-course', icon: FileText },
-        { title: 'Select Main Course', href: '/dashboard/course/add-selected-course', icon: CheckSquare }
+        { title: 'All Lesson', href: '/dashboard/course', icon: BookOpen },
+        { title: 'Add Lesson', href: '/dashboard/course/add-course', icon: FileText },
+        { title: 'Select Main Lesson', href: '/dashboard/course/add-selected-course', icon: CheckSquare }
       ],
       allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },

@@ -232,8 +232,8 @@ export default function CourseManagement() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">Course Management</h1>
-          <p className="text-gray-400 mt-2">Monitor and manage all courses on the platform</p>
+          <h1 className="text-3xl font-bold text-white">Recorded Lesson</h1>
+          <p className="text-gray-400 mt-2">Monitor and manage all lessons on the platform</p>
         </div>
         <Link href="/dashboard/course/add-course">
             <Button className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer">
@@ -320,10 +320,10 @@ export default function CourseManagement() {
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2 pt-5">
             <BookOpen className="h-5 w-5 text-orange-500" />
-            Courses
+            Recorded Lesson
           </CardTitle>
           <CardDescription className="text-gray-400">
-            Overview of all courses fetched from the Brain Bridge API
+            Overview of all courses Recorded Lesson
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
