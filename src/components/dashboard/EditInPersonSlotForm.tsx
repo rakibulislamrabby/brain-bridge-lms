@@ -462,32 +462,40 @@ export default function EditInPersonSlotForm({
 
       addToast({
         type: "success",
-        title: "In-Person Slot Updated",
-        description: result?.message || "Slot updated successfully!",
+        title: "In-Person Session Updated!",
+        description: result?.message || "Your in-person session has been updated successfully.",
         duration: 6000,
       });
 
       router.push("/dashboard/in-person-session");
     } catch (error) {
-      let errorMessage = "Failed to update in-person slot. Please try again.";
+      let errorMessage = "We couldn't update your in-person session. Please check your information and try again.";
 
       if (error instanceof Error) {
-        errorMessage = error.message;
-        if (
-          error.message.includes("end_time") &&
-          error.message.includes("start_time")
-        ) {
-          errorMessage =
-            "End time must be after start time for all slots. Please check your time ranges.";
-        }
-        if (error.message.includes("video") || error.message.includes("file")) {
-          errorMessage = `File upload error: ${error.message}. Please ensure the video file is valid (MP4, WebM, or Ogg) and under 50MB.`;
+        const errorText = error.message.toLowerCase();
+        
+        if (errorText.includes("network") || errorText.includes("fetch")) {
+          errorMessage = "Unable to connect to the server. Please check your internet connection and try again.";
+        } else if (errorText.includes("unauthorized") || errorText.includes("unauthenticated")) {
+          errorMessage = "Your session has expired. Please sign in again and try again.";
+        } else if (errorText.includes("end_time") && errorText.includes("start_time")) {
+          errorMessage = "The end time must be after the start time for all time slots. Please check your schedule.";
+        } else if (errorText.includes("validation") || errorText.includes("invalid")) {
+          errorMessage = "Some information provided is invalid. Please review your session details and try again.";
+        } else if (errorText.includes("video") || errorText.includes("file") || errorText.includes("upload")) {
+          errorMessage = "There was an issue uploading your video. Please ensure the file is in MP4, WebM, or Ogg format and under 50MB.";
+        } else if (errorText.includes("size") || errorText.includes("too large")) {
+          errorMessage = "Your video file is too large. Please compress it or use a file under 50MB.";
+        } else if (errorText.includes("format") || errorText.includes("type")) {
+          errorMessage = "Your video file format is not supported. Please use MP4, WebM, or Ogg format.";
+        } else if (errorText.includes("date") || errorText.includes("time")) {
+          errorMessage = "Please check your dates and times. Make sure the end date is after the start date.";
         }
       }
 
       addToast({
         type: "error",
-        title: "Error Updating Slot",
+        title: "Could Not Update Session",
         description: errorMessage,
         duration: 6000,
       });

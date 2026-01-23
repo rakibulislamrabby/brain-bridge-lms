@@ -155,7 +155,7 @@ const createCourse = async (payload: CreateCourseRequest & { thumbnail?: File | 
     });
   } catch (networkError) {
     console.error('Create course network error:', networkError);
-    throw new Error('Unable to reach the Brain Bridge API. Please verify your connection and try again.');
+    throw new Error('Unable to connect to the server. Please check your internet connection and try again.');
   }
 
   let result: CreateCourseResponse = { success: false, message: '' };
@@ -168,7 +168,30 @@ const createCourse = async (payload: CreateCourseRequest & { thumbnail?: File | 
   }
 
   if (!response.ok) {
-    const errorMessage = (result as any)?.message || (result as any)?.error || `Failed to create course (${response.status})`;
+    let errorMessage = 'We couldn\'t create your course right now. Please try again in a few moments.'
+    
+    // Try to get a user-friendly error message from the API
+    const apiMessage = (result as any)?.message || (result as any)?.error
+    if (apiMessage) {
+      const messageText = String(apiMessage).toLowerCase()
+      
+      // Convert common API errors to user-friendly messages
+      if (messageText.includes('validation') || messageText.includes('invalid')) {
+        errorMessage = 'Some information provided is invalid. Please review your course details and try again.'
+      } else if (messageText.includes('file') || messageText.includes('upload') || messageText.includes('video')) {
+        errorMessage = 'There was an issue uploading your files. Please ensure all video files are in MP4, WebM, or Ogg format and under 100MB each.'
+      } else if (messageText.includes('size') || messageText.includes('too large')) {
+        errorMessage = 'One or more files are too large. Please compress your videos or use smaller file sizes.'
+      } else if (messageText.includes('format') || messageText.includes('type')) {
+        errorMessage = 'One or more files are in an unsupported format. Please use MP4, WebM, or Ogg video formats.'
+      } else if (messageText.includes('unauthorized') || messageText.includes('unauthenticated')) {
+        errorMessage = 'Your session has expired. Please sign in again and try creating your course.'
+      } else {
+        // Use the API message if it seems user-friendly, otherwise use generic message
+        errorMessage = String(apiMessage)
+      }
+    }
+    
     throw new Error(errorMessage);
   }
 

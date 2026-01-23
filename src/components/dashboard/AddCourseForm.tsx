@@ -216,8 +216,8 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     if (!teacherId) {
       addToast({
         type: 'error',
-        title: 'Missing Teacher',
-        description: 'We could not determine your teacher account. Please make sure your profile is linked to a teacher.',
+        title: 'Account Setup Required',
+        description: 'Please complete your teacher profile setup before creating a course. Contact support if you need assistance.',
         duration: 6000,
       })
       return
@@ -226,8 +226,8 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     if (!courseInfo.title.trim() || !courseInfo.description.trim() || !courseInfo.subject_id) {
       addToast({
         type: 'error',
-        title: 'Missing Information',
-        description: 'Please fill out the course title, description, and subject before submitting.',
+        title: 'Required Information Missing',
+        description: 'Please fill in the course title, description, and select a subject to continue.',
         duration: 5000,
       })
       return
@@ -236,8 +236,8 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     if (!thumbnailFile) {
       addToast({
         type: 'error',
-        title: 'Thumbnail Required',
-        description: 'Please upload a thumbnail image for the course.',
+        title: 'Course Image Required',
+        description: 'Please upload a thumbnail image for your course. This helps students discover your content.',
         duration: 5000,
       })
       return
@@ -246,8 +246,8 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     if (modules.length === 0 || modules.every((m) => !m.title.trim())) {
       addToast({
         type: 'error',
-        title: 'Modules Required',
-        description: 'Please add at least one module with a title.',
+        title: 'Course Content Required',
+        description: 'Please add at least one module with a title to organize your course content.',
         duration: 5000,
       })
       return
@@ -259,8 +259,8 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
       if (!moduleState.title.trim()) {
         addToast({
           type: 'error',
-          title: 'Module Title Required',
-          description: `Module ${moduleIndex + 1} is missing a title. Please provide a title for all modules.`,
+          title: 'Module Title Missing',
+          description: `Please add a title to Module ${moduleIndex + 1}. Each module needs a clear title to help students navigate your course.`,
           duration: 5000,
         })
         return
@@ -272,8 +272,8 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     if (!hasVideos) {
       addToast({
         type: 'error',
-        title: 'Videos Required',
-        description: 'Please add at least one video to at least one module.',
+        title: 'Video Lessons Required',
+        description: 'Please add at least one video lesson to your course. Students need content to learn from.',
         duration: 5000,
       })
       return
@@ -286,8 +286,8 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         if (!video.file) {
           addToast({
             type: 'error',
-            title: 'Video File Required',
-            description: `Module ${moduleIndex + 1}, Video ${videoIndex + 1} is missing a file upload. Please select a video file before submitting.`,
+            title: 'Video File Missing',
+            description: `Please upload the video file for "${video.title || `Lesson ${videoIndex + 1}`}" in Module ${moduleIndex + 1}.`,
             duration: 6000,
           })
           return
@@ -336,17 +336,40 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 
       addToast({
         type: 'success',
-        title: 'Course Created',
-        description: result.message || 'Course created successfully!',
+        title: 'Course Created Successfully!',
+        description: result.message || 'Your recorded lesson has been created and is ready for students to enroll.',
         duration: 5000,
       })
 
       resetForm()
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create course. Please try again.'
+      let errorMessage = 'We encountered an issue while creating your course. Please check your internet connection and try again.'
+      
+      if (error instanceof Error) {
+        const errorText = error.message.toLowerCase()
+        
+        // Handle common API errors with user-friendly messages
+        if (errorText.includes('network') || errorText.includes('fetch')) {
+          errorMessage = 'Unable to connect to the server. Please check your internet connection and try again.'
+        } else if (errorText.includes('unauthorized') || errorText.includes('unauthenticated')) {
+          errorMessage = 'Your session has expired. Please sign in again and try creating your course.'
+        } else if (errorText.includes('validation') || errorText.includes('invalid')) {
+          errorMessage = 'Some information provided is invalid. Please review your course details and try again.'
+        } else if (errorText.includes('file') || errorText.includes('upload') || errorText.includes('video')) {
+          errorMessage = 'There was an issue uploading your files. Please ensure all video files are in MP4, WebM, or Ogg format and under 100MB each.'
+        } else if (errorText.includes('size') || errorText.includes('too large')) {
+          errorMessage = 'One or more files are too large. Please compress your videos or use smaller file sizes.'
+        } else if (errorText.includes('format') || errorText.includes('type')) {
+          errorMessage = 'One or more files are in an unsupported format. Please use MP4, WebM, or Ogg video formats.'
+        } else {
+          // For other errors, use a generic but helpful message
+          errorMessage = 'We couldn\'t create your course right now. Please try again in a few moments.'
+        }
+      }
+      
       addToast({
         type: 'error',
-        title: 'Error Creating Course',
+        title: 'Could Not Create Course',
         description: errorMessage,
         duration: 6000,
       })

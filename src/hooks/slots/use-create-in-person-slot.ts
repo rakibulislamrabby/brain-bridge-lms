@@ -179,25 +179,48 @@ const createInPersonSlot = async (
     }
 
     if (!response.ok) {
+      let errorMessage = 'We couldn\'t create your in-person session right now. Please try again in a few moments.'
+      
       if (result?.errors && typeof result.errors === "object") {
-        const errorMessages = Object.entries(result.errors)
-          .map(([field, messages]) => {
-            const msgArray = Array.isArray(messages) ? messages : [messages];
-            return `${field}: ${msgArray.join(", ")}`;
-          })
-          .join("; ");
-        throw new Error(errorMessages || "Validation failed");
+        // Convert validation errors to user-friendly messages
+        const errorFields = Object.keys(result.errors)
+        if (errorFields.includes('subject_id')) {
+          errorMessage = 'Please select a subject for your session.'
+        } else if (errorFields.includes('title')) {
+          errorMessage = 'Please provide a title for your session.'
+        } else if (errorFields.includes('from_date') || errorFields.includes('to_date')) {
+          errorMessage = 'Please check your date range. Make sure the end date is after the start date.'
+        } else if (errorFields.includes('price')) {
+          errorMessage = 'Please enter a valid price for your session.'
+        } else if (errorFields.includes('slots') || errorFields.includes('times')) {
+          errorMessage = 'Please check your schedule. Each day needs at least one valid time slot.'
+        } else {
+          errorMessage = 'Some information provided is invalid. Please review your session details and try again.'
+        }
+      } else {
+        const apiMessage = result?.message || result?.error
+        if (apiMessage) {
+          const messageText = String(apiMessage).toLowerCase()
+          
+          if (messageText.includes('validation') || messageText.includes('invalid')) {
+            errorMessage = 'Some information provided is invalid. Please review your session details and try again.'
+          } else if (messageText.includes('unauthorized') || messageText.includes('unauthenticated')) {
+            errorMessage = 'Your session has expired. Please sign in again and try again.'
+          } else if (messageText.includes('date') || messageText.includes('time')) {
+            errorMessage = 'Please check your dates and times. Make sure the end date is after the start date.'
+          } else if (messageText.includes('file') || messageText.includes('upload') || messageText.includes('video')) {
+            errorMessage = 'There was an issue uploading your video. Please ensure the file is in MP4, WebM, or Ogg format and under 50MB.'
+          } else {
+            errorMessage = String(apiMessage)
+          }
+        }
       }
-
-      const errorMessage =
-        result?.message ||
-        result?.error ||
-        `Failed to create in-person slot (${response.status})`;
+      
       throw new Error(errorMessage);
     }
 
     if (!result.success) {
-      throw new Error(result?.message || "Slot creation failed");
+      throw new Error(result?.message || "We couldn't create your in-person session. Please try again.");
     }
 
     return result as CreateInPersonSlotResponse;
@@ -206,7 +229,7 @@ const createInPersonSlot = async (
     if (error instanceof Error) {
       throw error;
     }
-    throw new Error("Network error: Failed to create in-person slot");
+    throw new Error("Unable to connect to the server. Please check your internet connection and try again.");
   }
 };
 

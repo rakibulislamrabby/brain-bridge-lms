@@ -136,10 +136,23 @@ const createSlot = async (
     const result = text ? JSON.parse(text) : {};
 
     if (!response.ok) {
-      const errorMessage =
-        result?.message ||
-        result?.error ||
-        `Failed to create slot (${response.status})`;
+      let errorMessage = 'We couldn\'t create your video call session right now. Please try again in a few moments.'
+      
+      const apiMessage = result?.message || result?.error
+      if (apiMessage) {
+        const messageText = String(apiMessage).toLowerCase()
+        
+        if (messageText.includes('validation') || messageText.includes('invalid')) {
+          errorMessage = 'Some information provided is invalid. Please review your session details and try again.'
+        } else if (messageText.includes('unauthorized') || messageText.includes('unauthenticated')) {
+          errorMessage = 'Your session has expired. Please sign in again and try again.'
+        } else if (messageText.includes('date') || messageText.includes('time')) {
+          errorMessage = 'Please check your dates and times. Make sure the end date is after the start date.'
+        } else {
+          errorMessage = String(apiMessage)
+        }
+      }
+      
       throw new Error(errorMessage);
     }
 
@@ -149,7 +162,7 @@ const createSlot = async (
     if (error instanceof Error) {
       throw error;
     }
-    throw new Error("Network error: Failed to create slot");
+    throw new Error("Unable to connect to the server. Please check your internet connection and try again.");
   }
 };
 
@@ -172,10 +185,23 @@ const updateSlot = async (
     const result = text ? JSON.parse(text) : {};
 
     if (!response.ok) {
-      const errorMessage =
-        result?.message ||
-        result?.error ||
-        `Failed to update slot (${response.status})`;
+      let errorMessage = 'We couldn\'t update your video call session right now. Please try again in a few moments.'
+      
+      const apiMessage = result?.message || result?.error
+      if (apiMessage) {
+        const messageText = String(apiMessage).toLowerCase()
+        
+        if (messageText.includes('validation') || messageText.includes('invalid')) {
+          errorMessage = 'Some information provided is invalid. Please review your session details and try again.'
+        } else if (messageText.includes('unauthorized') || messageText.includes('unauthenticated')) {
+          errorMessage = 'Your session has expired. Please sign in again and try again.'
+        } else if (messageText.includes('date') || messageText.includes('time')) {
+          errorMessage = 'Please check your dates and times. Make sure the end date is after the start date.'
+        } else {
+          errorMessage = String(apiMessage)
+        }
+      }
+      
       throw new Error(errorMessage);
     }
 
@@ -185,7 +211,7 @@ const updateSlot = async (
     if (error instanceof Error) {
       throw error;
     }
-    throw new Error("Network error: Failed to update slot");
+    throw new Error("Unable to connect to the server. Please check your internet connection and try again.");
   }
 };
 

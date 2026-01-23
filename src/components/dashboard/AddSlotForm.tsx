@@ -357,8 +357,8 @@ export default function AddSlotForm({
     ) {
       addToast({
         type: "error",
-        title: "Missing Information",
-        description: "Subject, title, dates, and price are required.",
+        title: "Required Information Missing",
+        description: "Please fill in the subject, title, date range, and price to create your video call session.",
         duration: 5000,
       });
       return;
@@ -370,9 +370,9 @@ export default function AddSlotForm({
     if (hasInvalidDay) {
       addToast({
         type: "error",
-        title: "Invalid Schedule",
+        title: "Schedule Incomplete",
         description:
-          "Each day must have a selected day and at least one time slot.",
+          "Please select a day and add at least one time slot for each day you want to offer sessions.",
         duration: 5000,
       });
       return;
@@ -384,8 +384,8 @@ export default function AddSlotForm({
     if (hasInvalidTime) {
       addToast({
         type: "error",
-        title: "Missing Slot Times",
-        description: "Each slot must include both start and end times.",
+        title: "Time Slots Incomplete",
+        description: "Please provide both start and end times for all time slots.",
         duration: 5000,
       });
       return;
@@ -403,7 +403,7 @@ export default function AddSlotForm({
       addToast({
         type: "error",
         title: "Invalid Time Range",
-        description: "End time must be after start time for each slot.",
+        description: "The end time must be later than the start time for each session slot.",
         duration: 5000,
       });
       return;
@@ -464,8 +464,8 @@ export default function AddSlotForm({
         });
         addToast({
           type: "success",
-          title: "Slot Updated",
-          description: result?.message || "Slot updated successfully!",
+          title: "Video Call Session Updated!",
+          description: result?.message || "Your video call session has been updated successfully.",
           duration: 5000,
         });
         router.push("/dashboard/one-to-one-session");
@@ -473,33 +473,40 @@ export default function AddSlotForm({
         const result = await createSlotMutation.mutateAsync(payload);
         addToast({
           type: "success",
-          title: "Slot Created",
+          title: "Video Call Session Created!",
           description:
-            result?.message || "One-to-one slot created successfully!",
+            result?.message || "Your video call session is now available for students to book.",
           duration: 5000,
         });
         resetForm();
       }
     } catch (error) {
       let errorMessage = isEditMode
-        ? "Failed to update slot. Please try again."
-        : "Failed to create slot. Please try again.";
+        ? "We couldn't update your video call session. Please check your information and try again."
+        : "We couldn't create your video call session. Please check your information and try again.";
 
       if (error instanceof Error) {
-        errorMessage = error.message;
-        // Check if it's a validation error about time
-        if (
-          error.message.includes("end_time") &&
-          error.message.includes("start_time")
-        ) {
-          errorMessage =
-            "End time must be after start time for all slots. Please check your time ranges.";
+        const errorText = error.message.toLowerCase();
+        
+        // Handle common API errors with user-friendly messages
+        if (errorText.includes("network") || errorText.includes("fetch")) {
+          errorMessage = "Unable to connect to the server. Please check your internet connection and try again.";
+        } else if (errorText.includes("unauthorized") || errorText.includes("unauthenticated")) {
+          errorMessage = "Your session has expired. Please sign in again and try again.";
+        } else if (errorText.includes("end_time") && errorText.includes("start_time")) {
+          errorMessage = "The end time must be after the start time for all time slots. Please check your schedule.";
+        } else if (errorText.includes("validation") || errorText.includes("invalid")) {
+          errorMessage = "Some information provided is invalid. Please review your session details and try again.";
+        } else if (errorText.includes("file") || errorText.includes("upload") || errorText.includes("video")) {
+          errorMessage = "There was an issue uploading your video. Please ensure the file is in MP4, WebM, or Ogg format and under 50MB.";
+        } else if (errorText.includes("date") || errorText.includes("time")) {
+          errorMessage = "Please check your dates and times. Make sure the end date is after the start date.";
         }
       }
 
       addToast({
         type: "error",
-        title: isEditMode ? "Error Updating Slot" : "Error Creating Slot",
+        title: isEditMode ? "Could Not Update Session" : "Could Not Create Session",
         description: errorMessage,
         duration: 6000,
       });

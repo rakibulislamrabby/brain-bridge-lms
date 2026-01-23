@@ -74,13 +74,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/courses" className="hover:text-white transition-colors">
+                <Link href="/live-session" className="hover:text-white transition-colors">
                   Live Sessions
-                </Link>
-              </li>
-              <li>
-                <Link href="/courses" className="hover:text-white transition-colors">
-                  Browse Skills
                 </Link>
               </li>
               <li>
@@ -105,25 +100,9 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3 text-gray-400">
               <li>
-                <Link href="/faq" className="hover:text-white transition-colors">
-                  FAQ
-                </Link>
-              </li>
-              <li>
                 <Link href="/contact" className="hover:text-white transition-colors flex items-center gap-2">
                   <MessageCircle className="w-4 h-4" />
                   Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/help" className="hover:text-white transition-colors">
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link href="/referral" className="hover:text-white transition-colors flex items-center gap-2">
-                  <Gift className="w-4 h-4" />
-                  Referral Program
                 </Link>
               </li>
               <li>
@@ -139,16 +118,6 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-lg mb-4">Legal</h4>
             <ul className="space-y-3 text-gray-400">
-              <li>
-                <Link href="/terms" className="hover:text-white transition-colors">
-                  Terms & Conditions
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy" className="hover:text-white transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
               <li>
                 <Link href="/about" className="hover:text-white transition-colors">
                   About Us
@@ -171,14 +140,11 @@ export default function Footer() {
               &copy; {new Date().getFullYear()} BrainBridge. All rights reserved.
             </p>
             <div className="flex flex-wrap items-center gap-6 text-sm text-gray-400">
-              <Link href="/terms" className="hover:text-white transition-colors">
-                Terms
-              </Link>
-              <Link href="/privacy" className="hover:text-white transition-colors">
-                Privacy
-              </Link>
               <Link href="/contact" className="hover:text-white transition-colors">
                 Contact
+              </Link>
+              <Link href="/about" className="hover:text-white transition-colors">
+                About
               </Link>
             </div>
           </div>
