@@ -94,7 +94,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       allowedRoles: ['admin'] // Only admin can see this
     },
     {
-      title: 'Course Enrollments',
+      title: 'Booked Course',
       icon: Users,
       href: '/dashboard/teacher-enrolled-courses',
       items: [],

@@ -60,7 +60,7 @@ export default function TeacherPage() {
                   </div>
                   <h3 className="text-xl font-bold text-white mb-4">Scheduling Tools</h3>
                   <p className="text-gray-300 leading-relaxed">
-                    Schedule live sessions, set office hours, and manage your teaching calendar efficiently.
+                    Video Call, set office hours, and manage your teaching calendar efficiently.
                   </p>
                 </CardContent>
               </Card>

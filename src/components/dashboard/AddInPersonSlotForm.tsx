@@ -270,9 +270,9 @@ export default function AddInPersonSlotForm({
     });
   };
 
-  // Check if price should be disabled (when subject has base_pay)
+  // Check if price should be disabled (when no subject is selected or subject has base_pay)
   const isPriceDisabled = useMemo(() => {
-    if (!formData.subject_id) return false;
+    if (!formData.subject_id) return true; // Disable when no subject is selected
     const selectedSubject = subjects.find(
       (s) => s.id.toString() === formData.subject_id,
     );
@@ -659,7 +659,7 @@ export default function AddInPersonSlotForm({
               <div>
                 <Label className="text-sm font-medium text-gray-300">
                   Price <span className="text-red-400">*</span>
-                  {isPriceDisabled && (
+                  {isPriceDisabled && formData.subject_id && (
                     <span className="text-xs text-gray-400 ml-2">
                       (from subject base pay)
                     </span>
@@ -680,6 +680,11 @@ export default function AddInPersonSlotForm({
                     className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed"
                   />
                 </div>
+                {isPriceDisabled && !formData.subject_id && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Please select a subject first
+                  </p>
+                )}
               </div>
             </div>
 

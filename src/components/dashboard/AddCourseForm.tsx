@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -68,16 +68,43 @@ const [modules, setModules] = useState<ModuleFormState[]>([
     const { name, value } = target
     const isCheckbox = target instanceof HTMLInputElement && target.type === 'checkbox'
 
-    setCourseInfo((prev) => ({
-      ...prev,
-      [name]: isCheckbox ? (target as HTMLInputElement).checked : value,
-    }))
+    setCourseInfo((prev) => {
+      const updated = {
+        ...prev,
+        [name]: isCheckbox ? (target as HTMLInputElement).checked : value,
+      }
+
+      // Auto-populate price from subject's base_pay when subject is selected
+      if (name === 'subject_id' && value) {
+        const selectedSubject = subjects.find((s) => s.id.toString() === value)
+        if (
+          selectedSubject?.base_pay !== null &&
+          selectedSubject?.base_pay !== undefined
+        ) {
+          updated.price = selectedSubject.base_pay.toString()
+        }
+      }
+
+      return updated
+    })
   }
 
   const handleThumbnailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null
     setThumbnailFile(file)
   }
+
+  // Check if price should be disabled (when no subject is selected or subject has base_pay)
+  const isPriceDisabled = useMemo(() => {
+    if (!courseInfo.subject_id) return true // Disable when no subject is selected
+    const selectedSubject = subjects.find(
+      (s) => s.id.toString() === courseInfo.subject_id,
+    )
+    return (
+      selectedSubject?.base_pay !== null &&
+      selectedSubject?.base_pay !== undefined
+    )
+  }, [courseInfo.subject_id, subjects])
 
   const updateModule = (index: number, updatedModule: Partial<ModuleFormState>) => {
     setModules((prev) => {
@@ -381,8 +408,16 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
                   onChange={handleCourseInfoChange}
                   placeholder="e.g., 129.99"
                   required
-                  className="mt-2 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500"
+                  disabled={isPriceDisabled}
+                  className="mt-2 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
+                {isPriceDisabled && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    {courseInfo.subject_id
+                      ? 'Price is set automatically from the selected subject'
+                      : 'Please select a subject first'}
+                  </p>
+                )}
               </div>
               <div>
                 <Label htmlFor="old_price" className="text-sm font-medium text-gray-300">Old Price</Label>

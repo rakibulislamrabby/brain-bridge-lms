@@ -48,7 +48,7 @@ function CoursesPageContent() {
     if (tab && TABS.some(t => t.id === tab)) {
       return tab
     }
-    return 'recorded-lesson'
+    return 'in-person'
   }
 
   const [activeTab, setActiveTab] = useState<CourseCategory>(getValidTab(tabParam))
