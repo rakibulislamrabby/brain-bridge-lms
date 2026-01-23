@@ -853,7 +853,7 @@ export default function LiveSessionDetailPage() {
                                       className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 group/btn"
                                     >
                                       <Link href={`/masters/${data.teacher?.id}`} className="flex items-center">
-                                        View Professional Portfolio
+                                        View Master Profile
                                         <ChevronRight className="w-4 h-4 ml-1 transform group-hover/btn:translate-x-1 transition-transform" />
                                       </Link>
                                     </Button>

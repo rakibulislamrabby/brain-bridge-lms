@@ -113,13 +113,13 @@ export default function OneToOneSessionPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white">Live Session</h1>
-            <p className="text-gray-400 mt-2">Manage and monitor all your one-to-one teaching slots.</p>
+            <h1 className="text-3xl font-bold text-white">Video Call</h1>
+            <p className="text-gray-400 mt-2">Manage and monitor all your one-to-one teaching video call slots.</p>
           </div>
           <Button asChild className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer">
             <Link href="/dashboard/one-to-one-session/add-slot">
               <Plus className="h-4 w-4 mr-2" />
-              Add Slot
+              Add Video Call Slot
             </Link>
           </Button>
         </div>

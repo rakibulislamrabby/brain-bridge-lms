@@ -789,7 +789,7 @@ export default function InPersonSessionDetailPage() {
                                       className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 group/btn"
                                     >
                                       <Link href={`/masters/${data.teacher?.id}`} className="flex items-center">
-                                        View Professional Portfolio
+                                        View Master Profile
                                         <ChevronRightIcon className="w-4 h-4 ml-1 transform group-hover/btn:translate-x-1 transition-transform" />
                                       </Link>
                                     </Button>

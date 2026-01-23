@@ -15,52 +15,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
 import { useSubjects } from "@/hooks/subject/use-subject";
-import { useCreateSlot, useUpdateSlot } from "@/hooks/slots/use-create-slot";
+import { useUpdateInPersonSlot } from "@/hooks/slots/use-update-in-person-slot";
+import { useTeacherInPersonSlotDetail } from "@/hooks/slots/use-teacher-in-person-slot-detail";
 import {
   Loader2,
   Plus,
   Trash2,
   Calendar as CalendarIcon,
   Clock,
-  Users,
   DollarSign,
   ClipboardList,
-  Link as LinkIcon,
+  MapPin,
   Video,
   FileVideo,
+  Save,
 } from "lucide-react";
-import { TeacherSlot } from "@/hooks/slots/teacher/use-teacher-slot";
-
-interface SlotTimeForm {
-  start_time: string;
-  end_time: string;
-  meeting_link: string;
-}
-
-interface DaySlotForm {
-  slot_day: string;
-  times: SlotTimeForm[];
-}
-
-const SLOT_TYPES = [
-  { value: "one_to_one", label: "One-to-One" },
-  { value: "group", label: "Group" },
-];
-
-const DAYS_OF_WEEK = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
-
-interface AddSlotFormProps {
-  slotId?: number;
-  initialData?: TeacherSlot;
-}
 
 const MEDIA_BASE_URL = process.env.NEXT_PUBLIC_MEDIA_BASE_URL;
 
@@ -91,17 +60,46 @@ const resolveMediaUrl = (path?: string | null) => {
   return `${base}storage/${cleanedPath}`;
 };
 
-export default function AddSlotForm({
+interface SlotTimeForm {
+  start_time: string;
+  end_time: string;
+}
+
+interface DaySlotForm {
+  slot_day: string;
+  times: SlotTimeForm[];
+}
+
+const DAYS_OF_WEEK = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+interface EditInPersonSlotFormProps {
+  slotId: number;
+}
+
+export default function EditInPersonSlotForm({
   slotId,
-  initialData,
-}: AddSlotFormProps = {}) {
+}: EditInPersonSlotFormProps) {
   const { data: subjects = [] } = useSubjects();
   const { addToast } = useToast();
   const router = useRouter();
-  const createSlotMutation = useCreateSlot();
-  const updateSlotMutation = useUpdateSlot();
+  const updateSlotMutation = useUpdateInPersonSlot();
+
+  // Fetch slot data using GET API: teacher/in-person-slots/edit/{id}
+  const {
+    data: slotData,
+    isLoading: isLoadingSlot,
+    error: slotError,
+  } = useTeacherInPersonSlotDetail(slotId);
+
   const [isFormInitialized, setIsFormInitialized] = useState(false);
-  const isEditMode = !!slotId && !!initialData;
 
   const subjectOptions = useMemo(
     () =>
@@ -117,38 +115,25 @@ export default function AddSlotForm({
     title: "",
     from_date: "",
     to_date: "",
-    type: "one_to_one",
     price: "",
-    max_students: "1",
     description: "",
+    country: "",
+    state: "",
+    city: "",
+    area: "",
   });
 
   const [daySlots, setDaySlots] = useState<DaySlotForm[]>([
-    {
-      slot_day: "Sunday",
-      times: [{ start_time: "", end_time: "", meeting_link: "" }],
-    },
+    { slot_day: "Sunday", times: [{ start_time: "", end_time: "" }] },
   ]);
 
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleRemoveVideo = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setVideoFile(null);
-    const resolvedVideoUrl = initialData?.video
-      ? resolveMediaUrl(initialData.video) || initialData.video
-      : null;
-    setVideoPreview(resolvedVideoUrl);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  // Initialize form with slot data if in edit mode
+  // Initialize form with slot data from GET API
   useEffect(() => {
-    if (isEditMode && initialData && subjects.length > 0) {
+    if (slotData && subjects.length > 0) {
       // Format date from ISO string to YYYY-MM-DD
       const formatDateForInput = (dateString?: string): string => {
         if (!dateString) return "";
@@ -169,48 +154,73 @@ export default function AddSlotForm({
 
       // Find the subject to check if it has base_pay
       const selectedSubject = subjects.find(
-        (s) => s.id === initialData.subject_id,
+        (s) => s.id === slotData.subject_id,
       );
       const priceValue =
         selectedSubject?.base_pay !== null &&
         selectedSubject?.base_pay !== undefined
           ? selectedSubject.base_pay.toString()
-          : initialData.price || "";
+          : slotData.price || "";
 
+      // Set form data
       setFormData({
-        subject_id: initialData.subject_id.toString(),
-        title: initialData.title || "",
-        from_date: formatDateForInput(initialData.from_date),
-        to_date: formatDateForInput(initialData.to_date),
-        type: initialData.type || "one_to_one",
+        subject_id: slotData.subject_id.toString(),
+        title: slotData.title || "",
+        from_date: formatDateForInput(slotData.from_date),
+        to_date: formatDateForInput(slotData.to_date),
         price: priceValue,
-        max_students: initialData.max_students?.toString() || "1",
-        description: initialData.description || "",
+        description: slotData.description || "",
+        country: slotData.country || "",
+        state: slotData.state || "",
+        city: slotData.city || "",
+        area: slotData.area || "",
       });
 
-      if (initialData.video) {
+      // Initialize day slots with all days and times from GET API
+      if (slotData.days && slotData.days.length > 0) {
+        const mappedDaySlots = slotData.days.map((day) => {
+          const dayTimes =
+            day.times && day.times.length > 0
+              ? day.times.map((t) => ({
+                  start_time: formatTimeForInput(t.start_time),
+                  end_time: formatTimeForInput(t.end_time),
+                }))
+              : [{ start_time: "", end_time: "" }];
+
+          return {
+            slot_day: day.day || "Sunday",
+            times: dayTimes,
+          };
+        });
+
+        setDaySlots(mappedDaySlots);
+      } else {
+        // Fallback: if no days array, check for old structure
+        if (slotData.start_time && slotData.end_time) {
+          setDaySlots([
+            {
+              slot_day: "Sunday",
+              times: [
+                {
+                  start_time: formatTimeForInput(slotData.start_time),
+                  end_time: formatTimeForInput(slotData.end_time),
+                },
+              ],
+            },
+          ]);
+        }
+      }
+
+      // Handle video preview
+      if (slotData.video) {
         const resolvedVideoUrl =
-          resolveMediaUrl(initialData.video) || initialData.video;
+          resolveMediaUrl(slotData.video) || slotData.video;
         setVideoPreview(resolvedVideoUrl);
       }
 
-      if (initialData.slots && initialData.slots.length > 0) {
-        setDaySlots(
-          initialData.slots.map((day) => ({
-            slot_day: day.slot_day,
-            times: day.times.map((t) => ({
-              start_time: formatTimeForInput(t.start_time),
-              end_time: formatTimeForInput(t.end_time),
-              meeting_link: t.meeting_link || "",
-            })),
-          })),
-        );
-      }
-      setIsFormInitialized(true);
-    } else if (!isEditMode) {
       setIsFormInitialized(true);
     }
-  }, [isEditMode, initialData, subjects]);
+  }, [slotData, subjects]);
 
   const handleInputChange = (
     event: React.ChangeEvent<
@@ -226,7 +236,9 @@ export default function AddSlotForm({
 
       // Auto-populate price from subject's base_pay when subject is selected
       if (name === "subject_id" && value) {
-        const selectedSubject = subjects.find((s) => s.id.toString() === value);
+        const selectedSubject = subjects.find(
+          (s) => s.id.toString() === value,
+        );
         if (
           selectedSubject?.base_pay !== null &&
           selectedSubject?.base_pay !== undefined
@@ -237,15 +249,6 @@ export default function AddSlotForm({
 
       return updated;
     });
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] || null;
-    setVideoFile(file);
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setVideoPreview(url);
-    }
   };
 
   // Check if price should be disabled (when subject has base_pay)
@@ -288,10 +291,7 @@ export default function AddSlotForm({
   const addDaySlot = () => {
     setDaySlots((prev) => [
       ...prev,
-      {
-        slot_day: "Sunday",
-        times: [{ start_time: "", end_time: "", meeting_link: "" }],
-      },
+      { slot_day: "Sunday", times: [{ start_time: "", end_time: "" }] },
     ]);
   };
 
@@ -306,7 +306,7 @@ export default function AddSlotForm({
         ...updated[dayIndex],
         times: [
           ...updated[dayIndex].times,
-          { start_time: "", end_time: "", meeting_link: "" },
+          { start_time: "", end_time: "" },
         ],
       };
       return updated;
@@ -324,30 +324,31 @@ export default function AddSlotForm({
     });
   };
 
-  const resetForm = () => {
-    setFormData({
-      subject_id: "",
-      title: "",
-      from_date: "",
-      to_date: "",
-      type: "one_to_one",
-      price: "",
-      max_students: "1",
-      description: "",
-    });
-    setDaySlots([
-      {
-        slot_day: "Sunday",
-        times: [{ start_time: "", end_time: "", meeting_link: "" }],
-      },
-    ]);
+  const handleRemoveVideo = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setVideoFile(null);
-    setVideoPreview(null);
+    const resolvedVideoUrl = slotData?.video
+      ? resolveMediaUrl(slotData.video) || slotData.video
+      : null;
+    setVideoPreview(resolvedVideoUrl);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    setVideoFile(file);
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setVideoPreview(url);
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    // Validation
     if (
       !formData.subject_id ||
       !formData.title ||
@@ -409,22 +410,19 @@ export default function AddSlotForm({
       return;
     }
 
-    // Format times to ensure they're in HH:MM format (as expected by API)
+    // Format times to ensure they're in HH:MM format
     const formatTime = (time: string): string => {
       if (!time) return time;
-      // Remove seconds if present (convert HH:MM:SS to HH:MM)
       if (time.split(":").length === 3) {
         const [hours, minutes] = time.split(":");
         return `${hours}:${minutes}`;
       }
-      // If already in HH:MM format, return as is
       return time;
     };
 
-    // Ensure dates are in YYYY-MM-DD format (not datetime)
+    // Ensure dates are in YYYY-MM-DD format
     const formatDate = (date: string): string => {
       if (!date) return date;
-      // If date includes time, extract just the date part
       if (date.includes("T")) {
         return date.split("T")[0];
       }
@@ -432,62 +430,49 @@ export default function AddSlotForm({
     };
 
     const payload: any = {
-      subject_id: Number(formData.subject_id),
       title: formData.title,
+      subject_id: Number(formData.subject_id),
       from_date: formatDate(formData.from_date),
       to_date: formatDate(formData.to_date),
-      type: formData.type,
-      price: Number(formData.price),
-      max_students: Number(formData.max_students),
-      description: formData.description,
       slots: daySlots.map((day) => ({
         slot_day: (day.slot_day || "Sunday").trim(),
         times: day.times.map((slot) => ({
           start_time: formatTime(slot.start_time),
           end_time: formatTime(slot.end_time),
-          meeting_link: slot.meeting_link || "",
         })),
       })),
+      price: Number(formData.price),
+      description: formData.description,
+      ...(formData.country && { country: formData.country }),
+      ...(formData.state && { state: formData.state }),
+      ...(formData.city && { city: formData.city }),
+      ...(formData.area && { area: formData.area }),
     };
 
+    // Handle video: only include if it's a new file
     if (videoFile instanceof File) {
       payload.video = videoFile;
-    } else if (initialData?.video) {
-      payload.video = initialData.video;
     }
 
     try {
-      if (isEditMode && slotId) {
-        const result = await updateSlotMutation.mutateAsync({
-          id: slotId,
-          payload,
-        });
-        addToast({
-          type: "success",
-          title: "Slot Updated",
-          description: result?.message || "Slot updated successfully!",
-          duration: 5000,
-        });
-        router.push("/dashboard/one-to-one-session");
-      } else {
-        const result = await createSlotMutation.mutateAsync(payload);
-        addToast({
-          type: "success",
-          title: "Slot Created",
-          description:
-            result?.message || "One-to-one slot created successfully!",
-          duration: 5000,
-        });
-        resetForm();
-      }
+      const result = await updateSlotMutation.mutateAsync({
+        id: slotId,
+        payload,
+      });
+
+      addToast({
+        type: "success",
+        title: "In-Person Slot Updated",
+        description: result?.message || "Slot updated successfully!",
+        duration: 6000,
+      });
+
+      router.push("/dashboard/in-person-session");
     } catch (error) {
-      let errorMessage = isEditMode
-        ? "Failed to update slot. Please try again."
-        : "Failed to create slot. Please try again.";
+      let errorMessage = "Failed to update in-person slot. Please try again.";
 
       if (error instanceof Error) {
         errorMessage = error.message;
-        // Check if it's a validation error about time
         if (
           error.message.includes("end_time") &&
           error.message.includes("start_time")
@@ -495,25 +480,54 @@ export default function AddSlotForm({
           errorMessage =
             "End time must be after start time for all slots. Please check your time ranges.";
         }
+        if (error.message.includes("video") || error.message.includes("file")) {
+          errorMessage = `File upload error: ${error.message}. Please ensure the video file is valid (MP4, WebM, or Ogg) and under 50MB.`;
+        }
       }
 
       addToast({
         type: "error",
-        title: isEditMode ? "Error Updating Slot" : "Error Creating Slot",
+        title: "Error Updating Slot",
         description: errorMessage,
         duration: 6000,
       });
     }
   };
 
-  // Show loading state while form is initializing in edit mode
-  if (isEditMode && !isFormInitialized) {
+  // Show loading state while fetching slot data
+  if (isLoadingSlot || !isFormInitialized) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
-          <p className="text-gray-400">Loading slot details...</p>
+          <p className="text-gray-400">
+            {isLoadingSlot
+              ? "Loading slot details..."
+              : "Initializing form..."}
+          </p>
         </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (slotError || !slotData) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-400">
+          {slotError
+            ? slotError instanceof Error
+              ? slotError.message
+              : "Failed to load slot"
+            : "Slot not found"}
+        </p>
+        <Button
+          onClick={() => router.push("/dashboard/in-person-session")}
+          className="mt-4"
+          variant="outline"
+        >
+          Back to Slots
+        </Button>
       </div>
     );
   }
@@ -522,16 +536,16 @@ export default function AddSlotForm({
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-white">
-          {isEditMode ? "Edit Live Session" : "Schedule Live Session"}
+          Edit In-Person Session
         </h1>
         <p className="text-gray-400 mt-2">
-          {isEditMode
-            ? "Update the availability windows, pricing, and time slots for your live class."
-            : "Configure availability windows, pricing, and time slots for your live class."}
+          Update the availability windows, pricing, and time slots for your
+          in-person class.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Slot Details */}
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2 pt-5">
@@ -539,7 +553,7 @@ export default function AddSlotForm({
               Slot Details
             </CardTitle>
             <CardDescription className="text-gray-400">
-              Define the timing, availability, and pricing for your one-to-one
+              Define the timing, availability, and pricing for your in-person
               session.
             </CardDescription>
           </CardHeader>
@@ -581,7 +595,7 @@ export default function AddSlotForm({
                   type="text"
                   value={formData.title}
                   onChange={handleInputChange}
-                  placeholder="Live Math Class"
+                  placeholder="Graphics Design hands on class"
                   required
                   className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
                 />
@@ -624,24 +638,8 @@ export default function AddSlotForm({
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label className="text-sm font-medium text-gray-300">
-                  Type
-                </Label>
-                <select
-                  name="type"
-                  value={formData.type}
-                  onChange={handleInputChange}
-                  className="mt-2 w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent h-10"
-                >
-                  {SLOT_TYPES.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label className="text-sm font-medium text-gray-300">
                   Price <span className="text-red-400">*</span>
@@ -657,26 +655,15 @@ export default function AddSlotForm({
                   <DollarSign className="h-4 w-4 text-green-400" />
                   <Input
                     name="price"
+                    type="number"
                     value={formData.price}
                     onChange={handleInputChange}
-                    placeholder="150"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    required
                     disabled={isPriceDisabled}
-                    className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-gray-300">
-                  Max Students
-                </Label>
-                <div className="mt-2 flex items-center gap-2 bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white">
-                  <Users className="h-4 w-4 text-purple-400" />
-                  <Input
-                    name="max_students"
-                    value={formData.max_students}
-                    onChange={handleInputChange}
-                    placeholder="5"
-                    className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="flex-1 bg-transparent border-0 text-white focus:ring-0 focus:outline-none p-0"
                   />
                 </div>
               </div>
@@ -685,8 +672,9 @@ export default function AddSlotForm({
             <div>
               <Label
                 htmlFor="description"
-                className="text-sm font-medium text-gray-300"
+                className="text-sm font-medium text-gray-300 flex items-center gap-2"
               >
+                <ClipboardList className="h-4 w-4 text-orange-400" />
                 Description
               </Label>
               <Textarea
@@ -695,8 +683,97 @@ export default function AddSlotForm({
                 value={formData.description}
                 onChange={handleInputChange}
                 placeholder="Describe what this session covers"
-                className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500 min-h-[100px]"
+                rows={4}
+                className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Location Information */}
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2 pt-5">
+              <MapPin className="h-5 w-5 text-orange-500" />
+              Location Information
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              Optional: Specify the location where the in-person session will
+              take place.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label
+                  htmlFor="country"
+                  className="text-sm font-medium text-gray-300"
+                >
+                  Country
+                </Label>
+                <Input
+                  id="country"
+                  name="country"
+                  type="text"
+                  value={formData.country}
+                  onChange={handleInputChange}
+                  placeholder="e.g., USA"
+                  className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
+                />
+              </div>
+              <div>
+                <Label
+                  htmlFor="state"
+                  className="text-sm font-medium text-gray-300"
+                >
+                  State/Province
+                </Label>
+                <Input
+                  id="state"
+                  name="state"
+                  type="text"
+                  value={formData.state}
+                  onChange={handleInputChange}
+                  placeholder="e.g., New York"
+                  className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label
+                  htmlFor="city"
+                  className="text-sm font-medium text-gray-300"
+                >
+                  City
+                </Label>
+                <Input
+                  id="city"
+                  name="city"
+                  type="text"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  placeholder="e.g., New York City"
+                  className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
+                />
+              </div>
+              <div>
+                <Label
+                  htmlFor="area"
+                  className="text-sm font-medium text-gray-300"
+                >
+                  Area/Neighborhood
+                </Label>
+                <Input
+                  id="area"
+                  name="area"
+                  type="text"
+                  value={formData.area}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Manhattan, Downtown"
+                  className="mt-2 bg-gray-700 border-gray-600 text-white focus:border-orange-500"
+                />
+              </div>
             </div>
 
             <div className="pt-4 border-t border-gray-700/50">
@@ -742,6 +819,7 @@ export default function AddSlotForm({
                       {videoFile ? "New Video" : "Current Video"}
                       {videoFile && (
                         <button
+                          type="button"
                           onClick={handleRemoveVideo}
                           className="text-red-400 hover:text-red-300 text-[10px]"
                         >
@@ -769,7 +847,7 @@ export default function AddSlotForm({
           </CardContent>
         </Card>
 
-        {/* Slot times */}
+        {/* Time Slots */}
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2 pt-5">
@@ -777,147 +855,138 @@ export default function AddSlotForm({
               Time Slots
             </CardTitle>
             <CardDescription className="text-gray-400">
-              Add one or more sessions for the selected date.
+              Edit your schedule. Currently {daySlots.length} day(s) with{" "}
+              {daySlots.reduce((sum, day) => sum + day.times.length, 0)} time
+              slot(s) configured.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {daySlots.map((daySlot, dayIndex) => (
-              <div
-                key={dayIndex}
-                className="border border-gray-700 rounded-lg p-6 bg-gray-900/40 space-y-4"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 max-w-[200px]">
-                    <Label className="text-sm font-medium text-gray-300">
-                      Day of Week <span className="text-red-400">*</span>
-                    </Label>
-                    <select
-                      value={daySlot.slot_day}
-                      onChange={(e) =>
-                        handleDayChange(dayIndex, e.target.value)
-                      }
-                      className="mt-2 w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent h-10"
-                    >
-                      {DAYS_OF_WEEK.map((day) => (
-                        <option key={day} value={day}>
-                          {day}
-                        </option>
-                      ))}
-                    </select>
+            {daySlots.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <p>No schedule configured yet.</p>
+                <p className="text-sm mt-2">
+                  Click "Add Another Day to Schedule" to get started.
+                </p>
+              </div>
+            ) : (
+              daySlots.map((daySlot, dayIndex) => (
+                <div
+                  key={dayIndex}
+                  className="border border-gray-700 rounded-lg p-6 bg-gray-900/40 space-y-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 max-w-[200px]">
+                      <Label className="text-sm font-medium text-gray-300">
+                        Day of Week <span className="text-red-400">*</span>
+                      </Label>
+                      <select
+                        value={daySlot.slot_day}
+                        onChange={(e) =>
+                          handleDayChange(dayIndex, e.target.value)
+                        }
+                        className="mt-2 w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent h-10"
+                      >
+                        {DAYS_OF_WEEK.map((day) => (
+                          <option key={day} value={day}>
+                            {day}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {daySlots.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeDaySlot(dayIndex)}
+                        className="border-red-700 text-red-400 hover:bg-red-900/30 cursor-pointer mt-6"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Remove Day
+                      </Button>
+                    )}
                   </div>
-                  {daySlots.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeDaySlot(dayIndex)}
-                      className="border-red-700 text-red-400 hover:bg-red-900/30 cursor-pointer mt-6"
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Remove Day
-                    </Button>
-                  )}
-                </div>
 
-                <div className="space-y-4 pt-2">
-                  <Label className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    Time Slots for {daySlot.slot_day}
-                  </Label>
+                  <div className="space-y-4 pt-2">
+                    <Label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Time Slots for {daySlot.slot_day}
+                    </Label>
 
-                  {daySlot.times.map((timeSlot, timeIndex) => (
-                    <div
-                      key={timeIndex}
-                      className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-gray-800/50 p-4 rounded-md border border-gray-700/50"
-                    >
-                      <div className="md:col-span-3">
-                        <Label className="text-xs font-medium text-gray-400">
-                          Start Time
-                        </Label>
-                        <Input
-                          type="time"
-                          value={timeSlot.start_time}
-                          onChange={(e) =>
-                            handleTimeChange(
-                              dayIndex,
-                              timeIndex,
-                              "start_time",
-                              e.target.value,
-                            )
-                          }
-                          required
-                          className="mt-1 bg-gray-700 border-gray-600 text-white focus:border-orange-500 h-9"
-                        />
-                      </div>
-                      <div className="md:col-span-3">
-                        <Label className="text-xs font-medium text-gray-400">
-                          End Time
-                        </Label>
-                        <Input
-                          type="time"
-                          value={timeSlot.end_time}
-                          onChange={(e) =>
-                            handleTimeChange(
-                              dayIndex,
-                              timeIndex,
-                              "end_time",
-                              e.target.value,
-                            )
-                          }
-                          required
-                          className="mt-1 bg-gray-700 border-gray-600 text-white focus:border-orange-500 h-9"
-                        />
-                      </div>
-                      <div className="md:col-span-5">
-                        <Label className="text-xs font-medium text-gray-400">
-                          Meeting Link
-                        </Label>
-                        <div className="mt-1 flex items-center gap-2 bg-gray-700 border border-gray-600 rounded-md px-2 h-9">
-                          <LinkIcon className="h-3 w-3 text-blue-400 flex-shrink-0" />
+                    {daySlot.times.map((timeSlot, timeIndex) => (
+                      <div
+                        key={timeIndex}
+                        className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-gray-800/50 p-4 rounded-md border border-gray-700/50"
+                      >
+                        <div className="md:col-span-5">
+                          <Label className="text-xs font-medium text-gray-400">
+                            Start Time
+                          </Label>
                           <Input
-                            type="url"
-                            value={timeSlot.meeting_link}
+                            type="time"
+                            value={timeSlot.start_time}
                             onChange={(e) =>
                               handleTimeChange(
                                 dayIndex,
                                 timeIndex,
-                                "meeting_link",
+                                "start_time",
                                 e.target.value,
                               )
                             }
-                            placeholder="https://zoom.us/..."
-                            className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-white text-sm h-full"
+                            required
+                            className="mt-1 bg-gray-700 border-gray-600 text-white focus:border-orange-500 h-9"
                           />
                         </div>
+                        <div className="md:col-span-5">
+                          <Label className="text-xs font-medium text-gray-400">
+                            End Time
+                          </Label>
+                          <Input
+                            type="time"
+                            value={timeSlot.end_time}
+                            onChange={(e) =>
+                              handleTimeChange(
+                                dayIndex,
+                                timeIndex,
+                                "end_time",
+                                e.target.value,
+                              )
+                            }
+                            required
+                            className="mt-1 bg-gray-700 border-gray-600 text-white focus:border-orange-500 h-9"
+                          />
+                        </div>
+                        <div className="md:col-span-2 pt-6">
+                          {daySlot.times.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                removeTimeSlot(dayIndex, timeIndex)
+                              }
+                              className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-9 w-9"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <div className="md:col-span-1 pt-6">
-                        {daySlot.times.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeTimeSlot(dayIndex, timeIndex)}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-9 w-9"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
 
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => addTimeSlot(dayIndex)}
-                    className="text-orange-400 hover:text-orange-300 hover:bg-orange-900/20"
-                  >
-                    <Plus className="h-3 w-3 mr-1" /> Add Time Slot
-                  </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => addTimeSlot(dayIndex)}
+                      className="text-orange-400 hover:text-orange-300 hover:bg-orange-900/20"
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Add Time Slot
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
 
             <Button
               type="button"
@@ -930,36 +999,31 @@ export default function AddSlotForm({
           </CardContent>
         </Card>
 
+        {/* Submit Button */}
         <div className="flex justify-center gap-4">
-          {isEditMode && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push("/dashboard/one-to-one-session")}
-              className="border-gray-600 text-gray-300 hover:bg-gray-700 cursor-pointer"
-              disabled={
-                createSlotMutation.isPending || updateSlotMutation.isPending
-              }
-            >
-              Cancel
-            </Button>
-          )}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/dashboard/in-person-session")}
+            className="border-gray-600 text-gray-400 hover:text-white"
+          >
+            Cancel
+          </Button>
           <Button
             type="submit"
-            disabled={
-              createSlotMutation.isPending || updateSlotMutation.isPending
-            }
-            className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
+            disabled={updateSlotMutation.isPending}
+            className="bg-orange-600 hover:bg-orange-700 text-white px-8"
           >
-            {createSlotMutation.isPending || updateSlotMutation.isPending ? (
+            {updateSlotMutation.isPending ? (
               <>
-                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                {isEditMode ? "Updating Slot..." : "Creating Slot..."}
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Updating...
               </>
-            ) : isEditMode ? (
-              "Update Slot"
             ) : (
-              "Create Slot"
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Update Slot
+              </>
             )}
           </Button>
         </div>

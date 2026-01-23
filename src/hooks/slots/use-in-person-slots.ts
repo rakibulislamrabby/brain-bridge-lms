@@ -111,7 +111,10 @@ export interface InPersonSlotsResponse {
 }
 
 const fetchInPersonSlots = async (page: number = 1): Promise<PaginatedInPersonSlotsResponse> => {
-  const url = joinUrl(`teacher/in-person-slots?page=${page}`)
+  // Backend has hardcoded ordering by 'start_time' which no longer exists
+  // Try to override with orderBy parameter (Laravel common pattern)
+  // If backend doesn't accept this, it needs to be fixed on backend to remove start_time from ORDER BY
+  const url = joinUrl(`teacher/in-person-slots?page=${page}&orderBy=from_date&orderDirection=asc`)
   const headers = getAuthHeaders()
 
   try {
