@@ -129,6 +129,13 @@ const normalizeEnrolledCoursesArray = (response: unknown): EnrolledCourse[] => {
 
 const fetchEnrolledCourses = async (): Promise<EnrolledCourse[]> => {
   const url = joinUrl('student/enrolled-courses')
+  const token = getAuthToken()
+  
+  // If no auth token, return empty array (user is not authenticated)
+  if (!token) {
+    return []
+  }
+
   const headers = getAuthHeaders()
 
   console.log('🔵 Fetching Enrolled Courses from:', url)
@@ -160,6 +167,13 @@ const fetchEnrolledCourses = async (): Promise<EnrolledCourse[]> => {
         errorObj?.error || 
         (typeof errorObj?.data === 'string' ? errorObj.data : null) ||
         `Failed to fetch enrolled courses (${response.status})`
+      
+      // If unauthenticated, return empty array instead of throwing error
+      if (response.status === 401 || errorMessage === 'Unauthenticated.' || String(errorMessage).includes('Unauthenticated')) {
+        console.log('ℹ️ User is not authenticated, returning empty enrolled courses')
+        return []
+      }
+      
       console.error('🔴 Enrolled Courses Error:', errorMessage)
       throw new Error(typeof errorMessage === 'string' ? errorMessage : 'Failed to fetch enrolled courses')
     }
@@ -176,6 +190,10 @@ const fetchEnrolledCourses = async (): Promise<EnrolledCourse[]> => {
   } catch (error) {
     console.error('🔴 Error fetching enrolled courses:', error)
     if (error instanceof Error) {
+      // If it's an unauthenticated error, return empty array
+      if (error.message.includes('Unauthenticated') || error.message.includes('401')) {
+        return []
+      }
       throw error
     }
     throw new Error('Network error: Failed to fetch enrolled courses')
@@ -183,11 +201,14 @@ const fetchEnrolledCourses = async (): Promise<EnrolledCourse[]> => {
 }
 
 export const useEnrolledCourses = () => {
+  const token = getAuthToken()
+  
   return useQuery({
     queryKey: ['enrolled-courses'],
     queryFn: fetchEnrolledCourses,
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: 1,
+    enabled: !!token, // Only fetch if user is authenticated
   })
 }
 

@@ -233,6 +233,52 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
       return
     }
 
+    if (!thumbnailFile) {
+      addToast({
+        type: 'error',
+        title: 'Thumbnail Required',
+        description: 'Please upload a thumbnail image for the course.',
+        duration: 5000,
+      })
+      return
+    }
+
+    if (modules.length === 0 || modules.every((m) => !m.title.trim())) {
+      addToast({
+        type: 'error',
+        title: 'Modules Required',
+        description: 'Please add at least one module with a title.',
+        duration: 5000,
+      })
+      return
+    }
+
+    // Validate that each module has a title
+    for (let moduleIndex = 0; moduleIndex < modules.length; moduleIndex += 1) {
+      const moduleState = modules[moduleIndex]
+      if (!moduleState.title.trim()) {
+        addToast({
+          type: 'error',
+          title: 'Module Title Required',
+          description: `Module ${moduleIndex + 1} is missing a title. Please provide a title for all modules.`,
+          duration: 5000,
+        })
+        return
+      }
+    }
+
+    // Validate that at least one module has at least one video
+    const hasVideos = modules.some((module) => module.videos.length > 0)
+    if (!hasVideos) {
+      addToast({
+        type: 'error',
+        title: 'Videos Required',
+        description: 'Please add at least one video to at least one module.',
+        duration: 5000,
+      })
+      return
+    }
+
     for (let moduleIndex = 0; moduleIndex < modules.length; moduleIndex += 1) {
       const moduleState = modules[moduleIndex]
       for (let videoIndex = 0; videoIndex < moduleState.videos.length; videoIndex += 1) {
@@ -373,7 +419,7 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
               </div>
 
               <div>
-                <Label htmlFor="thumbnail" className="text-sm font-medium text-gray-300">Thumbnail Image</Label>
+                <Label htmlFor="thumbnail" className="text-sm font-medium text-gray-300">Thumbnail Image <span className="text-red-400">*</span></Label>
                 <div className="mt-2 flex items-center gap-3">
                   <label className="inline-flex items-center gap-2 bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm text-gray-300 hover:bg-gray-600 cursor-pointer">
                     <ImageIcon className="h-4 w-4 text-orange-400" />
@@ -453,10 +499,10 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2 pt-5">
               <Layers className="h-5 w-5 text-orange-500" />
-              Modules
+              Modules <span className="text-red-400">*</span>
             </CardTitle>
             <CardDescription className="text-gray-400">
-              Organize the course content into modules and attach videos
+              Organize the course content into modules and attach videos. At least one module is required.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
