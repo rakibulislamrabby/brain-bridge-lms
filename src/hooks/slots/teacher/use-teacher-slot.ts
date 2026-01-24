@@ -41,6 +41,17 @@ export interface TeacherSlotSubject {
   updated_at?: string
 }
 
+export interface SlotTimeRange {
+  start_time: string
+  end_time: string
+  meeting_link?: string
+}
+
+export interface DaySlot {
+  slot_day: string
+  times: SlotTimeRange[]
+}
+
 export interface TeacherSlot {
   id: number
   teacher_id: number
@@ -49,11 +60,10 @@ export interface TeacherSlot {
   type: string
   price: string
   description: string
+  video?: string | null
   from_date: string
   to_date: string
-  start_time: string
-  end_time: string
-  meeting_link?: string
+  slots: DaySlot[]
   is_booked: boolean
   max_students: number
   booked_count: number

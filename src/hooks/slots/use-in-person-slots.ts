@@ -42,6 +42,25 @@ export interface InPersonSlotSubject {
   updated_at?: string
 }
 
+export interface InPersonSlotTime {
+  id: number
+  in_person_slot_day_id: number
+  start_time: string
+  end_time: string
+  is_booked: number
+  created_at: string
+  updated_at: string
+}
+
+export interface InPersonSlotDay {
+  id: number
+  in_person_slot_id: number
+  day: string
+  created_at: string
+  updated_at: string
+  times: InPersonSlotTime[]
+}
+
 export interface InPersonSlot {
   id: number
   teacher_id: number
@@ -51,16 +70,16 @@ export interface InPersonSlot {
   description: string
   from_date: string
   to_date: string
-  start_time: string
-  end_time: string
   is_booked: boolean
   country?: string
   state?: string
   city?: string
   area?: string
+  video?: string | null
   created_at?: string
   updated_at?: string
   subject?: InPersonSlotSubject
+  days?: InPersonSlotDay[]
 }
 
 export interface PaginationLink {
@@ -92,7 +111,10 @@ export interface InPersonSlotsResponse {
 }
 
 const fetchInPersonSlots = async (page: number = 1): Promise<PaginatedInPersonSlotsResponse> => {
-  const url = joinUrl(`teacher/in-person-slots?page=${page}`)
+  // Backend has hardcoded ordering by 'start_time' which no longer exists
+  // Try to override with orderBy parameter (Laravel common pattern)
+  // If backend doesn't accept this, it needs to be fixed on backend to remove start_time from ORDER BY
+  const url = joinUrl(`teacher/in-person-slots?page=${page}&orderBy=from_date&orderDirection=asc`)
   const headers = getAuthHeaders()
 
   try {

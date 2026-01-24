@@ -3,21 +3,41 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Clock, Users, DollarSign, Info, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { 
+  ArrowLeft, 
+  Calendar as CalendarIcon, 
+  Clock, 
+  Users, 
+  DollarSign, 
+  Info, 
+  ChevronLeft, 
+  ChevronRight, 
+  Loader2, 
+  Sparkles, 
+  Minus, 
+  MessageSquare, 
+  X,
+  Star,
+  Award,
+  BookOpen,
+  CheckCircle2
+} from 'lucide-react'
 import { AppHeader } from '@/components/app-header'
 import Footer from '@/components/shared/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useLiveSessionDetail } from '@/hooks/live-session/use-live-session-detail'
+import { useTeacherSchedule } from '@/hooks/live-session/use-teacher-schedule'
+import { useTeacherDetails } from '@/hooks/teacher/use-teacher-details'
 import { useBookingIntent } from '@/hooks/slots/use-bookings-intent'
 import { useToast } from '@/components/ui/toast'
 import { useMe } from '@/hooks/use-me'
 import { useStudentBookedSlots } from '@/hooks/student/use-booked-slots'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Sparkles, Minus } from 'lucide-react'
 import { SERVICE_FEE } from '@/lib/constants'
+import LiveSessionChat, { ChatButton } from '@/components/live-session/LiveSessionChat'
 
 const toDateOnlyKey = (date: Date | string | null | undefined) => {
   if (!date) {
@@ -110,10 +130,18 @@ export default function LiveSessionDetailPage() {
   }, [params])
 
   const { data, isLoading, error } = useLiveSessionDetail(sessionId)
+  const { data: scheduleData, isLoading: isScheduleLoading } = useTeacherSchedule(sessionId)
+  const { data: teacherDetailsData } = useTeacherDetails(data?.teacher?.id)
+  const teacherDetails = teacherDetailsData?.teacher
   const bookingIntentMutation = useBookingIntent()
   const { addToast } = useToast()
   const { data: userData } = useMe()
   const [pointsToUse, setPointsToUse] = useState<number>(0)
+  const [selectedSlot, setSelectedSlot] = useState<any>(null)
+  const [selectedDateKeyForBooking, setSelectedDateKeyForBooking] = useState<string | null>(null)
+  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set())
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
   
   // Fetch student's booked slots to disable already reserved dates
   const { data: bookedSlotsData } = useStudentBookedSlots(1)
@@ -212,9 +240,39 @@ export default function LiveSessionDetailPage() {
     return firstFutureDate ? toDateOnlyKey(firstFutureDate) : null
   })
 
-  const availableDateKeys = useMemo(() => new Set(availableDates.map((date) => toDateOnlyKey(date)).filter((key): key is string => Boolean(key))), [availableDates])
+  const availableDateKeys = useMemo(() => {
+    const keys = new Set<string>()
+    
+    // Primary source: schedule data from the API
+    if (scheduleData && scheduleData.length > 0) {
+      scheduleData.forEach(day => {
+        if (day.slots && day.slots.length > 0) {
+          keys.add(day.date)
+        }
+      })
+      return keys
+    }
+
+    // Fallback: derived from date range (old logic)
+    availableDates.forEach((date) => {
+      const key = toDateOnlyKey(date)
+      if (key) keys.add(key)
+    })
+    return keys
+  }, [availableDates, scheduleData])
 
   useEffect(() => {
+    if (scheduleData && scheduleData.length > 0) {
+      // Find the first date in schedule containing slots
+      const firstAvailable = scheduleData.find(day => day.slots && day.slots.length > 0)
+      if (firstAvailable) {
+        setSelectedDateKey(firstAvailable.date)
+        const dateObj = new Date(firstAvailable.date)
+        setCurrentMonth(new Date(dateObj.getFullYear(), dateObj.getMonth(), 1))
+        return
+      }
+    }
+
     if (availableDates.length > 0) {
       // Find the first future date (availableDates is already filtered to exclude past dates)
       const firstFutureDate = availableDates[0]
@@ -228,7 +286,7 @@ export default function LiveSessionDetailPage() {
       const today = new Date()
       setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1))
     }
-  }, [availableDates])
+  }, [availableDates, scheduleData])
 
   const selectedDate = useMemo(() => {
     if (!selectedDateKey) {
@@ -255,6 +313,13 @@ export default function LiveSessionDetailPage() {
     
     return false
   }, [data, selectedDateKey])
+
+  const selectedDateSchedule = useMemo(() => {
+    if (!selectedDateKey || !scheduleData) return null
+    
+    // Find matching date in schedule
+    return scheduleData.find(day => day.date === selectedDateKey)
+  }, [selectedDateKey, scheduleData])
 
   // Points system calculations
   const availablePoints = userData?.points || 0
@@ -316,40 +381,73 @@ export default function LiveSessionDetailPage() {
   }
 
   const handleReserveSlot = async () => {
-    if (!data || !selectedDate) {
+    // Check if user is logged in
+    if (!userData?.id) {
       addToast({
         type: 'error',
-        title: 'Missing Information',
-        description: 'Please select a date to reserve the slot.',
+        title: 'Login Required',
+        description: 'Please login first to book this slot.',
         duration: 5000,
       })
+      router.push('/signin')
       return
     }
 
-    if (data.available_seats === 0) {
+    if (!selectedSlot || !selectedDateKeyForBooking) {
       addToast({
         type: 'error',
-        title: 'Slot Full',
-        description: 'This slot is already full. Please select another date.',
+        title: 'Missing Selection',
+        description: 'Please select a date and time slot to reserve.',
         duration: 5000,
       })
       return
     }
 
     try {
+      // Calculate the correct payment amount before sending to API
+      // If slot price is 0, only service fee should be charged
+      // Ensure newPaymentAmount is never negative
+      const safeNewPaymentAmount = Math.max(0, newPaymentAmount)
+      const calculatedFinalAmount = safeNewPaymentAmount > 0 ? safeNewPaymentAmount + SERVICE_FEE : SERVICE_FEE
+      
+      // Log calculation for debugging
+      console.log('💰 Booking Intent - Amount Calculation:', {
+        slotPrice,
+        pointsToUse,
+        pointsDiscount,
+        newPaymentAmount: safeNewPaymentAmount,
+        serviceFee: SERVICE_FEE,
+        calculatedFinalAmount,
+      })
+      
       const result = await bookingIntentMutation.mutateAsync({
-        slot_id: data.id,
-        scheduled_date: selectedDate,
+        slot_id: sessionId,
+        scheduled_date: new Date(selectedDateKeyForBooking),
         points_to_use: pointsToUse > 0 ? pointsToUse : undefined,
-        new_payment_amount: newPaymentAmount,
+        new_payment_amount: safeNewPaymentAmount,
       })
 
       // Check if payment is required
       if (result?.requires_payment && result?.client_secret) {
+        // Use our calculated amount instead of API response amount
+        // The API might return incorrect amount, so we use our calculation
+        const finalAmount = calculatedFinalAmount
+        
+        // Log for debugging
+        console.log('💰 Payment Amount Calculation:', {
+          slotPrice,
+          pointsToUse,
+          pointsDiscount,
+          newPaymentAmount,
+          serviceFee: SERVICE_FEE,
+          calculatedFinalAmount: finalAmount,
+          apiReturnedAmount: result.amount,
+        })
+        
         // Build URL with payment data as query parameters
         const paymentParams = new URLSearchParams({
           client_secret: result.client_secret,
-          amount: String(result.amount),
+          amount: String(finalAmount),
           payment_intent: result.payment_intent_id || '',
         })
         
@@ -385,24 +483,27 @@ export default function LiveSessionDetailPage() {
     }
   }
 
+  // Check if user is logged in
+  const isLoggedIn = !!userData
+
   return (
     <div>
       <AppHeader />
-      <main className="bg-gray-900 min-h-screen py-14">
+      <main className="bg-gray-900 min-h-screen py-14 relative">
         <div className="max-w-5xl mx-auto px-4">
           <Button
             variant="ghost"
-            className="text-gray-300 hover:text-white hover:bg-gray-800/70 mb-6 cursor-pointer"
+            className="text-gray-400 hover:text-white hover:bg-gray-800/70 mb-8 cursor-pointer transition-all duration-300 group"
             onClick={() => router.back()}
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to live sessions
+            <ArrowLeft className="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition-transform" />
+            <span className="font-medium">Back to live sessions</span>
           </Button>
 
           {isLoading ? (
             <Card className="bg-gray-800/80 border border-gray-700">
               <CardContent className="py-16 flex justify-center">
-                <Calendar className="h-10 w-10 text-purple-500 animate-pulse" />
+                <CalendarIcon className="h-10 w-10 text-purple-500 animate-pulse" />
               </CardContent>
             </Card>
           ) : error ? (
@@ -443,132 +544,373 @@ export default function LiveSessionDetailPage() {
                         {data.description || 'Connect live with the mentor for personalized guidance and actionable feedback during this session.'}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <div className="text-3xl font-bold text-white">
-                        {data.price ? `$${Number(data.price).toFixed(2)}` : 'Free'}
+                    <div className="flex flex-col items-end gap-3">
+                      <div className="text-right">
+                        <div className="text-3xl font-bold text-white">
+                          {data.price ? `$${Number(data.price).toFixed(2)}` : 'Free'}
+                        </div>
+                        <div className="text-sm text-gray-400">per session</div>
                       </div>
-                      <div className="text-sm text-gray-400">per session</div>
+                      {data.video && (
+                        <div className="w-48 aspect-video rounded-lg overflow-hidden border border-gray-700 bg-black shadow-lg">
+                          <video 
+                            src={data.video} 
+                            controls 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-semibold text-white">Select a date</h2>
-                      <div className="flex items-center gap-2 text-sm text-gray-400">
-                        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white" onClick={handlePrevMonth}>
-                          <ChevronLeft className="w-4 h-4" />
-                        </Button>
-                        <span>{new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(currentMonth)}</span>
-                        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white" onClick={handleNextMonth}>
-                          <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      </div>
+                <CardContent className="pt-6">
+                  {isScheduleLoading ? (
+                    <div className="py-20 flex flex-col items-center justify-center space-y-4">
+                      <Loader2 className="h-10 w-10 animate-spin text-purple-500" />
+                      <p className="text-gray-400">Loading availability...</p>
                     </div>
-                    <div className="grid grid-cols-7 gap-1 text-center text-sm text-gray-400 mb-1">
-                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                        <div key={day} className="py-2">
-                          {day}
+                  ) : !scheduleData || scheduleData.length === 0 ? (
+                    <div className="py-20 text-center space-y-3">
+                      <CalendarIcon className="h-12 w-12 text-gray-600 mx-auto" />
+                      <p className="text-gray-400">No available slots found for this session.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                      {/* Left: Calendar and Slot Selection */}
+                      <div className="lg:col-span-2 space-y-8">
+                          <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                              <CalendarIcon className="w-6 h-6 text-purple-500" />
+                              Select Date
+                            </h2>
+                            <div className="flex items-center gap-3 text-sm text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-lg border border-gray-700">
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-white" onClick={handlePrevMonth}>
+                                <ChevronLeft className="w-4 h-4" />
+                              </Button>
+                              <span className="font-medium min-w-[120px] text-center">
+                                {new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(currentMonth)}
+                              </span>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-white" onClick={handleNextMonth}>
+                                <ChevronRight className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Calendar Grid */}
+                          <div className="bg-gray-800/40 rounded-xl border border-gray-700/50 p-4">
+                            <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+                              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                                <div key={day} className="py-2">{day}</div>
+                              ))}
+                            </div>
+                            <div className="grid grid-cols-7 gap-1">
+                              {calendarCells.map(({ date, isCurrentMonth }) => {
+                                const key = toDateOnlyKey(date)
+                                const isAvailable = key ? availableDateKeys.has(key) : false
+                                const isSelected = key === selectedDateKey
+                                const isBooked = key ? bookedDateKeys.has(key) : false
+                                
+                                const today = new Date()
+                                today.setHours(0, 0, 0, 0)
+                                const dateToCheck = new Date(date)
+                                dateToCheck.setHours(0, 0, 0, 0)
+                                const isPastDate = dateToCheck < today
+                                const isDisabled = !isAvailable || isPastDate || isBooked
+
+                                return (
+                                  <button
+                                    key={`${date.toISOString()}-${isCurrentMonth}`}
+                                    onClick={() => handleDateSelect(date)}
+                                    className={`relative flex h-14 items-center justify-center rounded-lg border text-sm transition-all duration-200 ${
+                                      isSelected
+                                        ? 'border-purple-600 bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.3)] z-10'
+                                        : isBooked
+                                        ? 'border-red-900/50 bg-red-900/10 text-red-400 cursor-not-allowed'
+                                        : isAvailable && !isPastDate
+                                        ? 'border-purple-500/30 bg-purple-500/5 text-purple-200 hover:border-purple-500 hover:bg-purple-500/10'
+                                        : isCurrentMonth
+                                        ? 'border-gray-800 bg-gray-900/50 text-gray-600 cursor-not-allowed'
+                                        : 'border-transparent text-gray-700 cursor-not-allowed opacity-20'
+                                    }`}
+                                    disabled={isDisabled}
+                                  >
+                                    <span className="font-semibold">{date.getDate()}</span>
+                                    {isAvailable && !isSelected && !isPastDate && !isBooked && (
+                                      <span className="absolute bottom-2 h-1 w-1 rounded-full bg-purple-500" />
+                                    )}
+                                    {isSelected && (
+                                      <span className="absolute bottom-2 h-1 w-4 rounded-full bg-white/50" />
+                                    )}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+
+                        {/* Available Slots for Selected Date */}
+                        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                          <div className="flex items-center justify-between mt-4">
+                            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                              <Clock className="w-6 h-6 text-purple-500" />
+                              Available Slots
+                              {selectedDate && (
+                                <span className="text-sm font-normal text-gray-500 bg-gray-800/50 px-3 py-1 rounded-full border border-gray-700/50 ml-2">
+                                  {selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                                </span>
+                              )}
+                            </h2>
+                          </div>
+
+                          {!selectedDateKey ? (
+                            <div className="py-12 border-2 border-dashed border-gray-800 rounded-xl text-center text-gray-500">
+                              <Clock className="w-12 h-12 mx-auto mb-3 text-gray-600" />
+                              <p className="text-gray-400">Pick a date on the calendar to view available times</p>
+                            </div>
+                          ) : !selectedDateSchedule || selectedDateSchedule.slots.length === 0 ? (
+                            <div className="py-12 bg-gray-800/30 rounded-xl text-center text-gray-400 border border-gray-700/50">
+                              <Clock className="w-12 h-12 mx-auto mb-3 text-gray-600" />
+                              <p>No slots available for the selected date.</p>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {selectedDateSchedule.slots.map((slot) => {
+                                const isSelected = selectedSlot?.id === slot.id && selectedDateKeyForBooking === selectedDateKey
+                                
+                                return (
+                                  <button
+                                    key={slot.id}
+                                    onClick={() => {
+                                      setSelectedSlot(slot)
+                                      setSelectedDateKeyForBooking(selectedDateKey!)
+                                    }}
+                                    className={`group relative px-5 py-4 rounded-xl border transition-all duration-200 text-left ${
+                                      isSelected
+                                        ? 'border-purple-500 bg-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.4)] scale-[1.02]'
+                                        : 'border-gray-700 bg-gray-800/50 text-gray-300 hover:border-purple-500/50 hover:bg-gray-800 hover:scale-[1.01]'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div className={`p-2 rounded-lg ${
+                                        isSelected 
+                                          ? 'bg-white/20' 
+                                          : 'bg-purple-500/10 group-hover:bg-purple-500/20'
+                                      }`}>
+                                        <Clock className={`w-4 h-4 ${
+                                          isSelected ? 'text-white' : 'text-purple-400'
+                                        }`} />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className={`font-semibold text-sm mb-1 ${
+                                          isSelected ? 'text-white' : 'text-white'
+                                        }`}>
+                                          {formatTimeRange(slot.start_time, slot.end_time)}
+                                        </div>
+                                        <div className={`text-xs ${
+                                          isSelected ? 'text-purple-100' : 'text-gray-400'
+                                        }`}>
+                                          {(() => {
+                                            const start = new Date(`1970-01-01T${slot.start_time}`)
+                                            const end = new Date(`1970-01-01T${slot.end_time}`)
+                                            const diffMs = end.getTime() - start.getTime()
+                                            const diffMins = Math.round(diffMs / 60000)
+                                            const hours = Math.floor(diffMins / 60)
+                                            const mins = diffMins % 60
+                                            return hours > 0 
+                                              ? `${hours}h ${mins > 0 ? `${mins}m` : ''}`.trim()
+                                              : `${diffMins}m`
+                                          })()} session
+                                        </div>
+                                      </div>
+                                      {isSelected && (
+                                        <div className="flex-shrink-0">
+                                          <CheckCircle2 className="w-5 h-5 text-white" />
+                                        </div>
+                                      )}
+                                    </div>
+                                    {slot.meeting_link && (
+                                      <div className={`mt-2 pt-2 border-t ${
+                                        isSelected ? 'border-white/20' : 'border-gray-700'
+                                      }`}>
+                                        <div className="flex items-center gap-1.5 text-xs">
+                                          <div className={`w-1.5 h-1.5 rounded-full ${
+                                            isSelected ? 'bg-green-300' : 'bg-green-500'
+                                          }`} />
+                                          <span className={isSelected ? 'text-purple-100' : 'text-gray-400'}>
+                                            Meeting link available
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-7 gap-1">
-                      {calendarCells.map(({ date, isCurrentMonth }) => {
-                        const key = toDateOnlyKey(date)
-                        const isAvailable = key ? availableDateKeys.has(key) : false
-                        const isSelected = key === selectedDateKey
-                        const isBooked = key ? bookedDateKeys.has(key) : false
-                        
-                        // Check if date is in the past (today is allowed)
-                        const today = new Date()
-                        today.setHours(0, 0, 0, 0)
-                        const dateToCheck = new Date(date)
-                        dateToCheck.setHours(0, 0, 0, 0)
-                        // Only block dates that are strictly before today (today >= today, so today is allowed)
-                        const isPastDate = dateToCheck < today
-                        const isDisabled = !isAvailable || isPastDate || isBooked
 
-                        return (
-                          <button
-                            key={`${date.toISOString()}-${isCurrentMonth}`}
-                            onClick={() => handleDateSelect(date)}
-                            className={`relative flex h-12 items-center justify-center rounded-md border text-sm transition-colors ${
-                              isSelected
-                                ? 'border-purple-500 bg-purple-600/20 text-white shadow-inner'
-                                : isBooked
-                                ? 'border-red-500/40 bg-red-500/10 text-red-300 cursor-not-allowed opacity-60'
-                                : isAvailable && !isPastDate
-                                ? 'border-purple-500/40 bg-purple-500/10 text-purple-200 hover:bg-purple-500/20'
-                                : isCurrentMonth
-                                ? 'border-gray-700 bg-gray-800 text-gray-400 cursor-not-allowed opacity-50'
-                                : 'border-gray-800 bg-gray-900 text-gray-700 cursor-not-allowed opacity-50'
-                            }`}
-                            disabled={isDisabled}
-                            title={
-                              isPastDate 
-                                ? 'Past dates cannot be selected' 
-                                : isBooked 
-                                ? 'You have already reserved this date' 
-                                : undefined
-                            }
-                          >
-                            {date.getDate()}
-                            {isBooked && (
-                              <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-red-400" />
-                            )}
-                            {isAvailable && !isSelected && !isPastDate && !isBooked && (
-                              <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-purple-400" />
-                            )}
-                          </button>
-                        )
-                      })}
-                    </div>
-                    <div className="mt-4 text-sm text-gray-400 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="inline-block h-3 w-3 rounded-full bg-purple-500"></span>
-                        <span>Available date</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="inline-block h-3 w-3 rounded-full bg-red-500"></span>
-                        <span>Already reserved by you</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="inline-block h-3 w-3 rounded-full bg-gray-500"></span>
-                        <span>Unavailable</span>
-                      </div>
-                    </div>
-                  </div>
+                        {/* Meet your Master - Enhanced Professional Section */}
+                        <div className="pt-12 border-t border-gray-700/50">
+                          <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                              <Award className="w-6 h-6 text-purple-500" />
+                              Meet your Master
+                            </h2>
+                            <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 px-3 py-1">
+                              Expert Mentor
+                            </Badge>
+                          </div>
+                          
+                          <div className="relative group">
+                            {/* Decorative Background Element */}
+                            <div className="absolute -inset-0.5 bg-purple-600/10 rounded-3xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+                            
+                            <div className="relative bg-gray-800/40 backdrop-blur-xl rounded-2xl border border-gray-700/50 p-6 md:p-8 overflow-hidden">
+                              <div className="flex flex-col md:grid md:grid-cols-12 gap-8 relative z-10">
+                                
+                                {/* Avatar and Identity - MD: Col 4 */}
+                                <div className="md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left">
+                                  <div className="relative mb-6">
+                                    <div className="h-28 w-28 md:h-32 md:w-32 rounded-3xl bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 flex items-center justify-center text-4xl md:text-5xl text-white font-black shadow-2xl transform transition-transform group-hover:scale-105 duration-500">
+                                      {data.teacher?.name?.[0] || 'M'}
+                                    </div>
+                                    <div className="absolute -bottom-2 -right-2 bg-green-500 h-6 w-6 rounded-full border-4 border-gray-800 shadow-xl" title="Online" />
+                                    {/* Subtle ring animation */}
+                                    <div className="absolute -inset-2 border border-purple-500/20 rounded-[2rem] animate-pulse" />
+                                  </div>
+                                  
+                                  <h3 className="text-2xl font-bold text-white tracking-tight mb-1">{data.teacher?.name}</h3>
+                                  <p className="text-purple-400 font-medium text-sm mb-4">
+                                    {teacherDetails?.title || 'Expert Live Session Mentor'}
+                                  </p>
+                                  
+                                  <div className="flex items-center gap-4">
+                                    <div className="flex flex-col">
+                                      <span className="text-xl font-bold text-white">{teacherDetails?.average_rating || '5.0'}</span>
+                                      <div className="flex text-yellow-500">
+                                        {[...Array(5)].map((_, i) => (
+                                          <Star key={i} className={`w-3 h-3 ${i < Math.floor(teacherDetails?.average_rating || 5) ? 'fill-current' : 'opacity-30'}`} />
+                                        ))}
+                                      </div>
+                                    </div>
+                                    <div className="h-8 w-px bg-gray-700" />
+                                    <div className="flex flex-col">
+                                      <span className="text-xl font-bold text-white">{teacherDetails?.total_sessions || '0'}</span>
+                                      <span className="text-[10px] text-gray-500 uppercase font-bold">Sessions</span>
+                                    </div>
+                                  </div>
+                                </div>
 
-                  <div className="space-y-5">
-                    <div>
-                      <h2 className="text-lg font-semibold text-white mb-3">Time slot</h2>
-                      {selectedDate && showTimeSlot ? (
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900/50 px-4 py-3">
-                            <div className="flex items-center gap-3 text-white">
-                              <Clock className="w-4 h-4 text-purple-400" />
-                              <div className="flex flex-col">
-                                <span>{data.start_time && data.end_time ? formatTimeRange(data.start_time, data.end_time) : 'Time TBD'}</span>
-                                {data.available_seats > 0 && (
-                                  <span className="text-xs text-gray-400">
-                                    {data.available_seats} {data.available_seats === 1 ? 'seat' : 'seats'} available
-                                  </span>
-                                )}
+                                {/* Body Content - MD: Col 8 */}
+                                <div className="md:col-span-8 flex flex-col justify-between">
+                                  <div className="space-y-6">
+                                    <div>
+                                      <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                        <Info className="w-4 h-4 text-purple-400" />
+                                        About the Mentor
+                                      </h4>
+                                      <p className="text-gray-300 text-base leading-relaxed">
+                                        {data.teacher?.name} is a verified Brain Bridge Master specializing in <span className="text-purple-300 font-semibold">{data.subject?.name}</span>. 
+                                        Approaching education with a focus on interactive learning and personalized feedback, {data.teacher?.name} is dedicated to helping students 
+                                        master professional concepts through direct dialogue and real-world application.
+                                      </p>
+                                    </div>
+
+                                    <div>
+                                      <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Top Expertise</h4>
+                                      <div className="flex flex-wrap gap-2">
+                                        {teacherDetails?.skills && teacherDetails.skills.length > 0 ? (
+                                          teacherDetails.skills.slice(0, 4).map((skill) => (
+                                            <div 
+                                              key={skill.id} 
+                                              className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/5 border border-purple-500/20 rounded-xl text-xs text-purple-200 font-medium hover:bg-purple-500/10 transition-colors"
+                                            >
+                                              <CheckCircle2 className="w-3.5 h-3.5 text-purple-500" />
+                                              {skill.name}
+                                            </div>
+                                          ))
+                                        ) : (
+                                          <div className="text-gray-500 text-sm italic">General {data.subject?.name} Expertise</div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-8 pt-8 border-t border-gray-700/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div className="flex flex-wrap gap-3">
+                                      <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full text-[11px] text-green-400 font-semibold">
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                        VERIFIED MASTER
+                                      </div>
+                                      <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-[11px] text-blue-400 font-semibold">
+                                        <Users className="w-3.5 h-3.5" />
+                                        TOP 1% MENTOR
+                                      </div>
+                                    </div>
+                                    
+                                    <Button 
+                                      asChild 
+                                      variant="ghost" 
+                                      className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 group/btn"
+                                    >
+                                      <Link href={`/masters/${data.teacher?.id}`} className="flex items-center">
+                                        View Master Profile
+                                        <ChevronRight className="w-4 h-4 ml-1 transform group-hover/btn:translate-x-1 transition-transform" />
+                                      </Link>
+                                    </Button>
+                                  </div>
+                                </div>
                               </div>
                             </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Booking Summary & Details */}
+                      <div className="space-y-6">
+                        <div className="rounded-xl border border-gray-700 bg-gray-900/50 p-6 space-y-6 sticky top-28">
+                          <div>
+                            <h3 className="text-gray-400 font-semibold mb-4 text-center tracking-wide uppercase text-xs">Booking Summary</h3>
+                            {selectedSlot ? (
+                              <div className="space-y-4 bg-purple-600/10 border border-purple-500/20 rounded-xl p-5 animate-in fade-in zoom-in-95 duration-200">
+                                <div className="flex items-start gap-3">
+                                  <div className="p-2 bg-purple-600/20 rounded-lg text-purple-400">
+                                    <CalendarIcon className="w-5 h-5" />
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-[10px] text-gray-500 uppercase font-black">Confirmed Date</span>
+                                    <span className="text-sm font-bold text-white">
+                                      {new Date(selectedDateKeyForBooking!).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                  <div className="p-2 bg-purple-600/20 rounded-lg text-purple-400">
+                                    <Clock className="w-5 h-5" />
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-[10px] text-gray-500 uppercase font-black">Time Range</span>
+                                    <span className="text-sm font-bold text-white">{formatTimeRange(selectedSlot.start_time, selectedSlot.end_time)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-center py-10 px-4 rounded-xl bg-gray-800/50 border border-dashed border-gray-700">
+                                <p className="text-xs text-gray-500 italic">Select your preferred date and time slot to confirm booking</p>
+                              </div>
+                            )}
                           </div>
 
                           {/* Points Usage Section */}
                           {availablePoints > 0 && slotPrice > 0 && (
-                            <div className="mb-4 pb-4 border-b border-gray-700">
+                            <div className="pt-4 border-t border-gray-700/50">
                               <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                  <Label className="text-white flex items-center gap-2 text-sm">
-                                    <Sparkles className="w-4 h-4 text-yellow-400" />
-                                    Use Points (1 point = $1 discount)
+                                  <Label className="text-white flex items-center gap-2 text-[10px] uppercase font-bold">
+                                    <Sparkles className="w-3 h-3 text-yellow-400" />
+                                    Use Points (1 pt = $1)
                                   </Label>
                                   <span className="text-xs text-gray-400">
-                                    Available: <span className="text-yellow-400 font-semibold">{availablePoints}</span> points
+                                    <span className="text-yellow-400 font-semibold">{availablePoints}</span> pts
                                   </span>
                                 </div>
                                 
@@ -580,56 +922,29 @@ export default function LiveSessionDetailPage() {
                                     value={pointsToUse || ''}
                                     onChange={(e) => handlePointsChange(e.target.value)}
                                     placeholder="0"
-                                    className="bg-gray-700 border-gray-600 text-white flex-1 py-"
+                                    className="bg-gray-800 border-gray-700 text-white flex-1"
                                     disabled={bookingIntentMutation.isPending}
                                   />
                                   <Button
                                     type="button"
                                     variant="outline"
                                     onClick={handleMaxPoints}
-                                    className="border-yellow-600 text-yellow-400 hover:bg-yellow-900/30 whitespace-nowrap text-xs px-3"
+                                    className="border-yellow-600/50 text-yellow-400 hover:bg-yellow-900/30 text-[10px] px-3 font-bold"
                                     disabled={bookingIntentMutation.isPending || availablePoints === 0}
                                   >
-                                    Use Max
+                                    MAX
                                   </Button>
                                 </div>
                                 
                                 {pointsToUse > 0 && (
-                                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                                    <div className="space-y-1 text-sm">
-                                      <div className="flex items-center justify-between text-gray-300">
-                                        <span>Session Price:</span>
-                                        <span>${slotPrice.toFixed(2)}</span>
-                                      </div>
-                                      <div className="flex items-center justify-between text-yellow-400">
-                                        <span className="flex items-center gap-1">
-                                          <Minus className="w-3 h-3" />
-                                          Points Discount ({pointsToUse} pts):
-                                        </span>
-                                        <span>-${pointsDiscount.toFixed(2)}</span>
-                                      </div>
-                                      <div className="flex items-center justify-between text-white font-semibold pt-1 border-t border-yellow-500/20">
-                                        <span>New Payment Amount:</span>
-                                        <span>${newPaymentAmount.toFixed(2)}</span>
-                                      </div>
-                                      <div className="flex items-center justify-between text-gray-400 text-xs pt-1">
-                                        <span>Service Fee:</span>
-                                        <span>${SERVICE_FEE.toFixed(2)} (flat)</span>
-                                      </div>
+                                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-xs space-y-1">
+                                    <div className="flex justify-between text-yellow-400">
+                                      <span>Points Discount:</span>
+                                      <span>-${pointsDiscount.toFixed(2)}</span>
                                     </div>
-                                  </div>
-                                )}
-                                {pointsToUse === 0 && (
-                                  <div className="p-3 bg-gray-700/50 border border-gray-600 rounded-lg">
-                                    <div className="space-y-1 text-sm">
-                                      <div className="flex items-center justify-between text-gray-300">
-                                        <span>Session Price:</span>
-                                        <span>${slotPrice.toFixed(2)}</span>
-                                      </div>
-                                      <div className="flex items-center justify-between text-gray-400 text-xs pt-1">
-                                        <span>Service Fee:</span>
-                                        <span>${SERVICE_FEE.toFixed(2)} (flat)</span>
-                                      </div>
+                                    <div className="flex justify-between text-white font-bold pt-1 border-t border-yellow-500/20 mt-1">
+                                      <span>Final Amount:</span>
+                                      <span>${newPaymentAmount.toFixed(2)}</span>
                                     </div>
                                   </div>
                                 )}
@@ -638,91 +953,79 @@ export default function LiveSessionDetailPage() {
                           )}
 
                           <Button 
-                            className="w-full bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
-                            disabled={data.available_seats === 0 || bookingIntentMutation.isPending}
+                            className="w-full bg-purple-600 hover:bg-purple-700 text-white cursor-pointer py-7 text-base font-bold shadow-xl shadow-purple-600/20 active:scale-95 transition-transform"
+                            disabled={!selectedSlot || bookingIntentMutation.isPending}
                             onClick={handleReserveSlot}
                           >
                             {bookingIntentMutation.isPending ? (
                               <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                <Loader2 className="w-5 h-5 mr-3 animate-spin" />
                                 Reserving...
                               </>
-                            ) : data.available_seats === 0 ? (
-                              'Full'
                             ) : (
-                              `Reserve Slot${pointsToUse > 0 ? ` - Pay $${newPaymentAmount.toFixed(2)}` : ''}`
+                              `Book This Slot • $${newPaymentAmount.toFixed(2)}`
                             )}
                           </Button>
+                          
                           {slotPrice > 0 && (
-                            <p className="text-xs text-gray-400 text-center mt-2">
-                              $7.95 flat service fee applies to all purchases
+                            <p className="text-[10px] text-gray-600 text-center font-medium">
+                              $7.95 flat service fee applies to all bookings
                             </p>
                           )}
                         </div>
-                      ) : (
-                        <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-6 text-center text-gray-400">
-                          Pick an available date to view the time slot.
-                        </div>
-                      )}
+                      </div>
                     </div>
-
-                    <div className="rounded-lg border border-gray-700 bg-gray-900/50 p-5 space-y-3 text-sm text-gray-300">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-white">
-                          <Users className="w-4 h-4 text-purple-400" />
-                          <span>Master</span>
-                        </div>
-                        {data.teacher?.id && (
-                          <Button
-                            asChild
-                            variant="outline"
-                            size="sm"
-                            className="border-purple-600 text-purple-400 hover:bg-purple-900/30 cursor-pointer"
-                          >
-                            <Link href={`/masters/${data.teacher.id}`}>
-                              Show Master Details
-                            </Link>
-                          </Button>
-                        )}
-                      </div>
-                      <div className="pl-6">
-                        <p className="font-medium text-white">{data.teacher?.name ?? 'Mashter'}</p>
-                        {data.teacher?.email && <p className="text-gray-400">{data.teacher.email}</p>}
-                      </div>
-                      {data.subject && (
-                        <>
-                          <div className="flex items-center gap-2 text-white pt-2">
-                            <Info className="w-4 h-4 text-blue-400" />
-                            <span>Subject</span>
-                          </div>
-                          <div className="pl-6 text-gray-200">{data.subject.name}</div>
-                        </>
-                      )}
-                      <div className="flex items-center gap-2 text-white pt-2">
-                        <DollarSign className="w-4 h-4 text-green-400" />
-                        <span>Price</span>
-                      </div>
-                      <div className="pl-6 text-gray-200">
-                        {data.price ? `$${Number(data.price).toFixed(2)}` : 'Free'}
-                      </div>
-                      {data.type && (
-                        <div className="flex items-center gap-2 text-white pt-2">
-                          <Info className="w-4 h-4 text-blue-400" />
-                          <span>Session Type</span>
-                        </div>
-                      )}
-                      {data.type && (
-                        <div className="pl-6 text-gray-200 capitalize">{data.type.replace(/_/g, ' ')}</div>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
           )}
         </div>
+        
+        {/* Chat Button and Chat Window */}
+        {isLoggedIn && data?.teacher && (
+          <>
+            <ChatButton 
+              onClick={() => setIsChatOpen(!isChatOpen)} 
+              unreadCount={unreadCount}
+              isOpen={isChatOpen}
+            />
+            {isChatOpen && (
+              <LiveSessionChat
+                teacher={{
+                  id: data.teacher.id,
+                  name: data.teacher.name || 'Master',
+                  email: data.teacher.email,
+                }}
+                currentUser={{
+                  id: userData.id,
+                  name: userData.name || 'User',
+                }}
+                isOpen={isChatOpen}
+                onClose={() => setIsChatOpen(false)}
+                onUnreadCountChange={setUnreadCount}
+              />
+            )}
+          </>
+        )}
       </main>
       <Footer />
+      
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #374151;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #4b5563;
+        }
+      `}</style>
     </div>
   )
 }

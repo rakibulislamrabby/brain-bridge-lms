@@ -1,148 +1,247 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_MAIN_BASE_URL || ''
+const API_BASE_URL = process.env.NEXT_PUBLIC_MAIN_BASE_URL || "";
 
 const joinUrl = (path: string) => {
-  const trimmedPath = path.startsWith('/') ? path.slice(1) : path
+  const trimmedPath = path.startsWith("/") ? path.slice(1) : path;
   if (!API_BASE_URL) {
-    return `/${trimmedPath}`
+    return `/${trimmedPath}`;
   }
-  const base = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL
-  return `${base}/${trimmedPath}`
-}
+  const base = API_BASE_URL.endsWith("/")
+    ? API_BASE_URL.slice(0, -1)
+    : API_BASE_URL;
+  return `${base}/${trimmedPath}`;
+};
 
 const getAuthToken = (): string | null => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('auth_token')
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("auth_token");
   }
-  return null
-}
+  return null;
+};
 
-const getAuthHeaders = (): Record<string, string> => {
+const getAuthHeaders = (
+  isFormData: boolean = false,
+): Record<string, string> => {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
+    Accept: "application/json",
+  };
+
+  // Only set Content-Type for JSON, let browser set it for FormData
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
   }
 
-  const token = getAuthToken()
+  const token = getAuthToken();
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
-  return headers
-}
+  return headers;
+};
 
 export interface InPersonSlotTimeRange {
-  start_time: string
-  end_time: string
+  start_time: string;
+  end_time: string;
+}
+
+export interface InPersonDaySlot {
+  slot_day: string;
+  times: InPersonSlotTimeRange[];
 }
 
 export interface CreateInPersonSlotRequest {
-  title: string
-  subject_id: number
-  from_date: string
-  to_date: string
-  slots: InPersonSlotTimeRange[]
-  price: number
-  description: string
-  country?: string
-  state?: string
-  city?: string
-  area?: string
+  title: string;
+  subject_id: number;
+  from_date: string;
+  to_date: string;
+  slots: InPersonDaySlot[];
+  price: number;
+  description: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  area?: string;
+  video?: File | string | null;
+}
+
+export interface InPersonSlotTime {
+  id: number;
+  in_person_slot_day_id: number;
+  start_time: string;
+  end_time: string;
+  is_booked: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InPersonSlotDay {
+  id: number;
+  in_person_slot_id: number;
+  day: string;
+  created_at: string;
+  updated_at: string;
+  times: InPersonSlotTime[];
 }
 
 export interface InPersonSlotData {
-  id: number
-  country: string
-  state: string
-  city: string
-  area: string
-  title: string
-  teacher_id: number
-  subject_id: number
-  from_date: string
-  to_date: string
-  start_time: string
-  end_time: string
-  price: number
-  description: string
-  created_at: string
-  updated_at: string
+  id: number;
+  country: string;
+  state: string;
+  city: string;
+  area: string;
+  title: string;
+  teacher_id: number;
+  subject_id: number | string;
+  from_date: string;
+  to_date: string;
+  price: number;
+  description: string | null;
+  video: string | null;
+  created_at: string;
+  updated_at: string;
+  days: InPersonSlotDay[];
 }
 
 export interface CreateInPersonSlotResponse {
-  success: boolean
-  message: string
-  data: InPersonSlotData[]
+  success: boolean;
+  message: string;
+  data: InPersonSlotData;
 }
 
-const createInPersonSlot = async (payload: CreateInPersonSlotRequest): Promise<CreateInPersonSlotResponse> => {
-  const url = joinUrl('teacher/in-person-slots')
-  const headers = getAuthHeaders()
+export const buildInPersonSlotFormData = (
+  payload: CreateInPersonSlotRequest,
+  isUpdate: boolean = false,
+): FormData => {
+  const formData = new FormData();
+  if (isUpdate) {
+    formData.append("_method", "PUT");
+  }
+
+  formData.append("title", payload.title);
+  formData.append("subject_id", payload.subject_id.toString());
+  formData.append("from_date", payload.from_date);
+  formData.append("to_date", payload.to_date);
+  formData.append("price", payload.price.toString());
+  formData.append("description", payload.description || "");
+
+  if (payload.country) formData.append("country", payload.country);
+  if (payload.state) formData.append("state", payload.state);
+  if (payload.city) formData.append("city", payload.city);
+  if (payload.area) formData.append("area", payload.area);
+
+  // Only append video if it's a File (new upload)
+  // For updates, if video is not a File, don't send it (backend preserves existing)
+  if (payload.video instanceof File) {
+    formData.append("video", payload.video);
+  }
+  // Note: We don't send video as string to avoid overwriting existing video on update
+
+  payload.slots.forEach((day: InPersonDaySlot, index: number) => {
+    formData.append(`slots[${index}][slot_day]`, day.slot_day);
+    day.times.forEach((time: InPersonSlotTimeRange, tIndex: number) => {
+      formData.append(
+        `slots[${index}][times][${tIndex}][start_time]`,
+        time.start_time,
+      );
+      formData.append(
+        `slots[${index}][times][${tIndex}][end_time]`,
+        time.end_time,
+      );
+    });
+  });
+
+  return formData;
+};
+
+const createInPersonSlot = async (
+  payload: CreateInPersonSlotRequest,
+): Promise<CreateInPersonSlotResponse> => {
+  const url = joinUrl("teacher/in-person-slots");
+  const formData = buildInPersonSlotFormData(payload);
+  const headers = getAuthHeaders(true);
 
   try {
     const response = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers,
-      body: JSON.stringify(payload),
-    })
+      body: formData,
+    });
 
-    const text = await response.text()
-    let result: CreateInPersonSlotResponse | any = {}
-    
+    const text = await response.text();
+    let result: CreateInPersonSlotResponse | any = {};
+
     try {
-      result = text ? JSON.parse(text) : {}
+      result = text ? JSON.parse(text) : {};
     } catch (parseError) {
-      console.error('Failed to parse response:', parseError)
-      throw new Error('Invalid response format from server')
+      console.error("Failed to parse response:", parseError);
+      throw new Error("Invalid response format from server");
     }
 
     if (!response.ok) {
-      // Handle validation errors
-      if (result?.errors && typeof result.errors === 'object') {
-        const errorMessages = Object.entries(result.errors)
-          .map(([field, messages]) => {
-            const msgArray = Array.isArray(messages) ? messages : [messages]
-            return `${field}: ${msgArray.join(', ')}`
-          })
-          .join('; ')
-        throw new Error(errorMessages || 'Validation failed')
+      let errorMessage = 'We couldn\'t create your in-person session right now. Please try again in a few moments.'
+      
+      if (result?.errors && typeof result.errors === "object") {
+        // Convert validation errors to user-friendly messages
+        const errorFields = Object.keys(result.errors)
+        if (errorFields.includes('subject_id')) {
+          errorMessage = 'Please select a subject for your session.'
+        } else if (errorFields.includes('title')) {
+          errorMessage = 'Please provide a title for your session.'
+        } else if (errorFields.includes('from_date') || errorFields.includes('to_date')) {
+          errorMessage = 'Please check your date range. Make sure the end date is after the start date.'
+        } else if (errorFields.includes('price')) {
+          errorMessage = 'Please enter a valid price for your session.'
+        } else if (errorFields.includes('slots') || errorFields.includes('times')) {
+          errorMessage = 'Please check your schedule. Each day needs at least one valid time slot.'
+        } else {
+          errorMessage = 'Some information provided is invalid. Please review your session details and try again.'
+        }
+      } else {
+        const apiMessage = result?.message || result?.error
+        if (apiMessage) {
+          const messageText = String(apiMessage).toLowerCase()
+          
+          if (messageText.includes('validation') || messageText.includes('invalid')) {
+            errorMessage = 'Some information provided is invalid. Please review your session details and try again.'
+          } else if (messageText.includes('unauthorized') || messageText.includes('unauthenticated')) {
+            errorMessage = 'Your session has expired. Please sign in again and try again.'
+          } else if (messageText.includes('date') || messageText.includes('time')) {
+            errorMessage = 'Please check your dates and times. Make sure the end date is after the start date.'
+          } else if (messageText.includes('file') || messageText.includes('upload') || messageText.includes('video')) {
+            errorMessage = 'There was an issue uploading your video. Please ensure the file is in MP4, WebM, or Ogg format and under 50MB.'
+          } else {
+            errorMessage = String(apiMessage)
+          }
+        }
       }
       
-      const errorMessage = result?.message || result?.error || `Failed to create in-person slot (${response.status})`
-      throw new Error(errorMessage)
+      throw new Error(errorMessage);
     }
 
-    // Validate response structure
     if (!result.success) {
-      throw new Error(result?.message || 'Slot creation failed')
+      throw new Error(result?.message || "We couldn't create your in-person session. Please try again.");
     }
 
-    if (!Array.isArray(result.data)) {
-      throw new Error('Invalid response: expected array of slots')
-    } 
-    
-
-    return result as CreateInPersonSlotResponse
+    return result as CreateInPersonSlotResponse;
   } catch (error) {
-    console.error('Create in-person slot error:', error)
+    console.error("Create in-person slot error:", error);
     if (error instanceof Error) {
-      throw error
+      throw error;
     }
-    throw new Error('Network error: Failed to create in-person slot')
+    throw new Error("Unable to connect to the server. Please check your internet connection and try again.");
   }
-}
+};
 
 export const useCreateInPersonSlot = () => {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: createInPersonSlot,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['slots'] })
-      queryClient.invalidateQueries({ queryKey: ['teacher-slots'] })
-      queryClient.invalidateQueries({ queryKey: ['in-person-slots'] })
+      queryClient.invalidateQueries({ queryKey: ["slots"] });
+      queryClient.invalidateQueries({ queryKey: ["teacher-slots"] });
+      queryClient.invalidateQueries({ queryKey: ["in-person-slots"] });
     },
-  })
-}
-
+  });
+};

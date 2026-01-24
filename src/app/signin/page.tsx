@@ -324,11 +324,11 @@ export default function SignIn() {
 
                 
 
-                <div className="flex items-center justify-between">
+                {/* <div className="flex items-center justify-between">
                   <Link href="/reset-password" className="text-sm text-orange-400 hover:text-orange-300 hover:underline">
                     Reset password?
                   </Link>
-                </div>
+                </div> */}
 
                 <Button 
                   type="submit" 

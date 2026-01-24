@@ -9,6 +9,7 @@ import { ArrowRightIcon, Menu, X, LogOut, User, LayoutDashboard, ChevronDown, Ch
 import { useState, useEffect, useRef } from "react"
 import { getStoredUser, clearAuthData } from "@/hooks/useAuth"
 import { useMe } from "@/hooks/use-me"
+import { useQueryClient } from "@tanstack/react-query"
 
 const STORAGE_BASE_URL = process.env.NEXT_PUBLIC_MAIN_STORAGE_URL || ''
 
@@ -41,6 +42,7 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
   const isLanding = variant === 'landing'
 
   const router = useRouter()
+  const queryClient = useQueryClient()
   
   // Fetch full user profile including profile_picture
   const { data: userProfile, isLoading: isLoadingUser } = useMe()
@@ -89,7 +91,7 @@ export function AppHeader({ variant = 'default' }: AppHeaderProps) {
     e.preventDefault()
     e.stopPropagation()
     setIsUserDropdownOpen(false)
-    clearAuthData()
+    clearAuthData(queryClient)
     setTimeout(() => {
       router.push('/signin')
     }, 10)

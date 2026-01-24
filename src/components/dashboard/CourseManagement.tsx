@@ -155,16 +155,29 @@ export default function CourseManagement() {
     try {
       await deleteCourseMutation.mutateAsync(id)
       addToast({
-        title: 'Course deleted',
-        description: `Course "${label}" has been removed.`,
+        title: 'Course Deleted Successfully',
+        description: `"${label}" has been permanently removed from your courses.`,
         type: 'success',
       })
       setDeleteDialogOpen(false)
       setCourseToDelete(null)
     } catch (error) {
+      let errorMessage = 'We couldn\'t delete the course right now. Please try again in a few moments.'
+      
+      if (error instanceof Error) {
+        const errorText = error.message.toLowerCase()
+        if (errorText.includes('network') || errorText.includes('fetch')) {
+          errorMessage = 'Unable to connect to the server. Please check your internet connection and try again.'
+        } else if (errorText.includes('unauthorized') || errorText.includes('unauthenticated')) {
+          errorMessage = 'Your session has expired. Please sign in again and try deleting the course.'
+        } else if (errorText.includes('not found') || errorText.includes('404')) {
+          errorMessage = 'This course could not be found. It may have already been deleted.'
+        }
+      }
+      
       addToast({
-        title: 'Error deleting course',
-        description: error instanceof Error ? error.message : 'Failed to delete course.',
+        title: 'Could Not Delete Course',
+        description: errorMessage,
         type: 'error',
       })
     } finally {
@@ -218,9 +231,15 @@ export default function CourseManagement() {
       <Card className="bg-gray-800 border-gray-700">
         <CardContent className="py-16 text-center space-y-4">
           <XCircle className="h-12 w-12 text-red-500 mx-auto" />
-          <h3 className="text-xl font-semibold text-white">Failed to load courses</h3>
+          <h3 className="text-xl font-semibold text-white">Failed to load Recorded Lesson</h3>
           <p className="text-gray-400">
-            {error instanceof Error ? error.message : 'Please try again later.'}
+            {error instanceof Error 
+              ? (error.message.includes('network') || error.message.includes('fetch')
+                  ? 'Unable to load your courses. Please check your internet connection and try again.'
+                  : error.message.includes('unauthorized') || error.message.includes('unauthenticated')
+                  ? 'Your session has expired. Please sign in again.'
+                  : 'We couldn\'t load your courses right now. Please try again in a few moments.')
+              : 'We couldn\'t load your courses right now. Please try again in a few moments.'}
           </p>
         </CardContent>
       </Card>
@@ -232,8 +251,8 @@ export default function CourseManagement() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">Course Management</h1>
-          <p className="text-gray-400 mt-2">Monitor and manage all courses on the platform</p>
+          <h1 className="text-3xl font-bold text-white">Recorded Lesson</h1>
+          <p className="text-gray-400 mt-2">Monitor and manage all lessons on the platform</p>
         </div>
         <Link href="/dashboard/course/add-course">
             <Button className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer">
@@ -320,10 +339,10 @@ export default function CourseManagement() {
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2 pt-5">
             <BookOpen className="h-5 w-5 text-orange-500" />
-            Courses
+            Recorded Lesson
           </CardTitle>
           <CardDescription className="text-gray-400">
-            Overview of all courses fetched from the Brain Bridge API
+            Overview of all courses Recorded Lesson
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { AppHeader } from '@/components/app-header'
 import Footer from '@/components/shared/Footer'
@@ -8,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useTeacherDetails } from '@/hooks/teacher/use-teacher-details'
+import { useMe } from '@/hooks/use-me'
 import {
   ArrowLeft,
   Star,
@@ -26,6 +28,8 @@ import {
   MapPin,
   Mail,
   Phone,
+  Lock,
+  LogIn,
 } from 'lucide-react'
 import Image from 'next/image'
 
@@ -77,6 +81,7 @@ export default function MasterDetailsPage() {
   }, [params])
 
   const { data, isLoading, error } = useTeacherDetails(teacherId)
+  const { data: userData, isLoading: isLoadingUser } = useMe()
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null)
   const [showAllCourses, setShowAllCourses] = useState(false)
   const [showAllSlots, setShowAllSlots] = useState(false)
@@ -85,6 +90,7 @@ export default function MasterDetailsPage() {
   const courses = data?.courses || []
   const skills = data?.skills || []
   const availableSlots = data?.available_slots || []
+  const isLoggedIn = !!userData?.id
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -107,12 +113,67 @@ export default function MasterDetailsPage() {
     }
   }, [teacher, courses, availableSlots])
 
-  if (isLoading) {
+  if (isLoading || isLoadingUser) {
     return (
       <>
         <AppHeader />
         <div className="min-h-screen bg-gray-900 flex items-center justify-center">
           <Loader2 className="h-12 w-12 text-orange-500 animate-spin" />
+        </div>
+        <Footer />
+      </>
+    )
+  }
+
+  // Check if user is authenticated
+  if (!isLoggedIn) {
+    return (
+      <>
+        <AppHeader />
+        <div className="min-h-screen bg-gray-900">
+          <div className="max-w-7xl mx-auto px-4 py-20">
+            <Button
+              variant="ghost"
+              className="text-gray-300 hover:text-white hover:bg-gray-800/70 mb-6 cursor-pointer"
+              onClick={() => router.back()}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+            <Card className="bg-gradient-to-br from-orange-900/20 to-purple-900/20 border border-orange-700/60 shadow-xl">
+              <CardContent className="py-16 px-8">
+                <div className="flex flex-col items-center justify-center text-center space-y-6">
+                  <div className="h-20 w-20 rounded-full bg-gradient-to-br from-orange-500/20 to-purple-500/20 flex items-center justify-center border-4 border-orange-500/30">
+                    <Lock className="h-10 w-10 text-orange-400" />
+                  </div>
+                  <div className="space-y-3">
+                    <h2 className="text-3xl font-bold text-white">Unauthenticated</h2>
+                    <p className="text-lg text-gray-300 max-w-md mx-auto">
+                      Please login first to view this master profile information and details.
+                    </p>
+                  </div>
+                  <div className="flex gap-4 mt-6">
+                    <Button
+                      asChild
+                      className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
+                    >
+                      <Link href="/signin">
+                        <LogIn className="w-4 h-4 mr-2" />
+                        Login
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="border-gray-600 text-gray-300 hover:bg-gray-800/70 cursor-pointer"
+                      onClick={() => router.back()}
+                    >
+                      Go Back
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
         <Footer />
       </>

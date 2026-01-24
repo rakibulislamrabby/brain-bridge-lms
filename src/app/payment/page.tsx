@@ -471,6 +471,19 @@ console.log("paymentIntentId",paymentIntentId)
                         googlePay: 'never',
                       },
                     }}
+                    onReady={(e) => {
+                      console.log('✅ Payment Element ready:', e)
+                    }}
+                    onError={(e) => {
+                      console.error('❌ Payment Element error:', e)
+                      setErrorMessage(e.message || 'Failed to load payment form. Please refresh the page.')
+                      addToast({
+                        type: 'error',
+                        title: 'Payment Form Error',
+                        description: e.message || 'Failed to load payment form. Please refresh the page.',
+                        duration: 6000,
+                      })
+                    }}
                   />
                 </div>
               </div>
@@ -580,6 +593,14 @@ function PaymentPageContent() {
     return (
       <div className="text-center text-red-400 py-10">
         Failed to initialize Stripe. Please check your configuration.
+      </div>
+    )
+  }
+
+  if (!clientSecret) {
+    return (
+      <div className="text-center text-red-400 py-10">
+        Missing payment information. Please try booking again.
       </div>
     )
   }

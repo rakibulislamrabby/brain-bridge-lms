@@ -284,8 +284,8 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
     if (!teacherId) {
       addToast({
         type: 'error',
-        title: 'Missing Teacher',
-        description: 'We could not determine your teacher account. Please make sure your profile is linked to a teacher.',
+        title: 'Account Setup Required',
+        description: 'Please complete your teacher profile setup before updating a course. Contact support if you need assistance.',
         duration: 6000,
       })
       return
@@ -294,8 +294,8 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
     if (!courseInfo.title.trim() || !courseInfo.description.trim() || !courseInfo.subject_id) {
       addToast({
         type: 'error',
-        title: 'Missing Information',
-        description: 'Please fill out the course title, description, and subject before submitting.',
+        title: 'Required Information Missing',
+        description: 'Please fill in the course title, description, and select a subject to continue.',
         duration: 5000,
       })
       return
@@ -308,8 +308,8 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
         if (!video.file && !video.video_url) {
           addToast({
             type: 'error',
-            title: 'Video File Required',
-            description: `Module ${moduleIndex + 1}, Video ${videoIndex + 1} needs a video file or existing URL.`,
+            title: 'Video Missing',
+            description: `Please upload a video file or provide a video URL for "${video.title || `Lesson ${videoIndex + 1}`}" in Module ${moduleIndex + 1}.`,
             duration: 6000,
           })
           return
@@ -366,15 +366,36 @@ export default function EditCourseForm({ course }: EditCourseFormProps) {
 
       addToast({
         type: 'success',
-        title: 'Course Updated',
-        description: result?.message || 'Course updated successfully!',
+        title: 'Course Updated Successfully!',
+        description: result?.message || 'Your recorded lesson has been updated and changes are now live.',
         duration: 5000,
       })
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update course. Please try again.'
+      let errorMessage = 'We couldn\'t update your course right now. Please check your internet connection and try again.'
+      
+      if (error instanceof Error) {
+        const errorText = error.message.toLowerCase()
+        
+        if (errorText.includes('network') || errorText.includes('fetch')) {
+          errorMessage = 'Unable to connect to the server. Please check your internet connection and try again.'
+        } else if (errorText.includes('unauthorized') || errorText.includes('unauthenticated')) {
+          errorMessage = 'Your session has expired. Please sign in again and try updating your course.'
+        } else if (errorText.includes('validation') || errorText.includes('invalid')) {
+          errorMessage = 'Some information provided is invalid. Please review your course details and try again.'
+        } else if (errorText.includes('file') || errorText.includes('upload') || errorText.includes('video')) {
+          errorMessage = 'There was an issue uploading your files. Please ensure all video files are in MP4, WebM, or Ogg format and under 100MB each.'
+        } else if (errorText.includes('size') || errorText.includes('too large')) {
+          errorMessage = 'One or more files are too large. Please compress your videos or use smaller file sizes.'
+        } else if (errorText.includes('format') || errorText.includes('type')) {
+          errorMessage = 'One or more files are in an unsupported format. Please use MP4, WebM, or Ogg video formats.'
+        } else {
+          errorMessage = 'We couldn\'t update your course right now. Please try again in a few moments.'
+        }
+      }
+      
       addToast({
         type: 'error',
-        title: 'Error Updating Course',
+        title: 'Could Not Update Course',
         description: errorMessage,
         duration: 6000,
       })

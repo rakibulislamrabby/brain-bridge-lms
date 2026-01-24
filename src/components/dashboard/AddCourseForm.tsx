@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -68,16 +68,43 @@ const [modules, setModules] = useState<ModuleFormState[]>([
     const { name, value } = target
     const isCheckbox = target instanceof HTMLInputElement && target.type === 'checkbox'
 
-    setCourseInfo((prev) => ({
-      ...prev,
-      [name]: isCheckbox ? (target as HTMLInputElement).checked : value,
-    }))
+    setCourseInfo((prev) => {
+      const updated = {
+        ...prev,
+        [name]: isCheckbox ? (target as HTMLInputElement).checked : value,
+      }
+
+      // Auto-populate price from subject's base_pay when subject is selected
+      if (name === 'subject_id' && value) {
+        const selectedSubject = subjects.find((s) => s.id.toString() === value)
+        if (
+          selectedSubject?.base_pay !== null &&
+          selectedSubject?.base_pay !== undefined
+        ) {
+          updated.price = selectedSubject.base_pay.toString()
+        }
+      }
+
+      return updated
+    })
   }
 
   const handleThumbnailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null
     setThumbnailFile(file)
   }
+
+  // Check if price should be disabled (when no subject is selected or subject has base_pay)
+  const isPriceDisabled = useMemo(() => {
+    if (!courseInfo.subject_id) return true // Disable when no subject is selected
+    const selectedSubject = subjects.find(
+      (s) => s.id.toString() === courseInfo.subject_id,
+    )
+    return (
+      selectedSubject?.base_pay !== null &&
+      selectedSubject?.base_pay !== undefined
+    )
+  }, [courseInfo.subject_id, subjects])
 
   const updateModule = (index: number, updatedModule: Partial<ModuleFormState>) => {
     setModules((prev) => {
@@ -189,8 +216,8 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     if (!teacherId) {
       addToast({
         type: 'error',
-        title: 'Missing Teacher',
-        description: 'We could not determine your teacher account. Please make sure your profile is linked to a teacher.',
+        title: 'Account Setup Required',
+        description: 'Please complete your teacher profile setup before creating a course. Contact support if you need assistance.',
         duration: 6000,
       })
       return
@@ -199,8 +226,54 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     if (!courseInfo.title.trim() || !courseInfo.description.trim() || !courseInfo.subject_id) {
       addToast({
         type: 'error',
-        title: 'Missing Information',
-        description: 'Please fill out the course title, description, and subject before submitting.',
+        title: 'Required Information Missing',
+        description: 'Please fill in the course title, description, and select a subject to continue.',
+        duration: 5000,
+      })
+      return
+    }
+
+    if (!thumbnailFile) {
+      addToast({
+        type: 'error',
+        title: 'Course Image Required',
+        description: 'Please upload a thumbnail image for your course. This helps students discover your content.',
+        duration: 5000,
+      })
+      return
+    }
+
+    if (modules.length === 0 || modules.every((m) => !m.title.trim())) {
+      addToast({
+        type: 'error',
+        title: 'Course Content Required',
+        description: 'Please add at least one module with a title to organize your course content.',
+        duration: 5000,
+      })
+      return
+    }
+
+    // Validate that each module has a title
+    for (let moduleIndex = 0; moduleIndex < modules.length; moduleIndex += 1) {
+      const moduleState = modules[moduleIndex]
+      if (!moduleState.title.trim()) {
+        addToast({
+          type: 'error',
+          title: 'Module Title Missing',
+          description: `Please add a title to Module ${moduleIndex + 1}. Each module needs a clear title to help students navigate your course.`,
+          duration: 5000,
+        })
+        return
+      }
+    }
+
+    // Validate that at least one module has at least one video
+    const hasVideos = modules.some((module) => module.videos.length > 0)
+    if (!hasVideos) {
+      addToast({
+        type: 'error',
+        title: 'Video Lessons Required',
+        description: 'Please add at least one video lesson to your course. Students need content to learn from.',
         duration: 5000,
       })
       return
@@ -213,8 +286,8 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         if (!video.file) {
           addToast({
             type: 'error',
-            title: 'Video File Required',
-            description: `Module ${moduleIndex + 1}, Video ${videoIndex + 1} is missing a file upload. Please select a video file before submitting.`,
+            title: 'Video File Missing',
+            description: `Please upload the video file for "${video.title || `Lesson ${videoIndex + 1}`}" in Module ${moduleIndex + 1}.`,
             duration: 6000,
           })
           return
@@ -263,17 +336,40 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 
       addToast({
         type: 'success',
-        title: 'Course Created',
-        description: result.message || 'Course created successfully!',
+        title: 'Course Created Successfully!',
+        description: result.message || 'Your recorded lesson has been created and is ready for students to enroll.',
         duration: 5000,
       })
 
       resetForm()
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create course. Please try again.'
+      let errorMessage = 'We encountered an issue while creating your course. Please check your internet connection and try again.'
+      
+      if (error instanceof Error) {
+        const errorText = error.message.toLowerCase()
+        
+        // Handle common API errors with user-friendly messages
+        if (errorText.includes('network') || errorText.includes('fetch')) {
+          errorMessage = 'Unable to connect to the server. Please check your internet connection and try again.'
+        } else if (errorText.includes('unauthorized') || errorText.includes('unauthenticated')) {
+          errorMessage = 'Your session has expired. Please sign in again and try creating your course.'
+        } else if (errorText.includes('validation') || errorText.includes('invalid')) {
+          errorMessage = 'Some information provided is invalid. Please review your course details and try again.'
+        } else if (errorText.includes('file') || errorText.includes('upload') || errorText.includes('video')) {
+          errorMessage = 'There was an issue uploading your files. Please ensure all video files are in MP4, WebM, or Ogg format and under 100MB each.'
+        } else if (errorText.includes('size') || errorText.includes('too large')) {
+          errorMessage = 'One or more files are too large. Please compress your videos or use smaller file sizes.'
+        } else if (errorText.includes('format') || errorText.includes('type')) {
+          errorMessage = 'One or more files are in an unsupported format. Please use MP4, WebM, or Ogg video formats.'
+        } else {
+          // For other errors, use a generic but helpful message
+          errorMessage = 'We couldn\'t create your course right now. Please try again in a few moments.'
+        }
+      }
+      
       addToast({
         type: 'error',
-        title: 'Error Creating Course',
+        title: 'Could Not Create Course',
         description: errorMessage,
         duration: 6000,
       })
@@ -283,8 +379,8 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-white">Add New Course</h1>
-        <p className="text-gray-400 mt-2">Create a new course with modules and videos</p>
+        <h1 className="text-3xl font-bold text-white">Add New Recorded Lesson</h1>
+        <p className="text-gray-400 mt-2">Create a new recorded lesson with modules and videos</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -346,7 +442,7 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
               </div>
 
               <div>
-                <Label htmlFor="thumbnail" className="text-sm font-medium text-gray-300">Thumbnail Image</Label>
+                <Label htmlFor="thumbnail" className="text-sm font-medium text-gray-300">Thumbnail Image <span className="text-red-400">*</span></Label>
                 <div className="mt-2 flex items-center gap-3">
                   <label className="inline-flex items-center gap-2 bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm text-gray-300 hover:bg-gray-600 cursor-pointer">
                     <ImageIcon className="h-4 w-4 text-orange-400" />
@@ -381,8 +477,16 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
                   onChange={handleCourseInfoChange}
                   placeholder="e.g., 129.99"
                   required
-                  className="mt-2 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500"
+                  disabled={isPriceDisabled}
+                  className="mt-2 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
+                {isPriceDisabled && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    {courseInfo.subject_id
+                      ? 'Price is set automatically from the selected subject'
+                      : 'Please select a subject first'}
+                  </p>
+                )}
               </div>
               <div>
                 <Label htmlFor="old_price" className="text-sm font-medium text-gray-300">Old Price</Label>
@@ -418,10 +522,10 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2 pt-5">
               <Layers className="h-5 w-5 text-orange-500" />
-              Modules
+              Modules <span className="text-red-400">*</span>
             </CardTitle>
             <CardDescription className="text-gray-400">
-              Organize the course content into modules and attach videos
+              Organize the course content into modules and attach videos. At least one module is required.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

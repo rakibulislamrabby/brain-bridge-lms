@@ -42,6 +42,17 @@ export interface LiveSessionTeacher {
   email?: string
 }
 
+export interface SlotTimeRange {
+  start_time: string
+  end_time: string
+  meeting_link?: string
+}
+
+export interface DaySlot {
+  slot_day: string
+  times: SlotTimeRange[]
+}
+
 export interface LiveSessionSlot {
   id: number
   title?: string
@@ -55,6 +66,8 @@ export interface LiveSessionSlot {
   type?: string
   price?: string
   description?: string
+  video?: string | null
+  slots?: DaySlot[]
 }
 
 export interface PaginationLink {

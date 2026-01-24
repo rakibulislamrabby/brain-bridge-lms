@@ -195,8 +195,8 @@ export default function InPersonSessionPage() {
                   <thead className="bg-gray-900/60">
                     <tr>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Subject</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Date</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Time</th>
+                      {/* <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Date</th> */}
+                      {/* <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Time</th> */}
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Price</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Actions</th>
@@ -218,19 +218,19 @@ export default function InPersonSessionPage() {
                             )}
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-300">
+                        {/* <td className="py-3 px-4 text-sm text-gray-300">
                           {slot.from_date && slot.to_date ? (
                             formatDate(slot.from_date) === formatDate(slot.to_date) 
                               ? formatDate(slot.from_date)
                               : `${formatDate(slot.from_date)} - ${formatDate(slot.to_date)}`
                           ) : slot.from_date ? formatDate(slot.from_date) : '—'}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-300">
+                        </td> */}
+                        {/* <td className="py-3 px-4 text-sm text-gray-300">
                           <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4 text-orange-400" />
                             {formatTime(slot.start_time)} – {formatTime(slot.end_time)}
                           </div>
-                        </td>
+                        </td> */}
                         <td className="py-3 px-4 text-sm text-gray-300">
                           <div className="flex items-center gap-2">
                             <DollarSign className="h-4 w-4 text-green-400" />

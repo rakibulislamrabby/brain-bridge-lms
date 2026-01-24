@@ -94,14 +94,14 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       allowedRoles: ['admin'] // Only admin can see this
     },
     {
-      title: 'Course Enrollments',
+      title: 'Booked Course',
       icon: Users,
       href: '/dashboard/teacher-enrolled-courses',
       items: [],
       allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     {
-      title: 'Booked Slots',
+      title: 'Booked Video Call',
       icon: Calendar,
       href: '/dashboard/teacher-booked-slots',
       items: [],
@@ -115,23 +115,23 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     {
-      title: 'Course',
+      title: 'Recorded Lesson',
       icon: BookOpen,
       href: '/dashboard/course',
       items: [
-        { title: 'All Courses', href: '/dashboard/course', icon: BookOpen },
-        { title: 'Add Course', href: '/dashboard/course/add-course', icon: FileText },
-        { title: 'Select Main Course', href: '/dashboard/course/add-selected-course', icon: CheckSquare }
+        { title: 'All Lesson', href: '/dashboard/course', icon: BookOpen },
+        { title: 'Add Lesson', href: '/dashboard/course/add-course', icon: FileText },
+        { title: 'Select Main Lesson', href: '/dashboard/course/add-selected-course', icon: CheckSquare }
       ],
       allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
     {
-      title: 'Live Session',
+      title: 'Video Call',
       icon: Video,
       href: '/dashboard/one-to-one-session',
       items: [
-        { title: 'All Slots', href: '/dashboard/one-to-one-session', icon: Video },
-        { title: 'Add Slot', href: '/dashboard/one-to-one-session/add-slot', icon: FileText },
+        { title: 'All Video Call', href: '/dashboard/one-to-one-session', icon: Video },
+        { title: 'Add Video Call', href: '/dashboard/one-to-one-session/add-slot', icon: FileText },
       ],
       allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
     },
@@ -150,7 +150,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       icon: FolderOpen,
       href: '/dashboard/subject',
       items: [],
-      allowedRoles: ['admin', 'teacher'] // Admin and Teacher only
+      allowedRoles: ['admin'] // Admin and Teacher only
     },
     {
       title: 'Skills',

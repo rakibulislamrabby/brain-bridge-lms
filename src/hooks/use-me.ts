@@ -158,7 +158,9 @@ export const useMe = (): UseMeResult => {
     queryKey: ['me'],
     queryFn: fetchMe,
     retry: 1,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes (reduced from 5 for fresher data)
+    refetchOnMount: 'always', // Always refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   return {

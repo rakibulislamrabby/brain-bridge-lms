@@ -28,17 +28,20 @@ export interface Subject {
   id: number;
   name: string;
   parent_id: number | null;
+  base_pay?: number | null;
 }
 
 export interface CreateSubjectRequest {
   name: string;
   parent_id: number | null;
+  base_pay?: number | null;
   icon?: File | null;
 }
 
 export interface UpdateSubjectRequest {
   name: string;
   parent_id: number | null;
+  base_pay?: number | null;
   icon?: File | null;
 }
 
@@ -46,6 +49,7 @@ export interface SubjectResponse {
   id: number;
   name: string;
   parent_id: number | null;
+  base_pay?: number | null;
   created_at?: string;
   updated_at?: string;
 }

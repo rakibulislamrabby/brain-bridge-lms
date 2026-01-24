@@ -66,6 +66,8 @@ export interface LiveSessionDetailResponse {
   type: string
   price: string
   description: string
+  video?: string | null
+  available_seats?: number // Overall available seats
   daily_available_seats: Record<string, DailyAvailableSeats> // Key is date string (YYYY-MM-DD)
   booked_slots: BookedSlot[]
 }

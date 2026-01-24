@@ -355,31 +355,33 @@ export default function AllCourse() {
   }
 
   return (
-    <section className=" bg-gray-900">
+    <section className="bg-gray-900">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className=" pt-5 text-3xl md:text-4xl font-bold text-white mb-4">Recorded Lessons</h2>
-          <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-8">
+        <div className="text-center mb-6">
+          <h2 className="pt-4 text-3xl md:text-4xl font-bold text-white mb-3">Recorded Lessons</h2>
+          <p className="text-lg text-gray-300 max-w-2xl mx-auto">
             Discover self-paced courses tailored to your interests. Filter by category to find the right fit.
           </p>
-          
-          {/* Search Field and Request Button */}
-          <div className="max-w-2xl mx-auto flex flex-col sm:flex-row gap-3 items-center justify-center">
-            <div className="relative flex-1 w-full sm:max-w-md">
+        </div>
+
+        {/* Search Field and Request Button - Professional placement */}
+        <div className="max-w-3xl mx-auto mb-6">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search courses by title, subject, or instructor..."
-                className="pl-10 pr-4 py-6 bg-gray-800/80 border-gray-700 text-white placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500/20 text-base"
+                className="pl-10 pr-4 py-3 bg-gray-800/80 border-gray-700 text-white placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500/20"
               />
             </div>
             {isStudent && (
               <Button
                 onClick={() => setIsRequestModalOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-6 flex items-center gap-2 whitespace-nowrap cursor-pointer"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
               >
                 <Plus className="w-5 h-5" />
                 Request a new course
@@ -389,7 +391,7 @@ export default function AllCourse() {
         </div>
 
         {/* Category Filter */}
-        <div className="flex flex-wrap justify-center gap-3 mb-16">
+        <div className="flex flex-wrap justify-center gap-3 mb-12">
           {categories.map((category) => {
             const isActive = selectedCategory === category
 

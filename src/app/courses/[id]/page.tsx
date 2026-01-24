@@ -22,7 +22,8 @@ import {
   Share2,
   Heart,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Lock
 } from 'lucide-react'
 import { usePublicCourse, usePublicCourses } from '@/hooks/course/public/use-public-courses'
 import { useCoursePaymentIntent } from '@/hooks/course/use-course-payment-intent'
@@ -255,6 +256,18 @@ export default function CourseDetailPage() {
   }
 
   const handleEnroll = async () => {
+    // Check if user is logged in
+    if (!userData?.id) {
+      addToast({
+        type: 'error',
+        title: 'Login Required',
+        description: 'Please login first to enroll in this course.',
+        duration: 5000,
+      })
+      router.push('/signin')
+      return
+    }
+
     if (!course) {
       addToast({
         type: 'error',
@@ -427,6 +440,18 @@ export default function CourseDetailPage() {
   const duration = course.duration ?? `${modules.length} modules`
   const language = course.language ?? 'English'
   const thumbnail = resolveThumbnailUrl(course.thumbnail_url, fallbackImage) || fallbackImage
+
+  // Calculate module start indices for global video indexing
+  const moduleStartIndices = useMemo(() => {
+    const indices: number[] = []
+    let currentIndex = 0
+    modules.forEach((module: any) => {
+      indices.push(currentIndex)
+      const videos = getModuleVideos(module)
+      currentIndex += videos.length
+    })
+    return indices
+  }, [modules])
   return (
     <>
       <AppHeader />
@@ -565,6 +590,7 @@ export default function CourseDetailPage() {
                     const sectionId = module.id ?? module.order_index ?? index
                     const isExpanded = expandedSections.includes(sectionId)
                     const videos = getModuleVideos(module)
+                    const moduleStartIndex = moduleStartIndices[index] ?? 0
                     return (
                       <div key={sectionId} className="border border-gray-600 rounded-lg overflow-hidden">
                         {/* Section Header */}
@@ -615,28 +641,55 @@ export default function CourseDetailPage() {
                                   lesson.duration_hours !== undefined && lesson.duration_hours !== null
                                     ? `${Number(lesson.duration_hours).toFixed(1)} hrs`
                                     : lesson.duration
+                                
+                                // Calculate global video index across all modules
+                                const globalVideoIndex = moduleStartIndex + lessonIndex
+                                // Check if this video is locked (not purchased and not the very first video globally)
+                                const isLocked = !isEnrolledAndPaid && globalVideoIndex > 0
+                                const canPlay = isEnrolledAndPaid || globalVideoIndex === 0
 
                                 return (
                                   <div
                                     key={lesson.id ?? lessonIndex}
-                                    className="space-y-3 p-3 bg-gray-800 rounded-lg border border-gray-600"
+                                    className={`space-y-3 p-3 bg-gray-800 rounded-lg border ${
+                                      isLocked ? 'border-gray-700 opacity-75' : 'border-gray-600'
+                                    }`}
                                   >
                                     <div className="flex items-center justify-between gap-3">
                                       <div className="flex items-center gap-3">
-                                        <div className="w-6 h-6 bg-gray-600 text-gray-300 rounded-full flex items-center justify-center text-xs font-medium">
+                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                                          isLocked ? 'bg-gray-700 text-gray-500' : 'bg-gray-600 text-gray-300'
+                                        }`}>
                                           {lessonIndex + 1}
                                         </div>
                                         <div className="flex items-center gap-2">
-                                          {lessonType === 'video' && <Play className="w-4 h-4 text-blue-500" />}
+                                          {lessonType === 'video' && (
+                                            isLocked ? (
+                                              <Lock className="w-4 h-4 text-gray-500" />
+                                            ) : (
+                                              <Play className="w-4 h-4 text-blue-500" />
+                                            )
+                                          )}
                                           {lessonType === 'quiz' && <CheckCircle className="w-4 h-4 text-green-500" />}
                                           {lessonType === 'exercise' && <Award className="w-4 h-4 text-purple-500" />}
                                           {lessonType === 'discussion' && <Users className="w-4 h-4 text-orange-500" />}
-                                          <span className="text-sm font-medium text-white">
+                                          <span className={`text-sm font-medium ${
+                                            isLocked ? 'text-gray-500' : 'text-white'
+                                          }`}>
                                             {lesson.title || `Lesson ${lessonIndex + 1}`}
+                                            {isLocked && (
+                                              <span className="ml-2 text-xs text-orange-400">(Locked)</span>
+                                            )}
                                           </span>
                                         </div>
                                       </div>
                                       <div className="flex items-center gap-2">
+                                        {isLocked && (
+                                          <Badge className="bg-orange-600/20 text-orange-400 border-orange-600/50 text-xs">
+                                            <Lock className="w-3 h-3 mr-1" />
+                                            Locked
+                                          </Badge>
+                                        )}
                                         {lessonType && (
                                           <span className="text-xs text-gray-300 bg-gray-600 px-2 py-1 rounded capitalize">
                                             {lessonType.replace(/_/g, ' ')}
@@ -650,24 +703,45 @@ export default function CourseDetailPage() {
                                       </div>
                                     </div>
                                     {lesson.description && (
-                                      <p className="text-xs text-gray-400 leading-relaxed">
+                                      <p className={`text-xs leading-relaxed ${
+                                        isLocked ? 'text-gray-500' : 'text-gray-400'
+                                      }`}>
                                         {lesson.description}
                                       </p>
                                     )}
                                     {videoUrl ? (
-                                      <div className="rounded-lg overflow-hidden border border-gray-700 bg-black">
+                                      <div className="rounded-lg overflow-hidden border border-gray-700 bg-black relative">
                                         <div
                                           className="relative w-full"
                                           style={{ paddingBottom: '56.25%' }} // 16:9 aspect ratio
                                         >
-                                          <video
-                                            controls
-                                            className="absolute inset-0 h-full w-full object-cover"
-                                            preload="metadata"
-                                          >
-                                            <source src={videoUrl} type="video/mp4" />
-                                            Your browser does not support the video tag.
-                                          </video>
+                                          {canPlay ? (
+                                            <video
+                                              controls
+                                              className="absolute inset-0 h-full w-full object-cover"
+                                              preload="metadata"
+                                            >
+                                              <source src={videoUrl} type="video/mp4" />
+                                              Your browser does not support the video tag.
+                                            </video>
+                                          ) : (
+                                            <>
+                                              <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
+                                                <div className="text-center space-y-3">
+                                                  <Lock className="w-12 h-12 text-gray-600 mx-auto" />
+                                                  <p className="text-gray-400 text-sm">This video is locked</p>
+                                                  <p className="text-gray-500 text-xs">Purchase the course to unlock all videos</p>
+                                                </div>
+                                              </div>
+                                              {/* Hidden video element to prevent loading */}
+                                              <video
+                                                className="hidden"
+                                                preload="none"
+                                              >
+                                                <source src={videoUrl} type="video/mp4" />
+                                              </video>
+                                            </>
+                                          )}
                                         </div>
                                       </div>
                                     ) : (
