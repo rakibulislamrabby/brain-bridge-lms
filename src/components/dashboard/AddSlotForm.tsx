@@ -157,11 +157,13 @@ export default function AddSlotForm({
         return date.toISOString().split("T")[0];
       };
 
-      // Format time from HH:MM:SS to HH:MM
+      // Format time safely and ensure consistent padding (06:00 instead of 6:00)
       const formatTimeForInput = (timeString?: string): string => {
         if (!timeString) return "";
-        if (timeString.split(":").length === 3) {
-          const [hours, minutes] = timeString.split(":");
+        const parts = timeString.split(":");
+        if (parts.length >= 2) {
+          const hours = parts[0].padStart(2, "0");
+          const minutes = parts[1].padStart(2, "0");
           return `${hours}:${minutes}`;
         }
         return timeString;
@@ -259,6 +261,85 @@ export default function AddSlotForm({
       selectedSubject?.base_pay !== undefined
     );
   }, [formData.subject_id, subjects]);
+
+  const toggleHourSlot = (dayIndex: number, hour: number) => {
+    const startTime = `${hour.toString().padStart(2, "0")}:00`;
+    const endTime = `${((hour + 1) % 24).toString().padStart(2, "0")}:00`;
+
+    setDaySlots((prev) =>
+      prev.map((day, dIdx) => {
+        if (dIdx !== dayIndex) return day;
+
+        // Create a copy of times and filter out any completely empty initial slots
+        let newTimes = day.times.filter(
+          (t) => t.start_time !== "" || t.end_time !== "",
+        );
+
+        const existingIndex = newTimes.findIndex(
+          (t) => t.start_time === startTime && t.end_time === endTime,
+        );
+
+        if (existingIndex > -1) {
+          // If already exists, remove it (toggle OFF)
+          newTimes = newTimes.filter((_, i) => i !== existingIndex);
+        } else {
+          // Otherwise, add it (toggle ON)
+          newTimes.push({
+            start_time: startTime,
+            end_time: endTime,
+            meeting_link: "",
+          });
+        }
+
+        // Return new day object with sorted times for consistent UI
+        return {
+          ...day,
+          times: newTimes.sort((a, b) =>
+            a.start_time.localeCompare(b.start_time),
+          ),
+        };
+      }),
+    );
+  };
+
+  const isHourSelected = (dayIndex: number, hour: number) => {
+    const startTime = `${hour.toString().padStart(2, "0")}:00`;
+    const endTime = `${((hour + 1) % 24).toString().padStart(2, "0")}:00`;
+    const day = daySlots[dayIndex];
+    if (!day) return false;
+
+    return day.times.some(
+      (t) => t.start_time === startTime && t.end_time === endTime,
+    );
+  };
+
+  const applyLinkToAllDaySlots = (dayIndex: number, link: string) => {
+    setDaySlots((prev) =>
+      prev.map((day, idx) =>
+        idx === dayIndex
+          ? {
+              ...day,
+              times: day.times.map((t) => ({ ...t, meeting_link: link })),
+            }
+          : day,
+      ),
+    );
+  };
+
+  const copyScheduleToAllDays = (sourceDayIndex: number) => {
+    const sourceSlots = daySlots[sourceDayIndex].times;
+    setDaySlots((prev) =>
+      prev.map((day, idx) =>
+        idx === sourceDayIndex ? day : { ...day, times: [...sourceSlots] },
+      ),
+    );
+    addToast({
+      type: "success",
+      title: "Schedule Copied",
+      description: `Schedule from ${daySlots[sourceDayIndex].slot_day} applied to all days.`,
+      duration: 3000,
+    });
+  };
 
   const handleDayChange = (dayIndex: number, value: string) => {
     setDaySlots((prev) => {
@@ -358,7 +439,8 @@ export default function AddSlotForm({
       addToast({
         type: "error",
         title: "Required Information Missing",
-        description: "Please fill in the subject, title, date range, and price to create your video call session.",
+        description:
+          "Please fill in the subject, title, date range, and price to create your video call session.",
         duration: 5000,
       });
       return;
@@ -385,7 +467,8 @@ export default function AddSlotForm({
       addToast({
         type: "error",
         title: "Time Slots Incomplete",
-        description: "Please provide both start and end times for all time slots.",
+        description:
+          "Please provide both start and end times for all time slots.",
         duration: 5000,
       });
       return;
@@ -403,7 +486,8 @@ export default function AddSlotForm({
       addToast({
         type: "error",
         title: "Invalid Time Range",
-        description: "The end time must be later than the start time for each session slot.",
+        description:
+          "The end time must be later than the start time for each session slot.",
         duration: 5000,
       });
       return;
@@ -465,7 +549,9 @@ export default function AddSlotForm({
         addToast({
           type: "success",
           title: "Video Call Session Updated!",
-          description: result?.message || "Your video call session has been updated successfully.",
+          description:
+            result?.message ||
+            "Your video call session has been updated successfully.",
           duration: 5000,
         });
         router.push("/dashboard/one-to-one-session");
@@ -475,7 +561,8 @@ export default function AddSlotForm({
           type: "success",
           title: "Video Call Session Created!",
           description:
-            result?.message || "Your video call session is now available for students to book.",
+            result?.message ||
+            "Your video call session is now available for students to book.",
           duration: 5000,
         });
         resetForm();
@@ -487,26 +574,47 @@ export default function AddSlotForm({
 
       if (error instanceof Error) {
         const errorText = error.message.toLowerCase();
-        
+
         // Handle common API errors with user-friendly messages
         if (errorText.includes("network") || errorText.includes("fetch")) {
-          errorMessage = "Unable to connect to the server. Please check your internet connection and try again.";
-        } else if (errorText.includes("unauthorized") || errorText.includes("unauthenticated")) {
-          errorMessage = "Your session has expired. Please sign in again and try again.";
-        } else if (errorText.includes("end_time") && errorText.includes("start_time")) {
-          errorMessage = "The end time must be after the start time for all time slots. Please check your schedule.";
-        } else if (errorText.includes("validation") || errorText.includes("invalid")) {
-          errorMessage = "Some information provided is invalid. Please review your session details and try again.";
-        } else if (errorText.includes("file") || errorText.includes("upload") || errorText.includes("video")) {
-          errorMessage = "There was an issue uploading your video. Please ensure the file is in MP4, WebM, or Ogg format and under 50MB.";
+          errorMessage =
+            "Unable to connect to the server. Please check your internet connection and try again.";
+        } else if (
+          errorText.includes("unauthorized") ||
+          errorText.includes("unauthenticated")
+        ) {
+          errorMessage =
+            "Your session has expired. Please sign in again and try again.";
+        } else if (
+          errorText.includes("end_time") &&
+          errorText.includes("start_time")
+        ) {
+          errorMessage =
+            "The end time must be after the start time for all time slots. Please check your schedule.";
+        } else if (
+          errorText.includes("validation") ||
+          errorText.includes("invalid")
+        ) {
+          errorMessage =
+            "Some information provided is invalid. Please review your session details and try again.";
+        } else if (
+          errorText.includes("file") ||
+          errorText.includes("upload") ||
+          errorText.includes("video")
+        ) {
+          errorMessage =
+            "There was an issue uploading your video. Please ensure the file is in MP4, WebM, or Ogg format and under 50MB.";
         } else if (errorText.includes("date") || errorText.includes("time")) {
-          errorMessage = "Please check your dates and times. Make sure the end date is after the start date.";
+          errorMessage =
+            "Please check your dates and times. Make sure the end date is after the start date.";
         }
       }
 
       addToast({
         type: "error",
-        title: isEditMode ? "Could Not Update Session" : "Could Not Create Session",
+        title: isEditMode
+          ? "Could Not Update Session"
+          : "Could Not Create Session",
         description: errorMessage,
         duration: 6000,
       });
@@ -796,9 +904,9 @@ export default function AddSlotForm({
             {daySlots.map((daySlot, dayIndex) => (
               <div
                 key={dayIndex}
-                className="border border-gray-700 rounded-lg p-6 bg-gray-900/40 space-y-4"
+                className="border border-gray-700 rounded-lg p-6 bg-gray-900/40 space-y-6 relative group/card"
               >
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex-1 max-w-[200px]">
                     <Label className="text-sm font-medium text-gray-300">
                       Day of Week <span className="text-red-400">*</span>
@@ -817,116 +925,239 @@ export default function AddSlotForm({
                       ))}
                     </select>
                   </div>
-                  {daySlots.length > 1 && (
+                  <div className="flex items-center gap-2">
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      onClick={() => removeDaySlot(dayIndex)}
-                      className="border-red-700 text-red-400 hover:bg-red-900/30 cursor-pointer mt-6"
+                      onClick={() => copyScheduleToAllDays(dayIndex)}
+                      className="text-orange-400 hover:text-orange-300 hover:bg-orange-900/20"
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Remove Day
+                      <Plus className="h-4 w-4 mr-1" />
+                      Apply to All Days
                     </Button>
-                  )}
+                    {daySlots.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeDaySlot(dayIndex)}
+                        className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Remove Day
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
-                <div className="space-y-4 pt-2">
-                  <Label className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    Time Slots for {daySlot.slot_day}
-                  </Label>
-
-                  {daySlot.times.map((timeSlot, timeIndex) => (
-                    <div
-                      key={timeIndex}
-                      className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-gray-800/50 p-4 rounded-md border border-gray-700/50"
-                    >
-                      <div className="md:col-span-3">
-                        <Label className="text-xs font-medium text-gray-400">
-                          Start Time
-                        </Label>
-                        <Input
-                          type="time"
-                          value={timeSlot.start_time}
-                          onChange={(e) =>
-                            handleTimeChange(
-                              dayIndex,
-                              timeIndex,
-                              "start_time",
-                              e.target.value,
-                            )
-                          }
-                          required
-                          className="mt-1 bg-gray-700 border-gray-600 text-white focus:border-orange-500 h-9"
-                        />
+                <div className="space-y-6 pt-2">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <Label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-orange-400" />
+                      Select Hour Blocks
+                    </Label>
+                    <div className="flex items-center gap-2 bg-gray-800/50 p-1 rounded-lg border border-gray-700/50">
+                      <div className="flex items-center gap-1.5 px-2 py-1">
+                        <div className="w-2.5 h-2.5 rounded-full bg-orange-500"></div>
+                        <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                          Selected
+                        </span>
                       </div>
-                      <div className="md:col-span-3">
-                        <Label className="text-xs font-medium text-gray-400">
-                          End Time
-                        </Label>
-                        <Input
-                          type="time"
-                          value={timeSlot.end_time}
-                          onChange={(e) =>
-                            handleTimeChange(
-                              dayIndex,
-                              timeIndex,
-                              "end_time",
-                              e.target.value,
-                            )
-                          }
-                          required
-                          className="mt-1 bg-gray-700 border-gray-600 text-white focus:border-orange-500 h-9"
-                        />
-                      </div>
-                      <div className="md:col-span-5">
-                        <Label className="text-xs font-medium text-gray-400">
-                          Meeting Link
-                        </Label>
-                        <div className="mt-1 flex items-center gap-2 bg-gray-700 border border-gray-600 rounded-md px-2 h-9">
-                          <LinkIcon className="h-3 w-3 text-blue-400 flex-shrink-0" />
-                          <Input
-                            type="url"
-                            value={timeSlot.meeting_link}
-                            onChange={(e) =>
-                              handleTimeChange(
-                                dayIndex,
-                                timeIndex,
-                                "meeting_link",
-                                e.target.value,
-                              )
-                            }
-                            placeholder="https://zoom.us/..."
-                            className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-white text-sm h-full"
-                          />
-                        </div>
-                      </div>
-                      <div className="md:col-span-1 pt-6">
-                        {daySlot.times.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeTimeSlot(dayIndex, timeIndex)}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-9 w-9"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
+                      <div className="flex items-center gap-1.5 px-2 py-1 border-l border-gray-700">
+                        <div className="w-2.5 h-2.5 rounded-full bg-gray-600"></div>
+                        <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                          Available
+                        </span>
                       </div>
                     </div>
-                  ))}
+                  </div>
 
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => addTimeSlot(dayIndex)}
-                    className="text-orange-400 hover:text-orange-300 hover:bg-orange-900/20"
-                  >
-                    <Plus className="h-3 w-3 mr-1" /> Add Time Slot
-                  </Button>
+                  <div className="space-y-4">
+                    {/* Time Grid - Divided by Morning/Afternoon/Evening */}
+                    {[
+                      {
+                        label: "Morning (06:00 - 12:00)",
+                        hours: [6, 7, 8, 9, 10, 11],
+                      },
+                      {
+                        label: "Afternoon (12:00 - 18:00)",
+                        hours: [12, 13, 14, 15, 16, 17],
+                      },
+                      {
+                        label: "Evening (18:00 - 00:00)",
+                        hours: [18, 19, 20, 21, 22, 23],
+                      },
+                    ].map((group) => (
+                      <div key={group.label}>
+                        <p className="text-[11px] text-gray-500 uppercase font-bold mb-2 ml-1">
+                          {group.label}
+                        </p>
+                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
+                          {group.hours.map((hour) => {
+                            const selected = isHourSelected(dayIndex, hour);
+                            return (
+                              <button
+                                key={hour}
+                                type="button"
+                                onClick={() => toggleHourSlot(dayIndex, hour)}
+                                className={`py-2 px-1 rounded-lg text-[11px] font-bold border transition-all duration-200 flex flex-col items-center justify-center gap-0.5 ${
+                                  selected
+                                    ? "bg-orange-600 border-orange-500 text-white shadow-sm z-10"
+                                    : "bg-gray-800/40 border-gray-700/50 text-gray-500 hover:border-gray-600 hover:bg-gray-700/30"
+                                }`}
+                              >
+                                <span>
+                                  {hour.toString().padStart(2, "0")}:00
+                                </span>
+                                <span
+                                  className={`text-[8px] opacity-70 font-medium ${selected ? "text-orange-100" : "text-gray-600"}`}
+                                >
+                                  -{" "}
+                                  {((hour + 1) % 24)
+                                    .toString()
+                                    .padStart(2, "0")}
+                                  :00
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {daySlot.times.length > 0 && (
+                    <div className="space-y-4 mt-8 animate-in fade-in duration-500">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 border-t border-gray-800">
+                        <Label className="text-sm font-medium text-white flex items-center gap-2">
+                          <ClipboardList className="h-4 w-4 text-orange-400" />
+                          Link Session Details ({daySlot.times.length} Slots)
+                        </Label>
+                        <div className="flex items-center gap-2 max-w-sm w-full">
+                          <Input
+                            placeholder="Common link for all slots today..."
+                            className="h-8 text-xs bg-gray-800/50 border-gray-700"
+                            onBlur={(e) => {
+                              if (e.target.value) {
+                                applyLinkToAllDaySlots(
+                                  dayIndex,
+                                  e.target.value,
+                                );
+                              }
+                            }}
+                          />
+                          <p className="text-[10px] text-gray-500 whitespace-nowrap">
+                            (Press tab to apply)
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-3">
+                        {daySlot.times.map((timeSlot, timeIndex) => (
+                          <div
+                            key={timeIndex}
+                            className="bg-gray-800/30 p-3 rounded-lg border border-gray-700/50 flex flex-col lg:flex-row lg:items-center gap-3"
+                          >
+                            <div className="flex items-center gap-2 min-w-[120px]">
+                              <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center">
+                                <Clock className="h-3.5 w-3.5 text-orange-500" />
+                              </div>
+                              <span className="text-sm font-bold text-white uppercase tracking-tight">
+                                {timeSlot.start_time} - {timeSlot.end_time}
+                              </span>
+                            </div>
+
+                            <div className="flex-1 relative group/link">
+                              <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-500" />
+                              <Input
+                                type="url"
+                                value={timeSlot.meeting_link}
+                                onChange={(e) =>
+                                  handleTimeChange(
+                                    dayIndex,
+                                    timeIndex,
+                                    "meeting_link",
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="Meeting Link (e.g. Zoom, G-Meet)"
+                                className="pl-9 h-9 bg-gray-700/50 border-gray-600 text-sm focus:border-orange-500 transition-colors"
+                              />
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <div className="flex flex-col lg:flex-row lg:items-center gap-4 text-xs">
+                                <div className="flex items-center gap-2">
+                                  <Label className="text-gray-400">From</Label>
+                                  <Input
+                                    type="time"
+                                    value={timeSlot.start_time}
+                                    onChange={(e) =>
+                                      handleTimeChange(
+                                        dayIndex,
+                                        timeIndex,
+                                        "start_time",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="h-8 w-24 bg-gray-700/30 border-0 p-1 text-center"
+                                  />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Label className="text-gray-400">To</Label>
+                                  <Input
+                                    type="time"
+                                    value={timeSlot.end_time}
+                                    onChange={(e) =>
+                                      handleTimeChange(
+                                        dayIndex,
+                                        timeIndex,
+                                        "end_time",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="h-8 w-24 bg-gray-700/30 border-0 p-1 text-center"
+                                  />
+                                </div>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() =>
+                                  removeTimeSlot(dayIndex, timeIndex)
+                                }
+                                className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => addTimeSlot(dayIndex)}
+                        className="text-orange-400 hover:text-orange-300 hover:bg-orange-900/20 w-full border border-dashed border-orange-900/10"
+                      >
+                        <Plus className="h-3 w-3 mr-1" /> Add Custom Interval
+                      </Button>
+                    </div>
+                  )}
+
+                  {daySlot.times.length === 0 && (
+                    <div className="py-12 border-2 border-dashed border-gray-800 rounded-xl text-center">
+                      <Clock className="w-12 h-12 mx-auto mb-3 text-gray-700" />
+                      <p className="text-gray-500">
+                        No slots selected. Click the hour blocks above to add
+                        availability.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
