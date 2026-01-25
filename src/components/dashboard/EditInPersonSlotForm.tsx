@@ -92,7 +92,7 @@ export default function EditInPersonSlotForm({
   const router = useRouter();
   const updateSlotMutation = useUpdateInPersonSlot();
 
-  // Fetch slot data using GET API: teacher/in-person-slots/edit/{id}
+  // Fetch slot data using GET API: teacher/in-person-slots/{id}
   const {
     data: slotData,
     isLoading: isLoadingSlot,
