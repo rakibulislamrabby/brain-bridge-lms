@@ -6,6 +6,7 @@ import { getStoredUser } from '@/hooks/useAuth'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import DashboardOverview from '@/components/dashboard/DashboardOverview'
 import StudentDashboardOverview from '@/components/dashboard/StudentDashboardOverview'
+import AdminDashboardOverview from '@/components/dashboard/AdminDashboardOverview'
 import { useMe } from '@/hooks/use-me'
 
 export default function DashboardPage() {
@@ -52,7 +53,9 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      {isStudent ? (
+      {isAdmin ? (
+        <AdminDashboardOverview />
+      ) : isStudent ? (
         <StudentDashboardOverview />
       ) : (
         <DashboardOverview />
