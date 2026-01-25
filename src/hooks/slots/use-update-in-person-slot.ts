@@ -58,7 +58,7 @@ const updateInPersonSlot = async (
 
   try {
     const response = await fetch(url, {
-      method: "POST", // Laravel requires POST with _method=PUT for FormData
+      method: "PUT", // Laravel requires POST with _method=PUT for FormData
       headers,
       body: formData,
     });
@@ -95,15 +95,15 @@ const updateInPersonSlot = async (
       throw new Error(result?.message || "Slot update failed");
     }
 
-    if (!result.data) {
-      throw new Error("Invalid response: missing data field");
-    }
-
-    if (!Array.isArray(result.data)) {
-      result.data = [result.data];
-    }
-
-    return result as CreateInPersonSlotResponse;
+    // Accept { success, message } without data – many PUT APIs return only that
+    const normalized: CreateInPersonSlotResponse = {
+      success: true,
+      message: result?.message || "In-person session updated successfully.",
+      data: Array.isArray(result?.data)
+        ? result.data[0]
+        : result?.data ?? ({} as CreateInPersonSlotResponse["data"]),
+    };
+    return normalized;
   } catch (error) {
     console.error("Update in-person slot error:", error);
     if (error instanceof Error) {

@@ -106,7 +106,7 @@ const fetchTeacherSlotDetail = async (id: number): Promise<TeacherSlot> => {
   const headers = getAuthHeaders()
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(url, { 
       method: 'GET',
       headers,
     })
