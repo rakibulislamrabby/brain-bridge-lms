@@ -102,7 +102,7 @@ const fetchTeacherSlotDetail = async (id: number): Promise<TeacherSlot> => {
   }
 
   // GET teacher/slots/{id} (same pattern as in-person: teacher/in-person-slots/{id})
-  const url = joinUrl(`teacher/slots/${id}`)
+  const url = joinUrl(`teacher/slots/edit/${id}`)
   const headers = getAuthHeaders()
 
   try {
