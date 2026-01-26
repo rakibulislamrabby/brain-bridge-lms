@@ -59,35 +59,35 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       allowedRoles: ['admin', 'teacher', 'student'] // Everyone can see Dashboard
     },
     {
-      title: 'My Courses',
+      title: 'Recorded Lesson',
       icon: BookOpen,
       href: '/dashboard/enrolled-courses',
       items: [],
       allowedRoles: ['student'] // Students only
     },
     {
-      title: 'My Booked Slots',
+      title: 'Booked Video Call',
       icon: Calendar,
       href: '/dashboard/student-booked-slots',
       items: [],
       allowedRoles: ['student'] // Students only
     },
     {
-      title: 'My In-Person Slots',
+      title: 'In-Person Slots',
       icon: UserCheck,
       href: '/dashboard/student-booked-in-person-slots',
       items: [],
       allowedRoles: ['student'] // Students only
     },
     {
-      title: 'My Course Requests',
+      title: 'Course Requests',
       icon: BookOpen,
       href: '/dashboard/my-course-requests',
       items: [],
       allowedRoles: ['student'] // Students only
     },
     {
-      title: 'Course Requests',
+      title: 'Recorded Lesson Requests',
       icon: BookOpen,
       href: '/dashboard/course-requests',
       items: [],

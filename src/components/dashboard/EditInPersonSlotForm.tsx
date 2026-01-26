@@ -92,7 +92,7 @@ export default function EditInPersonSlotForm({
   const router = useRouter();
   const updateSlotMutation = useUpdateInPersonSlot();
 
-  // Fetch slot data using GET API: teacher/in-person-slots/edit/{id}
+  // Fetch slot data using GET API: teacher/in-person-slots/{id}
   const {
     data: slotData,
     isLoading: isLoadingSlot,
@@ -195,15 +195,16 @@ export default function EditInPersonSlotForm({
 
         setDaySlots(mappedDaySlots);
       } else {
-        // Fallback: if no days array, check for old structure
-        if (slotData.start_time && slotData.end_time) {
+        // Fallback: if no days array, check for legacy flat start_time/end_time
+        const raw = slotData as { start_time?: string; end_time?: string };
+        if (raw.start_time && raw.end_time) {
           setDaySlots([
             {
               slot_day: "Sunday",
               times: [
                 {
-                  start_time: formatTimeForInput(slotData.start_time),
-                  end_time: formatTimeForInput(slotData.end_time),
+                  start_time: formatTimeForInput(raw.start_time),
+                  end_time: formatTimeForInput(raw.end_time),
                 },
               ],
             },
@@ -324,6 +325,67 @@ export default function EditInPersonSlotForm({
     });
   };
 
+  const toggleHourSlot = (dayIndex: number, hour: number) => {
+    const startTime = `${hour.toString().padStart(2, "0")}:00`;
+    const endTime = `${((hour + 1) % 24).toString().padStart(2, "0")}:00`;
+
+    setDaySlots((prev) =>
+      prev.map((day, dIdx) => {
+        if (dIdx !== dayIndex) return day;
+
+        let newTimes = day.times.filter(
+          (t) => t.start_time !== "" || t.end_time !== "",
+        );
+
+        const existingIndex = newTimes.findIndex(
+          (t) => t.start_time === startTime && t.end_time === endTime,
+        );
+
+        if (existingIndex > -1) {
+          newTimes = newTimes.filter((_, i) => i !== existingIndex);
+        } else {
+          newTimes.push({
+            start_time: startTime,
+            end_time: endTime,
+          });
+        }
+
+        return {
+          ...day,
+          times: newTimes.sort((a, b) =>
+            a.start_time.localeCompare(b.start_time),
+          ),
+        };
+      }),
+    );
+  };
+
+  const isHourSelected = (dayIndex: number, hour: number) => {
+    const startTime = `${hour.toString().padStart(2, "0")}:00`;
+    const endTime = `${((hour + 1) % 24).toString().padStart(2, "0")}:00`;
+    const day = daySlots[dayIndex];
+    if (!day) return false;
+
+    return day.times.some(
+      (t) => t.start_time === startTime && t.end_time === endTime,
+    );
+  };
+
+  const copyScheduleToAllDays = (sourceDayIndex: number) => {
+    const sourceSlots = daySlots[sourceDayIndex].times;
+    setDaySlots((prev) =>
+      prev.map((day, idx) =>
+        idx === sourceDayIndex ? day : { ...day, times: [...sourceSlots] },
+      ),
+    );
+    addToast({
+      type: "success",
+      title: "Schedule Copied",
+      description: `Schedule from ${daySlots[sourceDayIndex].slot_day} applied to all days.`,
+      duration: 3000,
+    });
+  };
+
   const handleRemoveVideo = (e: React.MouseEvent) => {
     e.stopPropagation();
     setVideoFile(null);
@@ -347,6 +409,7 @@ export default function EditInPersonSlotForm({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (updateSlotMutation.isPending) return;
 
     // Validation
     if (
@@ -410,37 +473,49 @@ export default function EditInPersonSlotForm({
       return;
     }
 
-    // Format times to ensure they're in HH:MM format
-    const formatTime = (time: string): string => {
-      if (!time) return time;
-      if (time.split(":").length === 3) {
-        const [hours, minutes] = time.split(":");
-        return `${hours}:${minutes}`;
-      }
-      return time;
-    };
-
     // Ensure dates are in YYYY-MM-DD format
     const formatDate = (date: string): string => {
       if (!date) return date;
-      if (date.includes("T")) {
-        return date.split("T")[0];
-      }
-      return date;
+      const d = date.includes("T") ? date.split("T")[0] : date;
+      return d.trim();
+    };
+
+    const fromDate = formatDate(formData.from_date);
+    const toDate = formatDate(formData.to_date);
+    if (fromDate && toDate && toDate < fromDate) {
+      addToast({
+        type: "error",
+        title: "Invalid Date Range",
+        description: "Available To date must be on or after Available From date.",
+        duration: 5000,
+      });
+      return;
+    }
+
+    // Format times as HH:MM:SS for API (Laravel expects H:i:s)
+    const formatTime = (time: string): string => {
+      if (!time) return time;
+      const parts = time.split(":");
+      const hours = (parts[0] ?? "00").padStart(2, "0");
+      const minutes = (parts[1] ?? "00").padStart(2, "0");
+      const seconds = parts.length >= 3 ? (parts[2] ?? "00").padStart(2, "0") : "00";
+      return `${hours}:${minutes}:${seconds}`;
     };
 
     const payload: any = {
       title: formData.title,
       subject_id: Number(formData.subject_id),
-      from_date: formatDate(formData.from_date),
-      to_date: formatDate(formData.to_date),
+      from_date: fromDate,
+      to_date: toDate,
       slots: daySlots.map((day) => ({
         slot_day: (day.slot_day || "Sunday").trim(),
-        times: day.times.map((slot) => ({
-          start_time: formatTime(slot.start_time),
-          end_time: formatTime(slot.end_time),
-        })),
-      })),
+        times: day.times
+          .filter((slot) => slot.start_time && slot.end_time)
+          .map((slot) => ({
+            start_time: formatTime(slot.start_time),
+            end_time: formatTime(slot.end_time),
+          })),
+      })).filter((day) => day.times.length > 0),
       price: Number(formData.price),
       description: formData.description,
       ...(formData.country && { country: formData.country }),
@@ -540,11 +615,19 @@ export default function EditInPersonSlotForm({
     );
   }
 
+  const isSubmitting = updateSlotMutation.isPending;
+
   return (
     <div className="space-y-6">
-      <div>
+      <div className="relative">
         <h1 className="text-3xl font-bold text-white">
           Edit In-Person Session
+          {isSubmitting && (
+            <span className="ml-3 inline-flex items-center gap-1.5 text-sm font-medium text-orange-400 animate-pulse">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Saving...
+            </span>
+          )}
         </h1>
         <p className="text-gray-400 mt-2">
           Update the availability windows, pricing, and time slots for your
@@ -553,8 +636,14 @@ export default function EditInPersonSlotForm({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Slot Details */}
-        <Card className="bg-gray-800 border-gray-700">
+        <fieldset
+          disabled={isSubmitting}
+          aria-busy={isSubmitting}
+          className={`border-0 p-0 m-0 space-y-6 min-w-0 transition-opacity duration-200 ${isSubmitting ? "opacity-75" : ""}`}
+        >
+          <legend className="sr-only">Edit in-person session</legend>
+          {/* Slot Details */}
+          <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2 pt-5">
               <CalendarIcon className="h-5 w-5 text-orange-500" />
@@ -855,7 +944,7 @@ export default function EditInPersonSlotForm({
           </CardContent>
         </Card>
 
-        {/* Time Slots */}
+        {/* Time Slots - hour-based UI (same as Add In-Person Slot) */}
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2 pt-5">
@@ -863,26 +952,16 @@ export default function EditInPersonSlotForm({
               Time Slots
             </CardTitle>
             <CardDescription className="text-gray-400">
-              Edit your schedule. Currently {daySlots.length} day(s) with{" "}
-              {daySlots.reduce((sum, day) => sum + day.times.length, 0)} time
-              slot(s) configured.
+              Select one or more 1-hour slots for the days you are available.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {daySlots.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                <p>No schedule configured yet.</p>
-                <p className="text-sm mt-2">
-                  Click "Add Another Day to Schedule" to get started.
-                </p>
-              </div>
-            ) : (
-              daySlots.map((daySlot, dayIndex) => (
+          <CardContent className="space-y-6">
+            {daySlots.map((daySlot, dayIndex) => (
                 <div
                   key={dayIndex}
-                  className="border border-gray-700 rounded-lg p-6 bg-gray-900/40 space-y-4"
+                  className="border border-gray-700 rounded-lg p-6 bg-gray-900/40 space-y-6 relative group/card"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex-1 max-w-[200px]">
                       <Label className="text-sm font-medium text-gray-300">
                         Day of Week <span className="text-red-400">*</span>
@@ -901,140 +980,247 @@ export default function EditInPersonSlotForm({
                         ))}
                       </select>
                     </div>
-                    {daySlots.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeDaySlot(dayIndex)}
-                        className="border-red-700 text-red-400 hover:bg-red-900/30 cursor-pointer mt-6"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Remove Day
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="space-y-4 pt-2">
-                    <Label className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Time Slots for {daySlot.slot_day}
-                    </Label>
-
-                    {daySlot.times.map((timeSlot, timeIndex) => (
-                      <div
-                        key={timeIndex}
-                        className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-gray-800/50 p-4 rounded-md border border-gray-700/50"
-                      >
-                        <div className="md:col-span-5">
-                          <Label className="text-xs font-medium text-gray-400">
-                            Start Time
-                          </Label>
-                          <Input
-                            type="time"
-                            value={timeSlot.start_time}
-                            onChange={(e) =>
-                              handleTimeChange(
-                                dayIndex,
-                                timeIndex,
-                                "start_time",
-                                e.target.value,
-                              )
-                            }
-                            required
-                            className="mt-1 bg-gray-700 border-gray-600 text-white focus:border-orange-500 h-9"
-                          />
-                        </div>
-                        <div className="md:col-span-5">
-                          <Label className="text-xs font-medium text-gray-400">
-                            End Time
-                          </Label>
-                          <Input
-                            type="time"
-                            value={timeSlot.end_time}
-                            onChange={(e) =>
-                              handleTimeChange(
-                                dayIndex,
-                                timeIndex,
-                                "end_time",
-                                e.target.value,
-                              )
-                            }
-                            required
-                            className="mt-1 bg-gray-700 border-gray-600 text-white focus:border-orange-500 h-9"
-                          />
-                        </div>
-                        <div className="md:col-span-2 pt-6">
-                          {daySlot.times.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                removeTimeSlot(dayIndex, timeIndex)
-                              }
-                              className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-9 w-9"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-
+                    <div className="flex items-center gap-2">
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => addTimeSlot(dayIndex)}
-                      className="text-orange-400 hover:text-orange-300 hover:bg-orange-900/20"
+                      onClick={() => copyScheduleToAllDays(dayIndex)}
+                      className="text-orange-400 hover:text-orange-300 hover:bg-orange-900/20 transition-colors duration-150 cursor-pointer"
                     >
-                      <Plus className="h-3 w-3 mr-1" /> Add Time Slot
+                      <Plus className="h-4 w-4 mr-1" />
+                      Apply to All Days
                     </Button>
+                    {daySlots.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeDaySlot(dayIndex)}
+                        className="text-red-400 hover:text-red-300 hover:bg-red-900/20 transition-colors duration-150 cursor-pointer"
+                      >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Remove Day
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-6 pt-2">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <Label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-orange-400" />
+                        Select Hour Blocks
+                      </Label>
+                      <div className="flex items-center gap-2 bg-gray-800/50 p-1 rounded-lg border border-gray-700/50">
+                        <div className="flex items-center gap-1.5 px-2 py-1">
+                          <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+                          <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                            Selected
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 px-2 py-1 border-l border-gray-700">
+                          <div className="w-2.5 h-2.5 rounded-full bg-gray-600" />
+                          <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                            Available
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {[
+                        {
+                          label: "Morning (06:00 - 12:00)",
+                          hours: [6, 7, 8, 9, 10, 11],
+                        },
+                        {
+                          label: "Afternoon (12:00 - 18:00)",
+                          hours: [12, 13, 14, 15, 16, 17],
+                        },
+                        {
+                          label: "Evening (18:00 - 00:00)",
+                          hours: [18, 19, 20, 21, 22, 23],
+                        },
+                      ].map((group) => (
+                        <div key={group.label}>
+                          <p className="text-[11px] text-gray-500 uppercase font-bold mb-2 ml-1">
+                            {group.label}
+                          </p>
+                          <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
+                            {group.hours.map((hour) => {
+                              const selected = isHourSelected(dayIndex, hour);
+                              return (
+                                <button
+                                  key={hour}
+                                  type="button"
+                                  onClick={() => toggleHourSlot(dayIndex, hour)}
+                                  className={`py-2 px-1 rounded-lg text-[11px] font-bold border transition-all duration-200 cursor-pointer active:scale-95 flex flex-col items-center justify-center gap-0.5 ${
+                                    selected
+                                      ? "bg-orange-600 border-orange-500 text-white shadow-sm z-10 hover:bg-orange-500 hover:border-orange-400"
+                                      : "bg-gray-800/40 border-gray-700/50 text-gray-500 hover:border-gray-600 hover:bg-gray-700/30 hover:text-gray-400"
+                                  }`}
+                                >
+                                  <span>
+                                    {hour.toString().padStart(2, "0")}:00
+                                  </span>
+                                  <span
+                                    className={`text-[8px] opacity-70 font-medium ${selected ? "text-orange-100" : "text-gray-600"}`}
+                                  >
+                                    -{" "}
+                                    {((hour + 1) % 24)
+                                      .toString()
+                                      .padStart(2, "0")}
+                                    :00
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {daySlot.times.length > 0 && (
+                      <div className="space-y-4 mt-8 animate-in fade-in duration-500">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 border-t border-gray-800">
+                          <Label className="text-sm font-medium text-white flex items-center gap-2">
+                            <ClipboardList className="h-4 w-4 text-orange-400" />
+                            Selected Intervals ({daySlot.times.length} Slots)
+                          </Label>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-3">
+                          {daySlot.times.map((timeSlot, timeIndex) => (
+                          <div
+                            key={timeIndex}
+                            className="bg-gray-800/30 p-3 rounded-lg border border-gray-700/50 flex flex-col lg:flex-row lg:items-center justify-between gap-3 transition-all duration-200 hover:border-gray-600/60"
+                          >
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center">
+                                  <Clock className="h-3.5 w-3.5 text-orange-500" />
+                                </div>
+                                <span className="text-sm font-bold text-white uppercase tracking-tight">
+                                  {timeSlot.start_time} - {timeSlot.end_time}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-4 text-xs">
+                                  <div className="flex items-center gap-2">
+                                    <Label className="text-gray-400">From</Label>
+                                    <Input
+                                      type="time"
+                                      value={timeSlot.start_time}
+                                      onChange={(e) =>
+                                        handleTimeChange(
+                                          dayIndex,
+                                          timeIndex,
+                                          "start_time",
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="h-8 w-24 bg-gray-700/30 border border-gray-600/50 rounded p-1 text-center text-white transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50"
+                                    />
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Label className="text-gray-400">To</Label>
+                                    <Input
+                                      type="time"
+                                      value={timeSlot.end_time}
+                                      onChange={(e) =>
+                                        handleTimeChange(
+                                          dayIndex,
+                                          timeIndex,
+                                          "end_time",
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="h-8 w-24 bg-gray-700/30 border border-gray-600/50 rounded p-1 text-center text-white transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50"
+                                    />
+                                  </div>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() =>
+                                    removeTimeSlot(dayIndex, timeIndex)
+                                  }
+                                  className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10 transition-colors duration-150 cursor-pointer"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => addTimeSlot(dayIndex)}
+                          className="text-orange-400 hover:text-orange-300 hover:bg-orange-900/20 w-full border border-dashed border-orange-900/10 transition-colors duration-150 cursor-pointer"
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Add Custom Interval
+                        </Button>
+                      </div>
+                    )}
+
+                    {daySlot.times.length === 0 && (
+                      <div className="py-12 border-2 border-dashed border-gray-800 rounded-xl text-center">
+                        <Clock className="w-12 h-12 mx-auto mb-3 text-gray-700" />
+                        <p className="text-gray-500">
+                          No slots selected. Click the hour blocks above to add
+                          availability.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
-              ))
-            )}
+              ))}
 
             <Button
               type="button"
               variant="outline"
               onClick={addDaySlot}
-              className="w-full border-dashed border-gray-600 text-gray-400 hover:border-orange-500 hover:text-orange-400 hover:bg-orange-950/10 py-6"
+              className="w-full border-dashed border-gray-600 text-gray-400 hover:border-orange-500 hover:text-orange-400 hover:bg-orange-950/10 py-6 transition-colors duration-150 cursor-pointer"
             >
               <Plus className="h-4 w-4 mr-2" /> Add Another Day to Schedule
             </Button>
           </CardContent>
         </Card>
 
-        {/* Submit Button */}
-        <div className="flex justify-center gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push("/dashboard/in-person-session")}
-            className="border-gray-600 text-gray-400 hover:text-white"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={updateSlotMutation.isPending}
-            className="bg-orange-600 hover:bg-orange-700 text-white px-8"
-          >
-            {updateSlotMutation.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Updating...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Update Slot
-              </>
-            )}
-          </Button>
-        </div>
+          {/* Submit Button */}
+          <div className="flex justify-center gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/dashboard/in-person-session")}
+              className="border-gray-600 text-gray-400 hover:text-white disabled:opacity-70"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-orange-600 hover:bg-orange-700 text-white px-8 disabled:opacity-90 disabled:cursor-wait"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Update Slot
+                </>
+              )}
+            </Button>
+          </div>
+        </fieldset>
       </form>
     </div>
   );

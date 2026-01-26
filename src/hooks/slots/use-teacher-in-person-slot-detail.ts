@@ -44,8 +44,8 @@ const fetchTeacherInPersonSlotDetail = async (id: number): Promise<InPersonSlot>
     throw new Error('Invalid in-person slot id provided')
   }
 
-  // Use edit-specific endpoint: teacher/in-person-slots/edit/{id}
-  const url = joinUrl(`teacher/in-person-slots/edit/${id}`)
+  // GET teacher/in-person-slots/{id}
+  const url = joinUrl(`teacher/in-person-slot/edit/${id}`)
   const headers = getAuthHeaders()
 
   try {

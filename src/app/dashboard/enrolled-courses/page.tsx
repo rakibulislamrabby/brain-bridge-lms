@@ -221,10 +221,10 @@ export default function EnrolledCoursesPage() {
           <div>
             <h1 className="text-3xl font-bold text-white flex items-center gap-2">
               <BookOpen className="h-8 w-8 text-orange-500" />
-              My Enrolled Courses
+              My Recorded Lesson
             </h1>
             <p className="text-gray-400 mt-2">
-              View and manage all your enrolled courses
+              View and manage all your recorded lessons
             </p>
           </div>
           <Button
@@ -241,7 +241,7 @@ export default function EnrolledCoursesPage() {
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2 pt-5">
               <BookOpen className="h-5 w-5 text-orange-500" />
-              Enrolled Courses
+              Recorded Lesson
             </CardTitle>
             <CardDescription className="text-gray-400">
               {enrolledCourses && enrolledCourses.length > 0
