@@ -10,18 +10,12 @@ import {
   Loader2,
   TrendingUp
 } from 'lucide-react'
-import { useDashboardInfo } from '@/hooks/dashboard/use-dashboard-info'
-import { AdminDashboardInfo } from '@/hooks/dashboard/use-dashboard-info'
+import { useDashboardInfo, isAdminDashboardInfo } from '@/hooks/dashboard/use-dashboard-info'
 
 export default function AdminDashboardOverview() {
   const { data: dashboardData, isLoading, error } = useDashboardInfo()
 
-  // Type guard to check if data is AdminDashboardInfo
-  const isAdminData = (data: any): data is AdminDashboardInfo => {
-    return data && 'totalTeacher' in data && 'totalStudent' in data
-  }
-
-  const adminData = isAdminData(dashboardData) ? dashboardData : null
+  const adminData = isAdminDashboardInfo(dashboardData) ? dashboardData : null
 
   if (isLoading) {
     return (

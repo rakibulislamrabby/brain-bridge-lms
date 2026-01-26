@@ -60,15 +60,38 @@ export interface AdminDashboardInfo {
   totalSessions: number
 }
 
-// Teacher and Student dashboard interfaces will be added later
+export interface LatestCourse {
+  id: number
+  teacher_id: number
+  subject_id: number
+  title: string
+  description: string
+  thumbnail_url: string
+  old_price: string
+  price: string
+  is_published: number
+  is_main: number
+  enrollment_count: number
+  processing_status: string
+  created_at: string
+  updated_at: string
+}
+
 export interface TeacherDashboardInfo {
-  // To be defined when teacher response is provided
+  myCourses: number
+  enrolledCoursesEarning: string
+  latestCourse: LatestCourse[]
+}
+
+export interface LatestCourseRequest {
+  // To be defined when course request structure is provided
   [key: string]: any
 }
 
 export interface StudentDashboardInfo {
-  // To be defined when student response is provided
-  [key: string]: any
+  enrolledCourses: number
+  courserequest: number
+  latestcourserequest: LatestCourseRequest[]
 }
 
 export type DashboardInfo = AdminDashboardInfo | TeacherDashboardInfo | StudentDashboardInfo
@@ -107,6 +130,19 @@ const fetchDashboardInfo = async (): Promise<DashboardInfo> => {
     }
     throw new Error('Network error: Failed to fetch dashboard info')
   }
+}
+
+// Type guard functions
+export const isAdminDashboardInfo = (data: any): data is AdminDashboardInfo => {
+  return data && 'totalTeacher' in data && 'totalStudent' in data
+}
+
+export const isTeacherDashboardInfo = (data: any): data is TeacherDashboardInfo => {
+  return data && 'myCourses' in data && 'enrolledCoursesEarning' in data
+}
+
+export const isStudentDashboardInfo = (data: any): data is StudentDashboardInfo => {
+  return data && 'enrolledCourses' in data && 'courserequest' in data
 }
 
 export const useDashboardInfo = (enabled: boolean = true) => {

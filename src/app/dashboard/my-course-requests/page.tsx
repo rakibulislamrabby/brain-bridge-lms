@@ -180,10 +180,10 @@ export default function MyCourseRequestsPage() {
         <div>
           <h1 className="text-3xl font-bold text-white flex items-center gap-2">
             <BookOpen className="h-8 w-8 text-orange-500" />
-            My Course Requests
+            My Recorded Lesson Requests
           </h1>
           <p className="text-gray-400 mt-2">
-            View and track your course requests
+            View and track your recorded lesson requests
           </p>
         </div>
 

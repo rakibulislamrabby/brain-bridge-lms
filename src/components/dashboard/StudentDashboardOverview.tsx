@@ -9,50 +9,67 @@ import {
   Award,
   Star,
   ArrowRight,
-  Video
+  Video,
+  FileText
 } from 'lucide-react'
 import Link from 'next/link'
-import { useEnrolledCourses } from '@/hooks/student/use-enrolled-courses'
-import { useStudentBookedSlots } from '@/hooks/student/use-booked-slots'
+import { useDashboardInfo, isStudentDashboardInfo, StudentDashboardInfo } from '@/hooks/dashboard/use-dashboard-info'
 import { Loader2 } from 'lucide-react'
 
 export default function StudentDashboardOverview() {
-  const { data: enrolledCourses = [], isLoading: coursesLoading } = useEnrolledCourses()
-  const { data: bookedSlotsData, isLoading: slotsLoading } = useStudentBookedSlots(1)
+  const { data: dashboardData, isLoading, error } = useDashboardInfo()
   
-  const bookedSlots = bookedSlotsData?.data || []
-  const totalBookedSlots = bookedSlotsData?.total || 0
+  const studentData = isStudentDashboardInfo(dashboardData) ? dashboardData : null
   
-  // Calculate stats
+  // Calculate stats from dashboard data
   const stats = {
-    enrolledCourses: enrolledCourses.length,
-    bookedSlots: totalBookedSlots,
-    completedCourses: enrolledCourses.filter((course: any) => course.progress === 100 || course.completed).length,
-    upcomingSessions: bookedSlots.filter((slot: any) => {
-      if (!slot.scheduled_date) return false
-      const sessionDate = new Date(slot.scheduled_date)
-      return sessionDate >= new Date() && slot.status === 'confirmed'
-    }).length
+    enrolledCourses: studentData?.enrolledCourses || 0,
+    courserequest: studentData?.courserequest || 0,
+    latestcourserequest: studentData?.latestcourserequest || []
   }
 
-  // Get upcoming sessions (next 3)
-  const upcomingSessions = bookedSlots
-    .filter((slot: any) => {
-      if (!slot.scheduled_date) return false
-      const sessionDate = new Date(slot.scheduled_date)
-      return sessionDate >= new Date() && slot.status === 'confirmed'
-    })
-    .sort((a: any, b: any) => {
-      const dateA = new Date(a.scheduled_date).getTime()
-      const dateB = new Date(b.scheduled_date).getTime()
-      return dateA - dateB
-    })
-    .slice(0, 3)
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Student Dashboard</h1>
+          <p className="text-gray-400 mt-2">Loading dashboard information...</p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
+        </div>
+      </div>
+    )
+  }
 
-  // Get recent courses (latest 3)
-  const recentCourses = enrolledCourses.slice(0, 3)
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Student Dashboard</h1>
+          <p className="text-gray-400 mt-2">Error loading dashboard information</p>
+        </div>
+        <Card className="bg-gray-800 border-gray-700">
+          <CardContent className="p-6">
+            <p className="text-red-400">
+              {error instanceof Error ? error.message : 'Failed to load dashboard data'}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
-  const isLoading = coursesLoading || slotsLoading
+  if (!studentData) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Student Dashboard</h1>
+          <p className="text-gray-400 mt-2">No dashboard data available</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -63,17 +80,13 @@ export default function StudentDashboardOverview() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-400">Enrolled Courses</p>
-                {isLoading ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-purple-500 mt-2" />
-                ) : (
-                  <p className="text-2xl font-bold text-white">{stats.enrolledCourses}</p>
-                )}
+                <p className="text-2xl font-bold text-white">{stats.enrolledCourses}</p>
               </div>
               <BookOpen className="h-8 w-8 text-purple-500" />
             </div>
@@ -84,246 +97,82 @@ export default function StudentDashboardOverview() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-400">Booked Sessions</p>
-                {isLoading ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-blue-500 mt-2" />
-                ) : (
-                  <p className="text-2xl font-bold text-white">{stats.bookedSlots}</p>
-                )}
+                <p className="text-sm font-medium text-gray-400">Course Requests</p>
+                <p className="text-2xl font-bold text-white">{stats.courserequest}</p>
               </div>
-              <Calendar className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gray-800 border-gray-700">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-400">Completed Courses</p>
-                {isLoading ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-green-500 mt-2" />
-                ) : (
-                  <p className="text-2xl font-bold text-white">{stats.completedCourses}</p>
-                )}
-              </div>
-              <Award className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gray-800 border-gray-700">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-400">Upcoming Sessions</p>
-                {isLoading ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-orange-500 mt-2" />
-                ) : (
-                  <p className="text-2xl font-bold text-white">{stats.upcomingSessions}</p>
-                )}
-              </div>
-              <Clock className="h-8 w-8 text-orange-500" />
+              <FileText className="h-8 w-8 text-blue-500" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Upcoming Sessions */}
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-white pt-5">Upcoming Sessions</CardTitle>
-                <CardDescription className="text-gray-400">Your next learning sessions</CardDescription>
-              </div>
-              <Link 
-                href="/dashboard/student-booked-slots"
-                className="text-purple-400 hover:text-purple-300 text-sm font-medium flex items-center gap-1"
-              >
-                View All
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
-              </div>
-            ) : upcomingSessions.length === 0 ? (
-              <div className="text-center py-8">
-                <Calendar className="h-12 w-12 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400">No upcoming sessions</p>
-                <Link 
-                  href="/courses"
-                  className="text-purple-400 hover:text-purple-300 text-sm mt-2 inline-block"
-                >
-                  Book a session
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {upcomingSessions.map((slot: any) => {
-                  const sessionDate = slot.scheduled_date ? new Date(slot.scheduled_date) : null
-                  const formattedDate = sessionDate 
-                    ? sessionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                    : 'Date TBD'
-                  const formattedTime = slot.scheduled_start_time 
-                    ? new Date(`1970-01-01T${slot.scheduled_start_time}`).toLocaleTimeString('en-US', {
-                        hour: 'numeric',
-                        minute: '2-digit'
-                      })
-                    : 'Time TBD'
-                  
-                  return (
-                    <div key={slot.id} className="flex items-center gap-3 p-3 border border-gray-700 rounded-lg bg-gray-700/50 hover:bg-gray-700 transition-colors">
-                      <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                        <Video className="h-5 w-5 text-purple-400" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-white">
-                          {slot.slot?.teacher?.name || 'Master'}
-                        </p>
-                        <p className="text-sm text-gray-400">
-                          {slot.slot?.subject?.name || 'General Subject'}
-                        </p>
-                        <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                          <span>{formattedDate}</span>
-                          <span>•</span>
-                          <span>{formattedTime}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Recent Courses */}
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-white pt-5">My Courses</CardTitle>
-                <CardDescription className="text-gray-400">Continue your learning journey</CardDescription>
-              </div>
-              <Link 
-                href="/dashboard/enrolled-courses"
-                className="text-purple-400 hover:text-purple-300 text-sm font-medium flex items-center gap-1"
-              >
-                View All
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
-              </div>
-            ) : recentCourses.length === 0 ? (
-              <div className="text-center py-8">
-                <BookOpen className="h-12 w-12 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400">No enrolled courses yet</p>
-                <Link 
-                  href="/courses"
-                  className="text-purple-400 hover:text-purple-300 text-sm mt-2 inline-block"
-                >
-                  Browse courses
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {recentCourses.map((course: any) => {
-                  const progress = course.progress || 0
-                  const courseTitle = course.course?.title || course.title || 'Untitled Course'
-                  
-                  return (
-                    <Link
-                      key={course.id || course.course_id}
-                      href={`/dashboard/enrolled-courses/${course.course_id || course.course?.id}`}
-                      className="flex items-center gap-3 p-3 border border-gray-700 rounded-lg bg-gray-700/50 hover:bg-gray-700 transition-colors group"
-                    >
-                      <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
-                        <BookOpen className="h-5 w-5 text-blue-400" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-white group-hover:text-blue-400 transition-colors">
-                          {courseTitle}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-purple-500 transition-all"
-                              style={{ width: `${progress}%` }}
-                            />
-                          </div>
-                          <span className="text-xs text-gray-400">{Math.round(progress)}%</span>
-                        </div>
-                      </div>
-                    </Link>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
+      {/* Latest Course Requests */}
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle className="text-white pt-5">Quick Actions</CardTitle>
-          <CardDescription className="text-gray-400">Get started with your learning</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link
-              href="/courses"
-              className="flex items-center gap-3 p-4 border border-gray-700 rounded-lg hover:bg-gray-700 transition-colors bg-gray-700/50 group"
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-white pt-5">Latest Course Requests</CardTitle>
+              <CardDescription className="text-gray-400">Your recent course requests</CardDescription>
+            </div>
+            <Link 
+              href="/dashboard/my-course-requests"
+              className="text-purple-400 hover:text-purple-300 text-sm font-medium flex items-center gap-1"
             >
-              <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
-                <BookOpen className="h-6 w-6 text-purple-400" />
-              </div>
-              <div>
-                <p className="font-medium text-white">Browse Courses</p>
-                <p className="text-sm text-gray-400">Explore new courses</p>
-              </div>
-            </Link>
-
-            <Link
-              href="/courses"
-              className="flex items-center gap-3 p-4 border border-gray-700 rounded-lg hover:bg-gray-700 transition-colors bg-gray-700/50 group"
-            >
-              <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
-                <Video className="h-6 w-6 text-blue-400" />
-              </div>
-              <div>
-                <p className="font-medium text-white">Book Live Session</p>
-                <p className="text-sm text-gray-400">Schedule with masters</p>
-              </div>
-            </Link>
-
-            <Link
-              href="/dashboard/enrolled-courses"
-              className="flex items-center gap-3 p-4 border border-gray-700 rounded-lg hover:bg-gray-700 transition-colors bg-gray-700/50 group"
-            >
-              <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
-                <TrendingUp className="h-6 w-6 text-green-400" />
-              </div>
-              <div>
-                <p className="font-medium text-white">My Progress</p>
-                <p className="text-sm text-gray-400">Track your learning</p>
-              </div>
+              View All
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
+        </CardHeader>
+        <CardContent>
+          {stats.latestcourserequest && stats.latestcourserequest.length > 0 ? (
+            <div className="space-y-4">
+              {stats.latestcourserequest.map((request: any, index: number) => (
+                <div
+                  key={request.id || index}
+                  className="flex items-center gap-3 p-3 border border-gray-700 rounded-lg bg-gray-700/50 hover:bg-gray-700 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-white">
+                      {request.title || request.course_title || 'Course Request'}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {request.description || request.course_description || 'No description'}
+                    </p>
+                    {request.status && (
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-2 ${
+                          request.status === 'approved'
+                            ? 'bg-green-500/20 text-green-400'
+                            : request.status === 'pending'
+                            ? 'bg-yellow-500/20 text-yellow-400'
+                            : 'bg-red-500/20 text-red-400'
+                        }`}
+                      >
+                        {request.status}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-gray-600 mx-auto mb-3" />
+              <p className="text-gray-400">No course requests yet</p>
+              <Link 
+                href="/dashboard/my-course-requests"
+                className="text-purple-400 hover:text-purple-300 text-sm mt-2 inline-block"
+              >
+                Create a course request
+              </Link>
+            </div>
+          )}
         </CardContent>
       </Card>
+
     </div>
   )
 }
