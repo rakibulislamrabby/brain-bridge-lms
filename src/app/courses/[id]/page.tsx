@@ -287,14 +287,6 @@ export default function CourseDetailPage() {
 
       // Check if payment is required
       if (result?.requires_payment && result?.client_secret) {
-        // Build URL with payment data as query parameters
-        const paymentParams = new URLSearchParams({
-          client_secret: result.client_secret,
-          amount: String(result.amount),
-          payment_intent: result.payment_intent_id || '',
-        })
-        
-        // Add course info (URLSearchParams handles encoding automatically)
         const courseInfo = result.course || {
           id: course.id,
           title: course.title || 'Course',
@@ -303,15 +295,19 @@ export default function CourseDetailPage() {
           price: Number(course.price) || 0,
           old_price: course.old_price ? Number(course.old_price) : undefined,
         }
-        paymentParams.set('course', JSON.stringify(courseInfo))
-        
-        // Add points to use if any
-        if (pointsToUse > 0) {
-          paymentParams.set('points_to_use', String(pointsToUse))
+        const paymentRedirectData = {
+          client_secret: result.client_secret,
+          amount: String(result.amount),
+          payment_intent: result.payment_intent_id || '',
+          course: JSON.stringify(courseInfo),
+          points_to_use: pointsToUse > 0 ? String(pointsToUse) : undefined,
         }
-        
-        // Redirect to payment page with URL parameters
-        router.push(`/payment?${paymentParams.toString()}`)
+        try {
+          sessionStorage.setItem('brain_bridge_payment_redirect', JSON.stringify(paymentRedirectData))
+        } catch (e) {
+          console.warn('sessionStorage set failed', e)
+        }
+        router.push('/payment')
       } else {
         // No payment required, show success message
         addToast({

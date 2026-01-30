@@ -134,10 +134,11 @@ export default function InPersonSessionDetailPage() {
   const sessionId = useMemo(() => {
     const rawId = Array.isArray(params?.id) ? params?.id[0] : params?.id
     const parsed = Number(rawId)
-    return Number.isFinite(parsed) ? parsed : NaN
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : NaN
   }, [params])
 
-  const { data, isLoading, error } = useInPersonSlotDetail(sessionId)
+  // Only fetch if sessionId is valid
+  const { data, isLoading, error } = useInPersonSlotDetail(Number.isFinite(sessionId) && sessionId > 0 ? sessionId : 0)
   const { data: scheduleData, isLoading: isScheduleLoading } = useInPersonSchedule(sessionId)
   const { data: teacherDetailsData } = useTeacherDetails(data?.teacher?.id)
   const teacherDetails = teacherDetailsData?.teacher
@@ -344,19 +345,28 @@ export default function InPersonSessionDetailPage() {
       return
     }
 
+    // Determine the correct slot_id to send BEFORE try block so it's available in catch
+    // Priority: data.id (from API) > sessionId (from URL) > error
+    // Using data.id is more reliable as it's the actual slot ID from the backend
+    let slotIdToSend: number | null = null
+    
+    if (data?.id && Number.isFinite(data.id) && data.id > 0) {
+      slotIdToSend = data.id
+    } else if (Number.isFinite(sessionId) && sessionId > 0) {
+      slotIdToSend = sessionId
+    }
+
     try {
       // Calculate the payment amount without service fee (service fee will be added on payment page)
       const safeNewPaymentAmount = Math.max(0, newPaymentAmount)
-      
-      // Use sessionId directly (from URL params) to ensure we have the correct ID
-      // This should match data.id, but using sessionId is more reliable
-      const slotIdToSend = sessionId
       
       // Log calculation for debugging
       console.log('💰 In-Person Booking Intent - Request Data:', {
         slot_id: slotIdToSend,
         data_id: data?.id,
         sessionId: sessionId,
+        isSessionIdValid: Number.isFinite(sessionId),
+        isDataIdValid: data?.id && Number.isFinite(data.id),
         scheduled_date: selectedDate,
         selectedTimeSlotId: selectedTimeSlot?.id,
         slotPrice,
@@ -365,13 +375,63 @@ export default function InPersonSessionDetailPage() {
         newPaymentAmount: safeNewPaymentAmount,
       })
       
-      if (!slotIdToSend || !Number.isFinite(slotIdToSend)) {
+      if (!slotIdToSend || !Number.isFinite(slotIdToSend) || slotIdToSend <= 0) {
+        console.error('🔴 Invalid slot ID:', {
+          slotIdToSend,
+          dataId: data?.id,
+          sessionId,
+          dataLoaded: !!data,
+        })
         throw new Error('Invalid slot ID. Please refresh the page and try again.')
       }
+      
+      // Additional validation: ensure data is loaded
+      if (!data) {
+        throw new Error('Slot data not loaded. Please wait a moment and try again.')
+      }
+      
+      // Extract day_id from time slot - check multiple possible property names
+      // Also try to find it from schedule data if not on slot directly
+      let dayId = selectedTimeSlot?.day_id || 
+                  selectedTimeSlot?.in_person_slot_day_id
+      
+      // If still not found, try to find it from schedule data by matching the slot
+      if (!dayId && scheduleData && selectedTimeSlot?.id) {
+        for (const scheduleDay of scheduleData) {
+          const matchingSlot = scheduleDay.slots?.find(s => s.id === selectedTimeSlot.id)
+          if (matchingSlot) {
+            dayId = matchingSlot.day_id || 
+                    matchingSlot.in_person_slot_day_id || 
+                    scheduleDay.day_id
+            break
+          }
+        }
+      }
+      
+      // If still not found, try to find it from slot detail data
+      if (!dayId && data?.days && selectedTimeSlot?.id) {
+        for (const day of data.days) {
+          const matchingTime = day.times?.find(t => t.id === selectedTimeSlot.id)
+          if (matchingTime) {
+            dayId = day.id || matchingTime.in_person_slot_day_id
+            break
+          }
+        }
+      }
+      
+      // Log for debugging
+      console.log('🔍 In-Person Booking Intent - day_id extraction:', {
+        selectedTimeSlot_day_id: selectedTimeSlot?.day_id,
+        selectedTimeSlot_in_person_slot_day_id: selectedTimeSlot?.in_person_slot_day_id,
+        final_day_id: dayId,
+        time_id: selectedTimeSlot?.id,
+      })
       
       const result = await bookingIntentMutation.mutateAsync({
         slot_id: slotIdToSend, // Use sessionId directly from URL params
         scheduled_date: selectedDate,
+        ...(dayId !== undefined && dayId !== null && { day_id: dayId }),
+        ...(selectedTimeSlot?.id && { time_id: selectedTimeSlot.id }),
         points_to_use: pointsToUse > 0 ? pointsToUse : undefined,
         new_payment_amount: safeNewPaymentAmount,
       })
@@ -392,28 +452,23 @@ export default function InPersonSessionDetailPage() {
           apiReturnedAmount: result.amount,
         })
         
-        // Build URL with payment data as query parameters
-        const paymentParams = new URLSearchParams({
+        // Store payment data in sessionStorage to avoid URL length limits (client_secret is long)
+        const paymentRedirectData = {
           client_secret: result.client_secret,
-          amount: String(amountWithoutServiceFee), // Amount without service fee
+          amount: String(amountWithoutServiceFee),
           payment_intent: result.payment_intent_id || '',
-        })
-        
-        // Add slot info if available (URLSearchParams handles encoding automatically)
-        if (result.slot) {
-          paymentParams.set('slot', JSON.stringify(result.slot))
+          slot: result.slot ? JSON.stringify(result.slot) : undefined,
+          points_to_use: pointsToUse > 0 ? String(pointsToUse) : undefined,
+          slot_type: 'in-person',
         }
-        
-        // Add points to use if any
-        if (pointsToUse > 0) {
-          paymentParams.set('points_to_use', String(pointsToUse))
+        try {
+          sessionStorage.setItem('brain_bridge_payment_redirect', JSON.stringify(paymentRedirectData))
+        } catch (e) {
+          console.warn('sessionStorage set failed, falling back to URL params', e)
         }
-        
-        // Add slot type to identify in-person slots
-        paymentParams.set('slot_type', 'in-person')
-        
-        // Redirect to payment page with URL parameters
-        router.push(`/payment?${paymentParams.toString()}`)
+
+        // Redirect to payment page (data read from sessionStorage on payment page)
+        router.push('/payment')
       } else {
         // No payment required, show success message
         addToast({
@@ -424,7 +479,26 @@ export default function InPersonSessionDetailPage() {
         })
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to reserve slot. Please try again.'
+      console.error('🔴 In-Person Booking Intent Error:', error)
+      
+      let errorMessage = 'Failed to reserve slot. Please try again.'
+      
+      if (error instanceof Error) {
+        errorMessage = error.message
+        
+        // Check if it's the specific backend error about invalid slot_id
+        if (error.message.toLowerCase().includes('slot id is invalid') || 
+            error.message.toLowerCase().includes('selected slot id')) {
+          console.error('🔴 Backend rejected slot_id:', {
+            slotIdSent: slotIdToSend,
+            dataId: data?.id,
+            sessionId,
+            urlParam: params?.id,
+          })
+          errorMessage = 'The selected slot is invalid or no longer available. Please refresh the page and try again.'
+        }
+      }
+      
       addToast({
         type: 'error',
         title: 'Reservation Failed',

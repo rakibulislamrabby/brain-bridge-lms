@@ -37,6 +37,8 @@ const getAuthHeaders = (): Record<string, string> => {
 export interface BookingIntentRequest {
   slot_id: number
   scheduled_date: Date
+  day_id?: number
+  time_id?: number
   points_to_use?: number
   new_payment_amount?: number
 }
@@ -78,6 +80,15 @@ const createBookingIntent = async (payload: BookingIntentRequest): Promise<Booki
   const requestBody: any = {
     slot_id: payload.slot_id,
     scheduled_date: formatDateToString(payload.scheduled_date),
+  }
+
+  // Include day_id and time_id if provided (0 is a valid value)
+  if (payload.day_id !== undefined && payload.day_id !== null) {
+    requestBody.day_id = payload.day_id
+  }
+
+  if (payload.time_id !== undefined && payload.time_id !== null) {
+    requestBody.time_id = payload.time_id
   }
 
   if (payload.points_to_use !== undefined && payload.points_to_use > 0) {

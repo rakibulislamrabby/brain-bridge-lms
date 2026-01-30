@@ -33,6 +33,8 @@ const getAuthHeaders = (): Record<string, string> => {
 
 export interface InPersonScheduleSlot {
   id: number
+  day_id?: number
+  in_person_slot_day_id?: number
   start_time: string
   end_time: string
   is_booked: number
@@ -42,6 +44,7 @@ export interface InPersonScheduleSlot {
 export interface InPersonScheduleDay {
   date: string
   day: string
+  day_id?: number
   slots: InPersonScheduleSlot[]
 }
 

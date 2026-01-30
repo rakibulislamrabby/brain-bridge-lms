@@ -106,19 +106,19 @@ export default function InPersonSessionPreviewModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="!w-[85vw] !max-w-[1200px] max-h-[90vh] bg-gray-900 border-gray-700 p-0 overflow-hidden"
+        className="!w-[95vw] sm:!w-[90vw] lg:!w-[85vw] !max-w-[1200px] max-h-[90vh] bg-gray-900 border-gray-700 p-0 overflow-hidden"
         style={{ 
-          width: '85vw', 
+          width: '95vw', 
           maxWidth: '1200px',
         }}
       >
-        <div className="flex flex-col lg:flex-row h-full max-h-[95vh] overflow-hidden">
+        <div className="flex flex-col lg:flex-row h-full max-h-[90vh] overflow-hidden">
           {/* Left Side - Video Player */}
-          <div className="lg:w-2/3 bg-gray-900 p-4 lg:p-6 flex flex-col overflow-hidden">
+          <div className="lg:w-2/3 bg-gray-900 p-3 sm:p-4 lg:p-6 flex flex-col overflow-y-auto overflow-x-hidden pb-4 sm:pb-6 custom-scrollbar">
             {/* Video Player Section */}
             {videoUrl ? (
               <div className="mb-3">
-                <div className="relative w-[80%] mx-auto rounded-lg overflow-hidden border border-gray-700 bg-black shadow-2xl">
+                <div className="relative w-full sm:w-[80%] mx-auto rounded-lg overflow-hidden border border-gray-700 bg-black shadow-2xl">
                   <div
                     className="relative w-full"
                     style={{ paddingBottom: '56.25%' }} // 16:9 aspect ratio
@@ -141,7 +141,7 @@ export default function InPersonSessionPreviewModal({
               </div>
             ) : (
               <div className="mb-3">
-                <div className="relative w-full rounded-lg overflow-hidden border border-gray-700 bg-gray-800 shadow-2xl">
+                <div className="relative w-full sm:w-[80%] mx-auto rounded-lg overflow-hidden border border-gray-700 bg-gray-800 shadow-2xl">
                   <div
                     className="relative w-full"
                     style={{ paddingBottom: '56.25%' }}
@@ -175,7 +175,7 @@ export default function InPersonSessionPreviewModal({
             </DialogHeader>
 
             {/* Session Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 sm:mb-0">
               <div className="flex items-center gap-2 bg-gray-800 p-2 rounded-lg">
                 <Calendar className="w-4 h-4 text-orange-400 flex-shrink-0" />
                 <div>
@@ -208,8 +208,8 @@ export default function InPersonSessionPreviewModal({
           </div>
 
           {/* Right Side - Details */}
-          <div className="lg:w-1/3 bg-gray-800/50 border-l border-gray-700 p-4 lg:p-6 flex flex-col overflow-y-auto custom-scrollbar">
-            <div className="space-y-4">
+          <div className="lg:w-1/3 bg-gray-800/50 border-t lg:border-t-0 lg:border-l border-gray-700 p-3 sm:p-4 lg:p-6 pb-6 sm:pb-8 flex flex-col overflow-y-auto custom-scrollbar">
+            <div className="space-y-3 sm:space-y-4">
               {/* Master Info */}
               <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
                 <div className="flex items-center gap-3 mb-3">
@@ -253,7 +253,7 @@ export default function InPersonSessionPreviewModal({
               {/* CTA Button */}
               <Button
                 asChild
-                className="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 text-sm font-semibold mt-auto"
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white py-2.5 sm:py-2 text-sm font-semibold mt-auto"
                 onClick={() => onOpenChange(false)}
               >
                 <Link href={`/in-person-session/${session.id}`}>
