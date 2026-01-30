@@ -51,14 +51,13 @@ const updateInPersonSlot = async (
   id: number,
   payload: CreateInPersonSlotRequest,
 ): Promise<CreateInPersonSlotResponse> => {
-  // Use PUT endpoint directly - Laravel handles FormData with PUT method
   const url = joinUrl(`teacher/in-person-slots/${id}`);
   const formData = buildInPersonSlotFormData(payload, true);
   const headers = getAuthHeaders(true);
 
   try {
     const response = await fetch(url, {
-      method: "PUT", // Laravel requires POST with _method=PUT for FormData
+      method: "POST",
       headers,
       body: formData,
     });

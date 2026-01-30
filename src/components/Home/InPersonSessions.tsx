@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { MapPin, Calendar, Clock, DollarSign, Loader2, XCircle, ArrowRight, GraduationCap, Search, Users } from 'lucide-react'
+import { MapPin, Calendar, Clock, DollarSign, Loader2, XCircle, ArrowRight, GraduationCap, Search } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -312,13 +312,7 @@ export default function InPersonSessions({
                       </div>
                     )}
                     
-                    <div className="flex items-center justify-between pt-2 border-t border-gray-700/50">
-                      {session.available_seats !== undefined && (
-                        <div className="flex items-center gap-2 text-sm text-gray-400">
-                          <Users className="w-4 h-4 text-orange-400" />
-                          <span>{session.available_seats} seat{session.available_seats === 1 ? '' : 's'} available</span>
-                        </div>
-                      )}
+                    <div className="flex items-center justify-end pt-2 border-t border-gray-700/50">
                       {session.price && (
                         <div className="flex items-center gap-2 text-sm font-semibold text-green-400">
                           <DollarSign className="w-4 h-4" />

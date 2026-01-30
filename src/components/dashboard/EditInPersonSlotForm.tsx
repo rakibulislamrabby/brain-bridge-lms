@@ -63,11 +63,13 @@ const resolveMediaUrl = (path?: string | null) => {
 interface SlotTimeForm {
   start_time: string;
   end_time: string;
+  id?: number;
 }
 
 interface DaySlotForm {
   slot_day: string;
   times: SlotTimeForm[];
+  id?: number;
 }
 
 const DAYS_OF_WEEK = [
@@ -176,7 +178,7 @@ export default function EditInPersonSlotForm({
         area: slotData.area || "",
       });
 
-      // Initialize day slots with all days and times from GET API
+      // Initialize day slots with all days and times from GET API (keep ids for update)
       if (slotData.days && slotData.days.length > 0) {
         const mappedDaySlots = slotData.days.map((day) => {
           const dayTimes =
@@ -184,12 +186,14 @@ export default function EditInPersonSlotForm({
               ? day.times.map((t) => ({
                   start_time: formatTimeForInput(t.start_time),
                   end_time: formatTimeForInput(t.end_time),
+                  ...(t.id != null && { id: t.id }),
                 }))
               : [{ start_time: "", end_time: "" }];
 
           return {
             slot_day: day.day || "Sunday",
             times: dayTimes,
+            ...(day.id != null && { id: day.id }),
           };
         });
 
@@ -373,9 +377,14 @@ export default function EditInPersonSlotForm({
 
   const copyScheduleToAllDays = (sourceDayIndex: number) => {
     const sourceSlots = daySlots[sourceDayIndex].times;
+    // When copying to other days, strip ids so they are treated as new times
+    const timesWithoutIds = sourceSlots.map((t) => ({
+      start_time: t.start_time,
+      end_time: t.end_time,
+    }));
     setDaySlots((prev) =>
       prev.map((day, idx) =>
-        idx === sourceDayIndex ? day : { ...day, times: [...sourceSlots] },
+        idx === sourceDayIndex ? day : { ...day, times: timesWithoutIds },
       ),
     );
     addToast({
@@ -455,11 +464,21 @@ export default function EditInPersonSlotForm({
       return;
     }
 
+    // Parse time to minutes since midnight (handles HH:MM and HH:MM:SS reliably)
+    const timeToMinutes = (timeStr: string): number => {
+      if (!timeStr || typeof timeStr !== "string") return 0;
+      const parts = timeStr.trim().split(":");
+      const h = parseInt(parts[0] ?? "0", 10);
+      const m = parseInt(parts[1] ?? "0", 10);
+      if (Number.isNaN(h) || Number.isNaN(m)) return 0;
+      return h * 60 + m;
+    };
+
     const hasInvalidTimeRange = daySlots.some((day) =>
       day.times.some((time) => {
-        const start = new Date(`1970-01-01T${time.start_time}`);
-        const end = new Date(`1970-01-01T${time.end_time}`);
-        return end <= start;
+        const startM = timeToMinutes(time.start_time);
+        const endM = timeToMinutes(time.end_time);
+        return endM <= startM;
       }),
     );
 
@@ -492,14 +511,13 @@ export default function EditInPersonSlotForm({
       return;
     }
 
-    // Format times as HH:MM:SS for API (Laravel expects H:i:s)
-    const formatTime = (time: string): string => {
+    // Format times as HH:MM for API (backend expects end strictly after start)
+    const formatTimeForApi = (time: string): string => {
       if (!time) return time;
       const parts = time.split(":");
       const hours = (parts[0] ?? "00").padStart(2, "0");
       const minutes = (parts[1] ?? "00").padStart(2, "0");
-      const seconds = parts.length >= 3 ? (parts[2] ?? "00").padStart(2, "0") : "00";
-      return `${hours}:${minutes}:${seconds}`;
+      return `${hours}:${minutes}`;
     };
 
     const payload: any = {
@@ -507,15 +525,23 @@ export default function EditInPersonSlotForm({
       subject_id: Number(formData.subject_id),
       from_date: fromDate,
       to_date: toDate,
-      slots: daySlots.map((day) => ({
-        slot_day: (day.slot_day || "Sunday").trim(),
-        times: day.times
-          .filter((slot) => slot.start_time && slot.end_time)
-          .map((slot) => ({
-            start_time: formatTime(slot.start_time),
-            end_time: formatTime(slot.end_time),
-          })),
-      })).filter((day) => day.times.length > 0),
+      slots: daySlots
+        .map((day) => {
+          const validTimes = day.times
+            .filter((slot) => slot.start_time && slot.end_time)
+            .filter((slot) => timeToMinutes(slot.end_time) > timeToMinutes(slot.start_time))
+            .map((slot) => ({
+              start_time: formatTimeForApi(slot.start_time),
+              end_time: formatTimeForApi(slot.end_time),
+              ...(slot.id != null && { id: slot.id }),
+            }));
+          return {
+            slot_day: (day.slot_day || "Sunday").trim(),
+            ...(day.id != null && { id: day.id }),
+            times: validTimes,
+          };
+        })
+        .filter((day) => day.times.length > 0),
       price: Number(formData.price),
       description: formData.description,
       ...(formData.country && { country: formData.country }),

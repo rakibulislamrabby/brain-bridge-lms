@@ -43,11 +43,13 @@ const getAuthHeaders = (
 export interface InPersonSlotTimeRange {
   start_time: string;
   end_time: string;
+  id?: number;
 }
 
 export interface InPersonDaySlot {
   slot_day: string;
   times: InPersonSlotTimeRange[];
+  id?: number;
 }
 
 export interface CreateInPersonSlotRequest {
@@ -114,9 +116,7 @@ export const buildInPersonSlotFormData = (
   isUpdate: boolean = false,
 ): FormData => {
   const formData = new FormData();
-  if (isUpdate) {
-    formData.append("_method", "PUT");
-  }
+  // Update uses POST to teacher/in-person-slots/{id}; no _method spoofing
 
   formData.append("title", payload.title);
   formData.append("subject_id", payload.subject_id.toString());
@@ -138,8 +138,14 @@ export const buildInPersonSlotFormData = (
   // Note: We don't send video as string to avoid overwriting existing video on update
 
   payload.slots.forEach((day: InPersonDaySlot, index: number) => {
+    if (isUpdate && day.id != null) {
+      formData.append(`slots[${index}][id]`, String(day.id));
+    }
     formData.append(`slots[${index}][slot_day]`, day.slot_day);
     day.times.forEach((time: InPersonSlotTimeRange, tIndex: number) => {
+      if (isUpdate && time.id != null) {
+        formData.append(`slots[${index}][times][${tIndex}][id]`, String(time.id));
+      }
       formData.append(
         `slots[${index}][times][${tIndex}][start_time]`,
         time.start_time,

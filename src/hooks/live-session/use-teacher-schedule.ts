@@ -33,6 +33,7 @@ const getAuthHeaders = (): Record<string, string> => {
 
 export interface ScheduleTime {
   id: number
+  day_id?: number
   start_time: string
   end_time: string
   meeting_link: string | null
@@ -43,6 +44,7 @@ export interface ScheduleTime {
 export interface ScheduleDay {
   date: string
   day: string
+  day_id?: number
   slots: ScheduleTime[]
 }
 

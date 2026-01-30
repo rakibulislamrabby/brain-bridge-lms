@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
@@ -474,13 +474,15 @@ console.log("paymentIntentId",paymentIntentId)
                     onReady={(e) => {
                       console.log('✅ Payment Element ready:', e)
                     }}
-                    onError={(e) => {
-                      console.error('❌ Payment Element error:', e)
-                      setErrorMessage(e.message || 'Failed to load payment form. Please refresh the page.')
+                    onLoadError={(event) => {
+                      const err = event.error
+                      console.error('❌ Payment Element load error:', err)
+                      const message = err?.message || 'Failed to load payment form. Please refresh the page.'
+                      setErrorMessage(message)
                       addToast({
                         type: 'error',
                         title: 'Payment Form Error',
-                        description: e.message || 'Failed to load payment form. Please refresh the page.',
+                        description: message,
                         duration: 6000,
                       })
                     }}
@@ -543,19 +545,39 @@ console.log("paymentIntentId",paymentIntentId)
   )
 }
 
+const PAYMENT_REDIRECT_KEY = 'brain_bridge_payment_redirect'
+
 function PaymentPageContent() {
   const searchParams = useSearchParams()
-  
-  const clientSecret = searchParams.get('client_secret')
-  const amount = searchParams.get('amount')
-  const paymentIntentId = searchParams.get('payment_intent')
-  const pointsToUseParam = searchParams.get('points_to_use')
+  const [storageData, setStorageData] = useState<Record<string, string> | null>(null)
+  const [hasCheckedStorage, setHasCheckedStorage] = useState(false)
+
+  // Read payment data from sessionStorage (set by booking pages to avoid long URLs)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const raw = sessionStorage.getItem(PAYMENT_REDIRECT_KEY)
+      if (raw) {
+        const data = JSON.parse(raw) as Record<string, string>
+        sessionStorage.removeItem(PAYMENT_REDIRECT_KEY)
+        setStorageData(data)
+      }
+    } catch (_) {
+      // ignore parse errors
+    }
+    setHasCheckedStorage(true)
+  }, [])
+
+  const clientSecret = storageData?.client_secret ?? searchParams.get('client_secret')
+  const amount = storageData?.amount ?? searchParams.get('amount')
+  const paymentIntentId = storageData?.payment_intent ?? searchParams.get('payment_intent')
+  const pointsToUseParam = storageData?.points_to_use ?? searchParams.get('points_to_use')
   const pointsToUse = pointsToUseParam ? parseInt(pointsToUseParam) || 0 : 0
-  const slotType = searchParams.get('slot_type') // 'in-person' or null (live session)
-  
+  const slotType = storageData?.slot_type ?? searchParams.get('slot_type')
+
   // Parse slot info if present
   let slotInfo = null
-  const slotParam = searchParams.get('slot')
+  const slotParam = storageData?.slot ?? searchParams.get('slot')
   if (slotParam) {
     try {
       slotInfo = JSON.parse(slotParam)
@@ -564,10 +586,10 @@ function PaymentPageContent() {
       console.error('🔴 Error parsing slot info:', error, 'Raw slot param:', slotParam)
     }
   }
-  
-  // Parse course info if present
+
+  // Parse course info if present (from sessionStorage or URL)
   let courseInfo = null
-  const courseParam = searchParams.get('course')
+  const courseParam = storageData?.course ?? searchParams.get('course')
   if (courseParam) {
     try {
       courseInfo = JSON.parse(courseParam)
@@ -575,6 +597,10 @@ function PaymentPageContent() {
     } catch (error) {
       console.error('🔴 Error parsing course info:', error, 'Raw course param:', courseParam)
     }
+  }
+
+  if (!hasCheckedStorage) {
+    return <div className="text-white">Loading payment...</div>
   }
 
   if (!clientSecret || !amount || !paymentIntentId) {

@@ -420,9 +420,39 @@ export default function LiveSessionDetailPage() {
         calculatedFinalAmount,
       })
       
+      // Extract day_id from slot - check multiple possible property names
+      // Also try to find it from schedule data if not on slot directly
+      let dayId = selectedSlot?.day_id || 
+                  selectedSlot?.slot_day_id || 
+                  selectedDateSchedule?.day_id
+      
+      // If still not found, try to find it from schedule data by matching the slot
+      if (!dayId && scheduleData && selectedSlot?.id) {
+        for (const scheduleDay of scheduleData) {
+          const matchingSlot = scheduleDay.slots?.find(s => s.id === selectedSlot.id)
+          if (matchingSlot) {
+            dayId = matchingSlot.day_id || 
+                    matchingSlot.slot_day_id || 
+                    scheduleDay.day_id
+            break
+          }
+        }
+      }
+      
+      // Log for debugging
+      console.log('🔍 Booking Intent - day_id extraction:', {
+        selectedSlot_day_id: selectedSlot?.day_id,
+        selectedSlot_slot_day_id: selectedSlot?.slot_day_id,
+        selectedDateSchedule_day_id: selectedDateSchedule?.day_id,
+        final_day_id: dayId,
+        time_id: selectedSlot?.id,
+      })
+      
       const result = await bookingIntentMutation.mutateAsync({
         slot_id: sessionId,
         scheduled_date: new Date(selectedDateKeyForBooking),
+        ...(dayId !== undefined && dayId !== null && { day_id: dayId }),
+        ...(selectedSlot?.id && { time_id: selectedSlot.id }),
         points_to_use: pointsToUse > 0 ? pointsToUse : undefined,
         new_payment_amount: safeNewPaymentAmount,
       })
@@ -433,36 +463,24 @@ export default function LiveSessionDetailPage() {
         // The API might return incorrect amount, so we use our calculation
         const finalAmount = calculatedFinalAmount
         
-        // Log for debugging
-        console.log('💰 Payment Amount Calculation:', {
-          slotPrice,
-          pointsToUse,
-          pointsDiscount,
-          newPaymentAmount,
-          serviceFee: SERVICE_FEE,
-          calculatedFinalAmount: finalAmount,
-          apiReturnedAmount: result.amount,
-        })
+       
         
-        // Build URL with payment data as query parameters
-        const paymentParams = new URLSearchParams({
+        // Store payment data in sessionStorage to avoid URL length limits (client_secret is long)
+        const paymentRedirectData = {
           client_secret: result.client_secret,
           amount: String(finalAmount),
           payment_intent: result.payment_intent_id || '',
-        })
-        
-        // Add slot info if available (URLSearchParams handles encoding automatically)
-        if (result.slot) {
-          paymentParams.set('slot', JSON.stringify(result.slot))
+          slot: result.slot ? JSON.stringify(result.slot) : undefined,
+          points_to_use: pointsToUse > 0 ? String(pointsToUse) : undefined,
         }
-        
-        // Add points to use if any
-        if (pointsToUse > 0) {
-          paymentParams.set('points_to_use', String(pointsToUse))
+        try {
+          sessionStorage.setItem('brain_bridge_payment_redirect', JSON.stringify(paymentRedirectData))
+        } catch (e) {
+          console.warn('sessionStorage set failed, falling back to URL params', e)
         }
-        
-        // Redirect to payment page with URL parameters
-        router.push(`/payment?${paymentParams.toString()}`)
+
+        // Redirect to payment page (data read from sessionStorage on payment page)
+        router.push('/payment')
       } else {
         // No payment required, show success message
         addToast({
